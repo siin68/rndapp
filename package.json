@@ -6,9 +6,19 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "prisma:generate": "prisma generate",
+    "prisma:db:push": "prisma db push",
+    "prisma:studio": "prisma studio",
+    "prisma:migrate": "prisma migrate dev",
+    "seed": "npx tsx prisma/seed.ts",
+    "db:setup": "docker-compose up -d && npx prisma generate && npx prisma db push && npm run seed",
+    "db:start": "docker-compose up -d",
+    "db:stop": "docker-compose down",
+    "db:reset": "docker-compose down -v && docker-compose up -d && npx prisma db push && npm run seed"
   },
   "dependencies": {
+    "@prisma/client": "^5.12.0",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-slot": "^1.2.4",
     "class-variance-authority": "^0.7.1",
@@ -30,7 +40,10 @@
     "eslint": "^8",
     "eslint-config-next": "14.2.0",
     "postcss": "^8.4.35",
+    "prisma": "^5.12.0",
     "tailwindcss": "^3.4.18",
+    "ts-node": "^10.9.1",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

@@ -1,20 +1,60 @@
-'use client';
+"use client";
 
-import { useParams, useRouter } from 'next/navigation';
-import { Card, CardContent, Badge, Avatar, AvatarFallback, AvatarImage, Button } from '@/components/ui';
-import { MOCK_EVENTS } from '@/mock-data';
-import { getLocationById, getHobbyById, getUserById } from '@/lib/data';
+import { useParams, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  Badge,
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  Button,
+} from "@/components/ui";
+import { getLocationById, getHobbyById, fetchEvents } from "@/lib/data";
+
+interface Event {
+  id: string;
+  title: string;
+  description?: string;
+  date: Date | string;
+  hobbyId: string;
+  locationId: string;
+  hostId: string;
+  maxParticipants: number;
+  status: string;
+  participants?: any[];
+  _count?: { participants: number };
+}
 
 export default function LocationPage() {
   const params = useParams();
   const router = useRouter();
-  
-  const location = getLocationById(params.id as string);
-  if (!location) return <div>Location not found</div>;
+  const [eventsAtLocation, setEventsAtLocation] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const eventsAtLocation = MOCK_EVENTS.filter(
-    (e) => e.locationId === params.id && e.status === 'open'
-  );
+  const location = getLocationById(params.id as string);
+
+  useEffect(() => {
+    async function fetchLocationEvents() {
+      try {
+        const events = await fetchEvents({ limit: 50 });
+        const filtered = events.filter(
+          (e: any) => e.locationId === params.id && e.status === "OPEN"
+        );
+        setEventsAtLocation(filtered);
+      } catch (error) {
+        console.error("Error fetching location events:", error);
+        setEventsAtLocation([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchLocationEvents();
+  }, [params.id]);
+
+  if (!location) return <div>Location not found</div>;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -31,8 +71,9 @@ export default function LocationPage() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {eventsAtLocation.map((event) => {
             const hobby = getHobbyById(event.hobbyId);
-            const spotsLeft = event.maxParticipants - event.currentParticipants.length;
-            const host = getUserById?.(event.hostId);
+            const participantCount =
+              event._count?.participants || event.participants?.length || 0;
+            const spotsLeft = event.maxParticipants - participantCount;
             return (
               <Card
                 key={event.id}
@@ -54,7 +95,9 @@ export default function LocationPage() {
                   <h3 className="font-bold text-gray-800 group-hover:text-primary-600 transition text-lg mb-2">
                     {event.title}
                   </h3>
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">{event.description}</p>
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                    {event.description}
+                  </p>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-2 text-gray-600">
                       <span>🎯</span>
@@ -62,26 +105,30 @@ export default function LocationPage() {
                     </div>
                     <div className="flex items-center gap-2 text-gray-600">
                       <span>📅</span>
-                      <span>{event.date} • {event.time}</span>
+                      <span>{new Date(event.date).toLocaleDateString()}</span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-600">
-                      <Avatar className="w-6 h-6 border-2 border-white">
-                        <AvatarImage src={host?.image || ''} alt={host?.name || ''} />
-                        <AvatarFallback>{host?.name?.charAt(0) || '?'}</AvatarFallback>
-                      </Avatar>
-                      <span className="text-xs">Host: {host?.name}</span>
+                      <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs">
+                        H
+                      </div>
+                      <span>Host</span>
                     </div>
                   </div>
                   <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
                     <div className="flex -space-x-2">
                       {[1, 2, 3].map((i) => (
-                        <div key={i} className="w-7 h-7 rounded-full bg-gradient-to-br from-primary-300 to-accent-300 border-2 border-white"></div>
+                        <div
+                          key={i}
+                          className="w-7 h-7 rounded-full bg-gradient-to-br from-primary-300 to-accent-300 border-2 border-white"
+                        ></div>
                       ))}
                       <div className="w-7 h-7 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-xs font-bold text-gray-600">
-                        +{Math.max(0, event.currentParticipants.length - 3)}
+                        +{Math.max(0, participantCount - 3)}
                       </div>
                     </div>
-                    <span className="text-xs text-gray-500 font-medium">{event.currentParticipants.length} attending</span>
+                    <span className="text-xs text-gray-500 font-medium">
+                      {participantCount} attending
+                    </span>
                   </div>
                 </CardContent>
               </Card>
@@ -94,8 +141,12 @@ export default function LocationPage() {
             <CardContent className="pt-6">
               <div className="text-center py-12">
                 <div className="text-6xl mb-4">📭</div>
-                <h3 className="text-xl font-bold text-gray-600 mb-2">No open events at this location</h3>
-                <p className="text-gray-500 mb-6">Be the first to create an event here!</p>
+                <h3 className="text-xl font-bold text-gray-600 mb-2">
+                  No open events at this location
+                </h3>
+                <p className="text-gray-500 mb-6">
+                  Be the first to create an event here!
+                </p>
                 <Button onClick={() => {}} disabled>
                   Create Event
                 </Button>

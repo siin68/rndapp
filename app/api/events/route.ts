@@ -1,0 +1,44 @@
+import { NextRequest, NextResponse } from "next/server";
+import { eventQueries } from "@/lib/database/queries";
+import { EventService } from "@/lib/database/services";
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get("userId");
+    const status = searchParams.get("status") || "open";
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const type = searchParams.get("type"); // "hosted", "participating", "recommended"
+
+    let events;
+
+    if (type === "hosted" && userId) {
+      events = await eventQueries.getUserHostedEvents(userId);
+    } else if (type === "participating" && userId) {
+      events = await eventQueries.getUserParticipatingEvents(userId);
+    } else if (type === "recommended" && userId) {
+      events = await eventQueries.findRecommendedEvents(userId, limit);
+    } else {
+      events = await eventQueries.searchEvents("", {}, limit);
+    }
+
+    const eventsWithStats = events.map((event) => {
+      const stats = EventService.calculateEventStats(event);
+      return {
+        ...event,
+        stats,
+      };
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: eventsWithStats,
+    });
+  } catch (error) {
+    console.error("Error fetching events:", error);
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
