@@ -229,7 +229,7 @@ export default function CreateInvitePage() {
                   type="submit" 
                   className="flex-[2] h-14 rounded-full bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-bold text-lg shadow-lg shadow-rose-200 hover:shadow-xl hover:shadow-rose-300 transform transition-all hover:-translate-y-0.5 active:scale-95"
                 >
-                  ✨ {t('publish')}
+                   {t('publish')}
                 </Button>
               </div>
             </form>

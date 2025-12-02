@@ -3,8 +3,25 @@
 import { useParams } from 'next/navigation';
 import { useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
-import { Card, CardContent, Button, Avatar, AvatarImage, AvatarFallback } from '@/components/ui';
+import { Card, CardContent, Button, Avatar, AvatarImage, AvatarFallback, Badge } from '@/components/ui';
 import { getUserById, getHobbyById, getLocationById, getEventsByUserId } from '@/lib/data';
+
+// Icons
+const ArrowLeftIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+);
+const MapPinIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+);
+const SparklesIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+);
+const MessageCircleIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+);
+const CalendarIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+);
 
 export default function ProfilePage() {
   const params = useParams();
@@ -12,13 +29,14 @@ export default function ProfilePage() {
   const t = useTranslations('profile');
   
   const user = getUserById(params.id as string);
+  
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-6xl mb-4">👤</div>
-          <p className="text-gray-500">User not found</p>
-          <Button onClick={() => router.push(`/dashboard`)} className="mt-4">
+      <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center p-4">
+        <div className="text-center space-y-4">
+          <div className="text-6xl animate-bounce grayscale opacity-50">👤</div>
+          <h2 className="text-xl font-bold text-gray-800">User not found</h2>
+          <Button onClick={() => router.push(`/dashboard`)} variant="outline" className="rounded-full">
             Back to Dashboard
           </Button>
         </div>
@@ -29,111 +47,153 @@ export default function ProfilePage() {
   const userEvents = getEventsByUserId(user.id);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-orange-50 py-8">
-      <div className="container mx-auto px-4 max-w-3xl">
-        <Button variant="outline" onClick={() => router.back()} className="mb-6">
-          ← Back
-        </Button>
+    <div className="min-h-screen bg-[#FAFAFA] relative pb-20">
+       {/* Ambient Background */}
+      <div className="fixed top-0 left-0 w-[500px] h-[500px] bg-rose-100/40 rounded-full blur-[100px] pointer-events-none -z-10" />
+      <div className="fixed bottom-0 right-0 w-[600px] h-[600px] bg-purple-100/40 rounded-full blur-[100px] pointer-events-none -z-10" />
 
-        <Card className="mb-6">
-          <CardContent className="pt-6">
-            <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
-              <div className="relative">
-                <Avatar className="w-24 h-24">
-                  <AvatarImage src={user.image} alt={user.name} />
-                  <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white"></div>
-              </div>
-            <div className="flex-1 text-center md:text-left">
-              <h1 className="text-3xl font-extrabold text-gray-800 mb-2">{user.name}</h1>
-              <p className="text-gray-600 mb-4">
-                {user.age} years • {user.gender}
-              </p>
-              <p className="text-gray-700 mb-6">{user.bio}</p>
-              <Button onClick={() => alert('Message functionality will be implemented')}>
-                {t('sendMessage')}
-              </Button>
-            </div>
-          </div>
-          </CardContent>
-        </Card>
+      {/* Nav */}
+      <div className="sticky top-0 z-30 px-4 py-4">
+         <div className="max-w-xl mx-auto">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => router.back()} 
+              className="rounded-full bg-white/80 backdrop-blur-md shadow-sm hover:bg-white text-gray-700"
+            >
+               <ArrowLeftIcon className="w-5 h-5" />
+            </Button>
+         </div>
+      </div>
 
-        <Card className="mb-6">
-          <CardContent className="pt-6">
-          <h2 className="text-xl font-bold mb-4 bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
-            {t('hobbies')}
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {user.hobbies.map((hobbyId) => {
-              const hobby = getHobbyById(hobbyId);
-              return (
-                <span key={hobbyId} className="px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-primary-100 to-accent-100 text-primary-700">
-                  {hobby?.icon} {hobby?.name}
-                </span>
-              );
-            })}
-          </div>
-          </CardContent>
-        </Card>
+      <div className="max-w-xl mx-auto px-4 space-y-8">
+        
+        {/* Profile Header Card */}
+        <div className="relative pt-12">
+            <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] p-8 pt-24 border border-white shadow-xl shadow-purple-100/50 text-center relative overflow-visible">
+               
+               {/* Avatar */}
+               <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-10">
+                  <div className="relative group">
+                    <div className="absolute inset-0 bg-gradient-to-tr from-rose-400 to-purple-500 rounded-full blur-lg opacity-20 group-hover:opacity-40 transition-opacity"></div>
+                    <Avatar className="w-32 h-32 border-[6px] border-[#FAFAFA] shadow-lg bg-white">
+                      <AvatarImage src={user.image} alt={user.name} />
+                      <AvatarFallback className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-500 text-4xl font-bold">
+                        {user.name.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="absolute bottom-2 right-2 w-6 h-6 bg-green-500 rounded-full border-4 border-white shadow-sm" title="Online"></div>
+                  </div>
+               </div>
 
-        <Card className="mb-6">
-          <CardContent className="pt-6">
-          <h2 className="text-xl font-bold mb-4 bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
-            {t('locations')}
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {user.preferredLocations.map((locationId) => {
-              const location = getLocationById(locationId);
-              return (
-                <span key={locationId} className="px-4 py-2 rounded-full text-sm font-semibold bg-pink-50 text-primary-700">
-                  {location?.name}
-                </span>
-              );
-            })}
-          </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-          <h2 className="text-xl font-bold mb-4 bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
-            {t('events')}
-          </h2>
-          {userEvents.length > 0 ? (
-            <div className="space-y-3">
-              {userEvents.map((event) => {
-                const hobby = getHobbyById(event.hobbyId);
-                const location = getLocationById(event.locationId);
-                return (
-                  <div
-                    key={event.id}
-                    className="p-4 rounded-xl cursor-pointer transition group bg-white/60 backdrop-blur hover:shadow-md border border-pink-100 hover:border-primary-300"
-                    onClick={() => router.push(`/event/${event.id}`)}
-                  >
-                    <h3 className="font-semibold text-gray-800 group-hover:text-primary-600 transition">
-                      {event.title}
-                    </h3>
-                    <div className="mt-2 flex items-center gap-2 text-xs">
-                      <span className="px-2 py-1 rounded-md bg-gradient-to-r from-primary-100 to-accent-100 text-primary-700">
-                        {hobby?.icon} {hobby?.name}
-                      </span>
-                      <span className="px-2 py-1 rounded-md bg-pink-50 text-primary-700">
-                        {location?.name}
-                      </span>
-                    </div>
-                    <div className="text-xs text-gray-500 mt-2">
-                      {event.date} • {event.time}
+               <div className="space-y-4 relative z-0">
+                  <div>
+                    <h1 className="text-3xl font-black text-gray-900 tracking-tight mb-1">{user.name}</h1>
+                    <div className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500">
+                      <span>{user.age} years old</span>
+                      <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+                      <span className="capitalize">{user.gender}</span>
                     </div>
                   </div>
-                );
-              })}
+
+                  <p className="text-gray-600 leading-relaxed font-medium max-w-sm mx-auto">
+                    {user.bio}
+                  </p>
+
+                  <div className="pt-2">
+                    <Button 
+                      onClick={() => alert('Message functionality will be implemented')}
+                      className="rounded-full bg-gradient-to-r from-gray-900 to-gray-800 text-white font-bold px-8 shadow-lg shadow-gray-200 hover:shadow-xl hover:-translate-y-0.5 transition-all gap-2"
+                    >
+                      <MessageCircleIcon className="w-4 h-4" />
+                      {t('sendMessage')}
+                    </Button>
+                  </div>
+               </div>
             </div>
-          ) : (
-            <p className="text-gray-500 text-center py-8">No events yet</p>
-          )}
-          </CardContent>
-        </Card>
+        </div>
+
+        {/* Info Grid */}
+        <div className="grid gap-6">
+           
+           {/* Hobbies & Locations */}
+           <div className="space-y-6">
+              <div className="bg-white/60 backdrop-blur-md rounded-[2rem] p-6 border border-white shadow-sm">
+                 <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                   <SparklesIcon className="w-4 h-4 text-purple-400" />
+                   Interests
+                 </h2>
+                 <div className="flex flex-wrap gap-2">
+                   {user.hobbies.map((hobbyId) => {
+                     const hobby = getHobbyById(hobbyId);
+                     return (
+                       <span key={hobbyId} className="px-4 py-2 rounded-xl text-sm font-bold bg-purple-50 text-purple-700 border border-purple-100">
+                         {hobby?.icon} {hobby?.name}
+                       </span>
+                     );
+                   })}
+                 </div>
+              </div>
+
+              <div className="bg-white/60 backdrop-blur-md rounded-[2rem] p-6 border border-white shadow-sm">
+                 <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                   <MapPinIcon className="w-4 h-4 text-rose-400" />
+                   Locations
+                 </h2>
+                 <div className="flex flex-wrap gap-2">
+                   {user.preferredLocations.map((locationId) => {
+                     const location = getLocationById(locationId);
+                     return (
+                       <span key={locationId} className="px-4 py-2 rounded-xl text-sm font-bold bg-rose-50 text-rose-700 border border-rose-100">
+                         {location?.name}
+                       </span>
+                     );
+                   })}
+                 </div>
+              </div>
+           </div>
+
+           {/* Event History */}
+           <div className="space-y-4">
+              <h2 className="text-lg font-black text-gray-900 px-2">Past Events</h2>
+              {userEvents.length > 0 ? (
+                <div className="space-y-3">
+                  {userEvents.map((event) => {
+                    const hobby = getHobbyById(event.hobbyId);
+                    const location = getLocationById(event.locationId);
+                    return (
+                      <div
+                        key={event.id}
+                        onClick={() => router.push(`/event/${event.id}`)}
+                        className="group flex items-center gap-4 bg-white rounded-2xl p-3 pr-4 border border-gray-100 shadow-sm hover:shadow-md hover:border-purple-100 transition-all cursor-pointer"
+                      >
+                        <div className="w-16 h-16 rounded-xl bg-gray-50 flex items-center justify-center text-3xl group-hover:scale-105 transition-transform">
+                          {hobby?.icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                           <h3 className="font-bold text-gray-900 truncate group-hover:text-purple-600 transition-colors">
+                             {event.title}
+                           </h3>
+                           <div className="flex items-center gap-2 text-xs font-medium text-gray-500 mt-0.5">
+                             <CalendarIcon className="w-3 h-3" />
+                             <span>{event.date}</span>
+                             <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+                             <span>{location?.name}</span>
+                           </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-white/40 rounded-[2rem] border border-dashed border-gray-200">
+                  <p className="text-gray-400 font-medium">No public events yet</p>
+                </div>
+              )}
+           </div>
+
+        </div>
+
       </div>
     </div>
   );

@@ -3,9 +3,15 @@
 import { useTranslations } from 'next-intl';
 import { usePathname, useRouter } from 'next/navigation';
 import { signOut } from 'next-auth/react';
-import React from 'react';
+import React, { useState } from 'react';
 
 // Icons
+const MenuIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+);
+const XIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+);
 const HomeIcon = ({ className }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
 );
@@ -41,6 +47,7 @@ export default function DashboardLayout({
   const t = useTranslations('dashboard.nav');
   const pathname = usePathname();
   const router = useRouter();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Derive locale if not passed (fallback parsing)
   const locale = params?.locale || pathname.split('/')[1] || 'en';
@@ -68,6 +75,14 @@ export default function DashboardLayout({
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+            >
+              <MenuIcon className="w-6 h-6" />
+            </button>
+
             {/* Logo Area */}
             <div className="flex items-center gap-2 cursor-pointer transition-transform hover:scale-105" onClick={() => router.push(base)}>
               <div className="relative w-10 h-10">
@@ -80,26 +95,97 @@ export default function DashboardLayout({
                 RND APP
               </span>
             </div>
-
-            {/* Right Actions */}
-            <button
-              onClick={handleLogout}
-              className="group flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold text-gray-600 hover:text-rose-600 hover:bg-rose-50 transition-all duration-300"
-            >
-              <span>Logout</span>
-              <LogOutIcon className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 w-full mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-28 pt-6">
+      <main className="flex-1 w-full mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-6 md:pb-28 pt-6">
         {children}
       </main>
 
-      {/* Floating Bottom Navigation */}
-      <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
+      {/* Mobile Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-50 md:hidden backdrop-blur-sm"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Mobile Sidebar */}
+      <aside
+        className={`fixed top-0 left-0 bottom-0 w-80 bg-white shadow-2xl z-50 md:hidden transform transition-transform duration-300 ease-out ${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        {/* Sidebar Header */}
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <div className="flex items-center gap-2">
+            <div className="relative w-10 h-10">
+              <div className="absolute inset-0 bg-gradient-to-tr from-rose-500 to-purple-600 rounded-xl rotate-6 opacity-80 blur-[2px]"></div>
+              <div className="relative w-full h-full bg-gradient-to-tr from-rose-500 to-purple-600 rounded-xl flex items-center justify-center text-white text-xl shadow-lg">
+                <span className="drop-shadow-md">✨</span>
+              </div>
+            </div>
+            <span className="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-purple-800 to-rose-700 tracking-tight">
+              RND APP
+            </span>
+          </div>
+          <button
+            onClick={() => setIsSidebarOpen(false)}
+            className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+          >
+            <XIcon className="w-6 h-6" />
+          </button>
+        </div>
+
+        {/* Sidebar Navigation */}
+        <nav className="flex flex-col p-4 gap-2">
+          {navItems.map((item) => {
+            const isActive = item.exact 
+              ? pathname === item.path || pathname === `/${locale}${item.path}`
+              : pathname.startsWith(item.path) || pathname.startsWith(`/${locale}${item.path}`);
+
+            return (
+              <button
+                key={item.path}
+                onClick={() => {
+                  router.push(item.path);
+                  setIsSidebarOpen(false);
+                }}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                  isActive
+                    ? 'bg-gradient-to-r from-rose-50 to-purple-50 text-purple-600 shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <item.icon className={`w-5 h-5 ${isActive ? 'text-purple-600' : 'text-gray-400'}`} />
+                <span className="font-semibold text-sm">{item.name}</span>
+                {isActive && (
+                  <div className="ml-auto w-2 h-2 bg-gradient-to-r from-rose-500 to-purple-600 rounded-full" />
+                )}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Sidebar Footer */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
+          <button
+            onClick={() => {
+              handleLogout();
+              setIsSidebarOpen(false);
+            }}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold text-rose-600 hover:bg-rose-50 transition-all duration-200"
+          >
+            <LogOutIcon className="w-5 h-5" />
+            <span>Logout</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Desktop Bottom Navigation - Hidden on Mobile */}
+      <div className="hidden md:flex fixed bottom-6 left-0 right-0 z-50 justify-center px-4 pointer-events-none">
         <nav className="pointer-events-auto bg-white/90 backdrop-blur-2xl border border-white/40 shadow-2xl shadow-purple-900/10 rounded-[2rem] p-2 flex items-center gap-1 sm:gap-2 max-w-full overflow-x-auto no-scrollbar">
           {navItems.map((item) => {
             // Check active state
@@ -134,7 +220,7 @@ export default function DashboardLayout({
                 }`}
               >
                 {isActive && (
-                  <div className="absolute top-1 w-8 h-1 bg-gradient-to-r from-rose-400 to-purple-500 rounded-full" />
+                  <div className="absolute bottom-1 w-8 h-1 bg-gradient-to-r from-rose-400 to-purple-500 rounded-full" />
                 )}
                 <item.icon className={`w-6 h-6 mb-0.5 transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`} />
                 <span className={`text-[10px] font-bold leading-none transition-colors ${isActive ? 'text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-purple-600' : ''}`}>

@@ -86,8 +86,6 @@ export default function LocationsStep() {
     }
   };
 
-
-
   // Lấy vị trí hiện tại của user
   const getCurrentLocation = async () => {
     setGettingLocation(true);
@@ -96,40 +94,44 @@ export default function LocationsStep() {
     try {
       const location = await getCurrentUserLocation();
       setUserLocation(location);
-      
+
       // Tự động chọn location gần nhất (chỉ 1 location)
       // Map English city names to Vietnamese names for coordinate lookup
       const cityNameMap: { [key: string]: string } = {
         "Ho Chi Minh": "Hồ Chí Minh",
-        "Hanoi": "Hà Nội", 
+        Hanoi: "Hà Nội",
         "Da Nang": "Đà Nẵng",
-        "Tokyo": "Tokyo"
+        Tokyo: "Tokyo",
       };
 
-      const locationsWithDistance = LOCATIONS
-        .map(loc => {
-          const vietnameseCityName = cityNameMap[loc.city] || loc.city;
-          const coords = getLocationCoordinates(vietnameseCityName);
-          if (!coords) return null;
-          
-          const distance = calculateDistance(
-            location.latitude,
-            location.longitude,
-            coords.lat,
-            coords.lng
-          );
-          return { ...loc, distance };
-        })
-        .filter((loc): loc is typeof loc & { distance: number } => loc !== null && loc.distance <= 100)
+      const locationsWithDistance = LOCATIONS.map((loc) => {
+        const vietnameseCityName = cityNameMap[loc.city] || loc.city;
+        const coords = getLocationCoordinates(vietnameseCityName);
+        if (!coords) return null;
+
+        const distance = calculateDistance(
+          location.latitude,
+          location.longitude,
+          coords.lat,
+          coords.lng
+        );
+        return { ...loc, distance };
+      })
+        .filter(
+          (loc): loc is typeof loc & { distance: number } =>
+            loc !== null && loc.distance <= 100
+        )
         .sort((a, b) => a.distance - b.distance);
 
       if (locationsWithDistance.length > 0) {
         setSelectedLocations([locationsWithDistance[0].id]);
       }
-
     } catch (error: any) {
       console.error("Error getting location:", error);
-      setError(error.message || "Không thể lấy vị trí hiện tại. Vui lòng chọn thủ công.");
+      setError(
+        error.message ||
+          "Không thể lấy vị trí hiện tại. Vui lòng chọn thủ công."
+      );
     } finally {
       setGettingLocation(false);
     }
@@ -208,7 +210,9 @@ export default function LocationsStep() {
           </p>
           <div className="inline-flex items-center px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full shadow-lg border border-white/50">
             <span className="text-sm font-semibold text-primary-700">
-              {selectedLocations.length > 0 ? "✅ Đã chọn 1 vị trí" : "📍 Chọn 1 vị trí"}
+              {selectedLocations.length > 0
+                ? "✅ Đã chọn 1 vị trí"
+                : "📍 Chọn 1 vị trí"}
             </span>
           </div>
         </div>
@@ -290,11 +294,12 @@ export default function LocationsStep() {
                 // Map English city names to Vietnamese names for coordinate lookup
                 const cityNameMap: { [key: string]: string } = {
                   "Ho Chi Minh": "Hồ Chí Minh",
-                  "Hanoi": "Hà Nội", 
+                  Hanoi: "Hà Nội",
                   "Da Nang": "Đà Nẵng",
-                  "Tokyo": "Tokyo" // Keep as is for international cities
+                  Tokyo: "Tokyo", // Keep as is for international cities
                 };
-                const vietnameseCityName = cityNameMap[location.city] || location.city;
+                const vietnameseCityName =
+                  cityNameMap[location.city] || location.city;
                 const coords = getLocationCoordinates(vietnameseCityName);
                 if (coords) {
                   distance = calculateDistance(
@@ -445,10 +450,7 @@ export default function LocationsStep() {
 
           <Button
             onClick={handleSubmit}
-            disabled={
-              selectedLocations.length !== 1 ||
-              isSubmitting
-            }
+            disabled={selectedLocations.length !== 1 || isSubmitting}
             className="flex items-center gap-2 bg-gradient-to-r from-rose-500 to-purple-600 hover:from-rose-600 hover:to-purple-700 text-white font-semibold px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
           >
             {isSubmitting ? (
