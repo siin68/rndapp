@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { usePathname, useRouter } from 'next/navigation';
-import { signOut } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 import React, { useState } from 'react';
 
 // Icons
@@ -47,6 +47,7 @@ export default function DashboardLayout({
   const t = useTranslations('dashboard.nav');
   const pathname = usePathname();
   const router = useRouter();
+  const { data: session } = useSession();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Derive locale if not passed (fallback parsing)
@@ -54,7 +55,17 @@ export default function DashboardLayout({
 
   const handleLogout = async () => {
     await signOut({ redirect: false });
-    window.location.href = `/${locale}/login`;
+    
+    // Check if user is new (hasn't completed onboarding)
+    const isNewUser = !session?.user?.profileCompleted;
+    
+    if (isNewUser) {
+      // Redirect new users to onboarding
+      window.location.href = `/${locale}/onboarding`;
+    } else {
+      // Redirect existing users to login
+      window.location.href = `/${locale}/login`;
+    }
   };
 
   const base = `/dashboard`;
@@ -94,6 +105,17 @@ export default function DashboardLayout({
               <span className="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-purple-800 to-rose-700 tracking-tight hidden sm:block">
                 RND APP
               </span>
+            </div>
+
+            {/* Desktop Logout Button */}
+            <div className="hidden md:flex items-center">
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-rose-600 hover:bg-rose-50 transition-all duration-200"
+              >
+                <LogOutIcon className="w-5 h-5" />
+                <span>Logout</span>
+              </button>
             </div>
           </div>
         </div>

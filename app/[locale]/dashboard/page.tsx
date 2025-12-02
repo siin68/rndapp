@@ -126,6 +126,7 @@ interface Event {
   id: string;
   title: string;
   description: string;
+  image?: string;
   date: string;
   time: string;
   hobbyId: string;
@@ -161,7 +162,6 @@ export default function DashboardHome() {
 
   useEffect(() => {
     async function checkOnboardingStatus() {
-      console.log("session?.user: ", session?.user);
       if (!session?.user) {
         setCheckingOnboarding(false);
         return;
@@ -194,6 +194,7 @@ export default function DashboardHome() {
           `/api/events?type=recommended&userId=${session.user.id}&limit=3`
         );
         const eventsData = await eventsRes.json();
+        console.log("eventsData: ", eventsData);
 
         const statsRes = await fetch(
           `/api/events/stats?userId=${session.user.id}`
@@ -404,6 +405,13 @@ export default function DashboardHome() {
                       }
                     >
                       <div className="h-40 bg-gradient-to-br from-indigo-400 via-purple-400 to-pink-400 relative overflow-hidden shrink-0">
+                        {event.image && (
+                          <img
+                            src={event.image}
+                            alt={event.title}
+                            className="w-full h-full object-cover"
+                          />
+                        )}
                         <div className="absolute inset-0 bg-black/10 mix-blend-overlay"></div>
                         <div className="absolute bottom-4 left-4 text-white flex items-center gap-3">
                           <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-2xl shadow-sm border border-white/20">

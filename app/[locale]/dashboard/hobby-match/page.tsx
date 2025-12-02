@@ -482,12 +482,18 @@ export default function HobbyMatchPage() {
             {/* Next Card (Background Placeholder) */}
             {nextUser && (
               <div className="absolute inset-0 top-3 sm:top-4 scale-95 opacity-50 bg-white rounded-[1.75rem] sm:rounded-[2rem] border border-gray-200 shadow-xl overflow-hidden pointer-events-none">
-                <div className="w-full h-full bg-gray-300">
-                  <img
-                    src={nextUser.image}
-                    className="w-full h-full object-cover grayscale"
-                    alt=""
-                  />
+                <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400">
+                  {nextUser.image ? (
+                    <img
+                      src={nextUser.image}
+                      className="w-full h-full object-cover grayscale"
+                      alt={nextUser.name}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-6xl text-white">
+                      {nextUser.name?.charAt(0) || "?"}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -532,15 +538,26 @@ export default function HobbyMatchPage() {
               >
                 {/* Image */}
                 <div className="absolute inset-0 bg-gray-200 pointer-events-none">
-                  <div className="w-full h-full bg-gradient-to-br from-indigo-500 to-purple-500">
-                    <img
-                      src={currentUser.image}
-                      alt={currentUser.name}
-                      className="w-full h-full object-cover pointer-events-none"
-                      draggable={false}
-                    />
-                  </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/10" />
+                  {currentUser.image ? (
+                    <>
+                      <img
+                        src={currentUser.image}
+                        alt={currentUser.name}
+                        className="w-full h-full object-cover pointer-events-none"
+                        draggable={false}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/10" />
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-full h-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+                        <div className="text-8xl font-black text-white/80">
+                          {currentUser.name?.charAt(0) || "?"}
+                        </div>
+                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/10" />
+                    </>
+                  )}
                 </div>
 
                 {/* STAMPS (Visual Feedback) - Responsive */}

@@ -182,4 +182,36 @@ export const eventQueries = {
       take: limit,
     });
   },
+
+  async createEvent(data: {
+    title: string;
+    description?: string;
+    image?: string;
+    hostId: string;
+    hobbyId: string;
+    locationId: string;
+    date: Date;
+    duration?: number;
+    maxParticipants?: number;
+    minParticipants?: number;
+    price?: number;
+    isPrivate?: boolean;
+    requiresApproval?: boolean;
+    status?: string;
+  }) {
+    return prisma.event.create({
+      data,
+      include: {
+        host: { select: { id: true, name: true, image: true, bio: true } },
+        hobby: true,
+        location: { include: { city: true } },
+        participants: {
+          include: {
+            user: { select: { id: true, name: true, image: true, bio: true } },
+          },
+        },
+        _count: { select: { participants: true } },
+      },
+    });
+  },
 };

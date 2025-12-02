@@ -128,6 +128,7 @@ model Event {
   id               String             @id @default(cuid())
   title            String
   description      String?
+  image            String?            // Event cover image URL
   hostId           String
   hobbyId          String
   locationId       String
