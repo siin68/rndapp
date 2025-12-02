@@ -180,7 +180,7 @@ export default function DashboardLayout({
     await signOut({ redirect: false });
 
     // Check if user is new (hasn't completed onboarding)
-    const isNewUser = !session?.user?.profileCompleted;
+    const isNewUser = !session?.user?.onboardingCompleted;
 
     if (isNewUser) {
       // Redirect new users to onboarding

@@ -1,6 +1,6 @@
-const { PrismaClient } = require('@prisma/client');
-const fs = require('fs');
-const path = require('path');
+const { PrismaClient } = require("@prisma/client");
+const fs = require("fs");
+const path = require("path");
 
 const prisma = new PrismaClient();
 
@@ -9,13 +9,15 @@ async function seed() {
     console.log("🌱 Starting database seed...\n");
 
     // Read exported data
-    const dataPath = path.join(process.cwd(), 'database-export.json');
+    const dataPath = path.join(process.cwd(), "database-export.json");
     if (!fs.existsSync(dataPath)) {
-      throw new Error("❌ database-export.json not found. Run export-data.js first!");
+      throw new Error(
+        "❌ database-export.json not found. Run export-data.js first!"
+      );
     }
 
-    const exportedData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-    
+    const exportedData = JSON.parse(fs.readFileSync(dataPath, "utf8"));
+
     console.log("📊 Data to seed:");
     Object.entries(exportedData).forEach(([table, records]) => {
       console.log(`  ${table}: ${records.length} records`);
@@ -42,7 +44,7 @@ async function seed() {
     console.log("✅ Cleared existing data\n");
 
     // Seed data in dependency order
-    
+
     // 1. Independent tables first
     console.log("🏙️ Seeding cities...");
     for (const city of exportedData.cities) {
@@ -54,10 +56,10 @@ async function seed() {
           country: city.country,
           timezone: city.timezone,
           isActive: city.isActive,
-        }
+        },
       });
     }
-    
+
     console.log("🎯 Seeding hobbies...");
     for (const hobby of exportedData.hobbies) {
       await prisma.hobby.create({
@@ -70,7 +72,7 @@ async function seed() {
           description: hobby.description,
           isActive: hobby.isActive,
           createdAt: new Date(hobby.createdAt),
-        }
+        },
       });
     }
 
@@ -87,7 +89,7 @@ async function seed() {
           cityId: location.cityId,
           isActive: location.isActive,
           createdAt: new Date(location.createdAt),
-        }
+        },
       });
     }
 
@@ -98,7 +100,9 @@ async function seed() {
           id: user.id,
           name: user.name,
           email: user.email,
-          emailVerified: user.emailVerified ? new Date(user.emailVerified) : null,
+          emailVerified: user.emailVerified
+            ? new Date(user.emailVerified)
+            : null,
           image: user.image,
           bio: user.bio,
           age: user.age,
@@ -114,7 +118,7 @@ async function seed() {
           distanceRadius: user.distanceRadius,
           ageRangeMin: user.ageRangeMin,
           ageRangeMax: user.ageRangeMax,
-        }
+        },
       });
     }
 
@@ -144,7 +148,7 @@ async function seed() {
           tags: event.tags,
           createdAt: new Date(event.createdAt),
           updatedAt: new Date(event.updatedAt),
-        }
+        },
       });
     }
 
@@ -159,7 +163,7 @@ async function seed() {
           skillLevel: userHobby.skillLevel,
           isPrimary: userHobby.isPrimary,
           createdAt: new Date(userHobby.createdAt),
-        }
+        },
       });
     }
 
@@ -172,7 +176,7 @@ async function seed() {
           locationId: userLocation.locationId,
           isPrimary: userLocation.isPrimary,
           createdAt: new Date(userLocation.createdAt),
-        }
+        },
       });
     }
 
@@ -186,7 +190,7 @@ async function seed() {
           status: participant.status,
           joinedAt: new Date(participant.joinedAt),
           leftAt: participant.leftAt ? new Date(participant.leftAt) : null,
-        }
+        },
       });
     }
 
@@ -201,7 +205,7 @@ async function seed() {
           isActive: chat.isActive,
           createdAt: new Date(chat.createdAt),
           updatedAt: new Date(chat.updatedAt),
-        }
+        },
       });
     }
 
@@ -215,7 +219,7 @@ async function seed() {
           role: participant.role,
           joinedAt: new Date(participant.joinedAt),
           leftAt: participant.leftAt ? new Date(participant.leftAt) : null,
-        }
+        },
       });
     }
 
@@ -231,7 +235,7 @@ async function seed() {
           isEdited: message.isEdited,
           sentAt: new Date(message.sentAt),
           editedAt: message.editedAt ? new Date(message.editedAt) : null,
-        }
+        },
       });
     }
 
@@ -247,13 +251,12 @@ async function seed() {
           data: notification.data,
           isRead: notification.isRead,
           createdAt: new Date(notification.createdAt),
-        }
+        },
       });
     }
 
     console.log("\n✅ Database seeding completed successfully!");
     console.log("🎯 All your data has been restored!");
-
   } catch (error) {
     console.error("❌ Seeding failed:", error);
     process.exit(1);
