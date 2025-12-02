@@ -171,6 +171,11 @@ export const eventQueries = {
         host: { select: { id: true, name: true, image: true, bio: true } },
         hobby: true,
         location: { include: { city: true } },
+        participants: {
+          include: {
+            user: { select: { id: true, name: true, image: true, bio: true } },
+          },
+        },
         _count: { select: { participants: true } },
       },
       orderBy: { date: "asc" },

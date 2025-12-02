@@ -68,6 +68,19 @@ export const authOptions: NextAuthOptions = {
             session.user.phoneNumber = dbUser.phoneNumber;
             session.user.isActive = dbUser.isActive;
             session.user.isVerified = dbUser.isVerified;
+            // Get onboarding status using raw query
+            try {
+              const onboardingStatus = await prisma.$queryRaw<
+                { onboardingCompleted: boolean }[]
+              >`
+                SELECT "onboardingCompleted" FROM "User" WHERE "id" = ${dbUser.id}
+              `;
+              (session.user as any).onboardingCompleted =
+                onboardingStatus[0]?.onboardingCompleted || false;
+            } catch (error) {
+              console.error("Error fetching onboarding status:", error);
+              (session.user as any).onboardingCompleted = false;
+            }
           }
         } catch (error) {
           console.error("Error fetching user session:", error);
@@ -77,9 +90,9 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async redirect({ url, baseUrl }) {
-      // Nếu user đăng nhập lần đầu hoặc chưa hoàn thành profile, redirect tới onboarding
+      // For sign-in redirects, check if user needs onboarding
       if (url === `${baseUrl}/dashboard` || url.includes("callbackUrl")) {
-        return `${baseUrl}/dashboard`;
+        return `${baseUrl}/dashboard`; // Let middleware handle onboarding check
       }
       if (url.startsWith(baseUrl)) return url;
       if (url.startsWith("/")) return `${baseUrl}${url}`;

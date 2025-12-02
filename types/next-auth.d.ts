@@ -13,6 +13,7 @@ declare module "next-auth" {
       phoneNumber?: string | null;
       isActive?: boolean;
       isVerified?: boolean;
+      onboardingCompleted?: boolean;
     };
   }
 
@@ -24,6 +25,7 @@ declare module "next-auth" {
     phoneNumber?: string | null;
     isActive?: boolean;
     isVerified?: boolean;
+    onboardingCompleted?: boolean;
   }
 }
 

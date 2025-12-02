@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     }
 
     const eventsWithStats = events.map((event) => {
-      const stats = EventService.calculateEventStats(event);
+      const stats = EventService.calculateEventStats(event as any);
       return {
         ...event,
         stats,

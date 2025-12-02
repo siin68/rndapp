@@ -157,10 +157,37 @@ export default function DashboardHome() {
     user: { hosted: 0, participating: 0, matches: 0 },
   });
   const [loading, setLoading] = useState(true);
+  const [checkingOnboarding, setCheckingOnboarding] = useState(true);
+
+  useEffect(() => {
+    async function checkOnboardingStatus() {
+      console.log("session?.user: ", session?.user);
+      if (!session?.user) {
+        setCheckingOnboarding(false);
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/auth/onboarding-status");
+        const result = await response.json();
+
+        if (result.success && result.needsOnboarding) {
+          router.push("/onboarding/profile");
+          return;
+        }
+      } catch (error) {
+        console.error("Error checking onboarding status:", error);
+      } finally {
+        setCheckingOnboarding(false);
+      }
+    }
+
+    checkOnboardingStatus();
+  }, [session?.user, router]);
 
   useEffect(() => {
     async function fetchData() {
-      if (!session?.user?.id) return;
+      if (!session?.user?.id || checkingOnboarding) return;
 
       try {
         const eventsRes = await fetch(
@@ -188,7 +215,19 @@ export default function DashboardHome() {
     }
 
     fetchData();
-  }, [session?.user?.id]);
+  }, [session?.user?.id, checkingOnboarding]);
+
+  // Show loading while checking onboarding
+  if (checkingOnboarding) {
+    return (
+      <div className="min-h-screen w-full bg-gradient-to-br from-rose-50 via-purple-50 to-indigo-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Checking profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   const openCount = stats.openEvents;
   const matchCount = stats.user.matches;
