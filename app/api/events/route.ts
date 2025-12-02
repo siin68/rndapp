@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { eventQueries } from "@/lib/database/queries";
 import { EventService } from "@/lib/database/services";
+import prisma from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
   try {
@@ -61,11 +62,44 @@ export async function POST(request: NextRequest) {
       isPrivate = false,
       requiresApproval = false,
     } = body;
-
-    // Validate required fields
     if (!title || !hostId || !hobbyId || !locationId || !date) {
       return NextResponse.json(
         { success: false, error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    const [hobbyExists, locationExists] = await Promise.all([
+      prisma.hobby.findUnique({ where: { id: hobbyId } }),
+      prisma.location.findUnique({ where: { id: locationId } }),
+    ]);
+
+    if (!hobbyExists) {
+      console.error("Hobby not found:", hobbyId);
+      return NextResponse.json(
+        { success: false, error: "Hobby not found" },
+        { status: 400 }
+      );
+    }
+
+    if (!locationExists) {
+      console.error("Location not found:", locationId);
+      return NextResponse.json(
+        { success: false, error: "Location not found" },
+        { status: 400 }
+      );
+    }
+
+    let eventDate;
+    try {
+      eventDate = new Date(date);
+      if (isNaN(eventDate.getTime())) {
+        throw new Error("Invalid date");
+      }
+    } catch (dateError) {
+      console.error("Date conversion error:", dateError);
+      return NextResponse.json(
+        { success: false, error: "Invalid date format" },
         { status: 400 }
       );
     }
@@ -78,11 +112,11 @@ export async function POST(request: NextRequest) {
       hostId,
       hobbyId,
       locationId,
-      date: new Date(date),
-      duration,
-      maxParticipants,
-      minParticipants,
-      price,
+      date: eventDate,
+      duration: duration ? parseInt(duration.toString()) : undefined,
+      maxParticipants: parseInt(maxParticipants.toString()),
+      minParticipants: parseInt(minParticipants.toString()),
+      price: parseFloat(price.toString()),
       isPrivate,
       requiresApproval,
       status: "OPEN",
