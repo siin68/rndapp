@@ -1,0 +1,327 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Core User Model
+model User {
+  id                String               @id @default(cuid())
+  name              String
+  email             String               @unique
+  emailVerified     DateTime?
+  image             String?
+  bio               String?
+  age               Int?
+  gender            String?            // MALE, FEMALE, OTHER
+  phoneNumber       String?
+  isActive          Boolean              @default(true)
+  isVerified        Boolean              @default(false)
+  onboardingCompleted Boolean            @default(false)
+  lastActive        DateTime             @default(now())
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  
+  // Profile settings
+  profileVisibility String               @default("PUBLIC") // PUBLIC, FRIENDS_ONLY, PRIVATE
+  distanceRadius    Int                  @default(10) // km
+  ageRangeMin       Int                  @default(18)
+  ageRangeMax       Int                  @default(50)
+  
+  // Relations
+  hobbies           UserHobby[]
+  locations         UserLocation[]
+  hostedEvents      Event[]              @relation("HostEvents")
+  eventParticipants EventParticipant[]
+  sentInvitations   EventInvitation[]    @relation("SentInvitations")
+  receivedInvitations EventInvitation[]  @relation("ReceivedInvitations")
+  chatParticipants  ChatParticipant[]
+  sentMessages      Message[]            @relation("SenderMessages")
+  sentFriendRequests FriendRequest[]     @relation("SenderFriendRequests")
+  receivedFriendRequests FriendRequest[] @relation("ReceiverFriendRequests")
+  friendships1      Friendship[]         @relation("User1Friendships")
+  friendships2      Friendship[]         @relation("User2Friendships")
+  sentReviews       Review[]             @relation("ReviewSender")
+  receivedReviews   Review[]             @relation("ReviewReceiver")
+  notifications     Notification[]
+  reportsMade       Report[]             @relation("ReportSender")
+  reportsReceived   Report[]             @relation("ReportReceiver")
+  blockedUsers      BlockedUser[]        @relation("BlockerUsers")
+  blockedByUsers    BlockedUser[]        @relation("BlockedUsers")
+}
+
+// Hobby System
+model Hobby {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  nameVi      String
+  category    String
+  icon        String
+  description String?
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  
+  // Relations
+  users       UserHobby[]
+  events      Event[]
+}
+
+model UserHobby {
+  id          String   @id @default(cuid())
+  userId      String
+  hobbyId     String
+  skillLevel  String     @default("BEGINNER") // BEGINNER, INTERMEDIATE, ADVANCED, EXPERT
+  isPrimary   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hobby       Hobby    @relation(fields: [hobbyId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, hobbyId])
+}
+
+// Location System
+model City {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  nameVi      String
+  country     String     @default("Vietnam")
+  timezone    String     @default("Asia/Ho_Chi_Minh")
+  isActive    Boolean    @default(true)
+  
+  locations   Location[]
+}
+
+model Location {
+  id          String         @id @default(cuid())
+  name        String
+  nameVi      String
+  cityId      String
+  address     String?
+  latitude    Float?
+  longitude   Float?
+  isActive    Boolean        @default(true)
+  
+  city        City           @relation(fields: [cityId], references: [id])
+  users       UserLocation[]
+  events      Event[]
+}
+
+model UserLocation {
+  id        String   @id @default(cuid())
+  userId    String
+  locationId String
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  location  Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, locationId])
+}
+
+// Event System
+model Event {
+  id               String             @id @default(cuid())
+  title            String
+  description      String?
+  hostId           String
+  hobbyId          String
+  locationId       String
+  date             DateTime
+  duration         Int?               // minutes
+  maxParticipants  Int                @default(10)
+  minParticipants  Int                @default(2)
+  price            Float?             @default(0)
+  currency         String             @default("VND")
+  status           String             @default("OPEN") // DRAFT, OPEN, FULL, ONGOING, COMPLETED, CANCELLED
+  isPrivate        Boolean            @default(false)
+  requiresApproval Boolean            @default(false)
+  ageRestrictionMin Int?
+  ageRestrictionMax Int?
+  genderRestriction String?            // MALE, FEMALE, OTHER
+  tags             String?            // JSON array of tags
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  
+  host             User               @relation(fields: [hostId], references: [id], name: "HostEvents")
+  hobby            Hobby              @relation(fields: [hobbyId], references: [id])
+  location         Location           @relation(fields: [locationId], references: [id])
+  participants     EventParticipant[]
+  invitations      EventInvitation[]
+  chats            Chat[]
+  reviews          Review[]
+}
+
+model EventParticipant {
+  id         String              @id @default(cuid())
+  eventId    String
+  userId     String
+  status     String              @default("JOINED") // JOINED, LEFT, KICKED, BANNED
+  joinedAt   DateTime            @default(now())
+  leftAt     DateTime?
+  
+  event      Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([eventId, userId])
+}
+
+model EventInvitation {
+  id        String           @id @default(cuid())
+  eventId   String
+  fromUserId String
+  toUserId  String
+  status    String           @default("PENDING") // PENDING, ACCEPTED, DECLINED, CANCELLED
+  message   String?
+  sentAt    DateTime         @default(now())
+  respondedAt DateTime?
+  
+  event     Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  fromUser  User             @relation(fields: [fromUserId], references: [id], name: "SentInvitations", onDelete: Cascade)
+  toUser    User             @relation(fields: [toUserId], references: [id], name: "ReceivedInvitations", onDelete: Cascade)
+  
+  @@unique([eventId, fromUserId, toUserId])
+}
+
+// Chat System
+model Chat {
+  id           String            @id @default(cuid())
+  eventId      String?
+  type         String            @default("GROUP") // DIRECT, GROUP, EVENT
+  name         String?
+  isActive     Boolean           @default(true)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  
+  event        Event?            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  participants ChatParticipant[]
+  messages     Message[]
+}
+
+model ChatParticipant {
+  id          String    @id @default(cuid())
+  chatId      String
+  userId      String
+  role        String    @default("MEMBER") // OWNER, ADMIN, MEMBER
+  joinedAt    DateTime  @default(now())
+  leftAt      DateTime?
+  lastReadAt  DateTime  @default(now())
+  
+  chat        Chat      @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([chatId, userId])
+}
+
+model Message {
+  id          String      @id @default(cuid())
+  chatId      String
+  senderId    String
+  content     String
+  type        String      @default("TEXT") // TEXT, IMAGE, FILE, SYSTEM
+  attachments String?     // JSON array of attachment URLs
+  replyToId   String?
+  isEdited    Boolean     @default(false)
+  timestamp   DateTime    @default(now())
+  editedAt    DateTime?
+  
+  chat        Chat        @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  sender      User        @relation(fields: [senderId], references: [id], name: "SenderMessages")
+  replyTo     Message?    @relation("MessageReply", fields: [replyToId], references: [id])
+  replies     Message[]   @relation("MessageReply")
+}
+
+// Social Features
+model FriendRequest {
+  id          String              @id @default(cuid())
+  senderId    String
+  receiverId  String
+  status      String              @default("PENDING") // PENDING, ACCEPTED, DECLINED, CANCELLED
+  message     String?
+  sentAt      DateTime            @default(now())
+  respondedAt DateTime?
+  
+  sender      User                @relation(fields: [senderId], references: [id], name: "SenderFriendRequests", onDelete: Cascade)
+  receiver    User                @relation(fields: [receiverId], references: [id], name: "ReceiverFriendRequests", onDelete: Cascade)
+  
+  @@unique([senderId, receiverId])
+}
+
+model Friendship {
+  id        String   @id @default(cuid())
+  user1Id   String
+  user2Id   String
+  createdAt DateTime @default(now())
+  
+  user1     User     @relation(fields: [user1Id], references: [id], name: "User1Friendships", onDelete: Cascade)
+  user2     User     @relation(fields: [user2Id], references: [id], name: "User2Friendships", onDelete: Cascade)
+  
+  @@unique([user1Id, user2Id])
+}
+
+model BlockedUser {
+  id        String   @id @default(cuid())
+  blockerId String
+  blockedId String
+  reason    String?
+  createdAt DateTime @default(now())
+  
+  blocker   User     @relation(fields: [blockerId], references: [id], name: "BlockerUsers", onDelete: Cascade)
+  blocked   User     @relation(fields: [blockedId], references: [id], name: "BlockedUsers", onDelete: Cascade)
+  
+  @@unique([blockerId, blockedId])
+}
+
+// Rating & Review System
+model Review {
+  id          String     @id @default(cuid())
+  eventId     String
+  reviewerId  String
+  revieweeId  String
+  rating      Float      // 1.0 to 5.0
+  comment     String?
+  tags        String?    // JSON array of review tags
+  createdAt   DateTime   @default(now())
+  
+  event       Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  reviewer    User       @relation(fields: [reviewerId], references: [id], name: "ReviewSender", onDelete: Cascade)
+  reviewee    User       @relation(fields: [revieweeId], references: [id], name: "ReviewReceiver", onDelete: Cascade)
+  
+  @@unique([eventId, reviewerId, revieweeId])
+}
+
+// Notification System
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      String           // FRIEND_REQUEST, EVENT_INVITATION, EVENT_REMINDER, NEW_MESSAGE, EVENT_UPDATE, SYSTEM
+  title     String
+  message   String
+  data      String?          // JSON data for notification
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Report & Moderation System
+model Report {
+  id          String       @id @default(cuid())
+  reporterId  String
+  reportedId  String
+  type        String       // SPAM, HARASSMENT, INAPPROPRIATE_CONTENT, FAKE_PROFILE, OTHER
+  reason      String
+  description String?
+  status      String       @default("PENDING") // PENDING, REVIEWING, RESOLVED, DISMISSED
+  createdAt   DateTime     @default(now())
+  resolvedAt  DateTime?
+  
+  reporter    User         @relation(fields: [reporterId], references: [id], name: "ReportSender", onDelete: Cascade)
+  reported    User         @relation(fields: [reportedId], references: [id], name: "ReportReceiver", onDelete: Cascade)
+}
+
+

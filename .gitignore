@@ -28,6 +28,14 @@ yarn-error.log*
 .env*.local
 .env
 
+# database
+*.db
+*.db-journal
+dev.db
+
+# Docker
+docker-compose.override.yml
+
 # vercel
 .vercel
 
