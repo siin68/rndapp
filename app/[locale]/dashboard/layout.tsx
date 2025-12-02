@@ -251,12 +251,10 @@ export default function DashboardLayout({
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 w-full mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-6 md:pb-28 pt-6">
+      <main className="flex-1 w-full ">
         {children}
       </main>
 
-      {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-50 md:hidden backdrop-blur-sm"

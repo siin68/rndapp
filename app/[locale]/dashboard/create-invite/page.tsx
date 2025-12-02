@@ -6,6 +6,74 @@ import { useRouter } from "@/i18n/navigation";
 import { Card, CardContent, Input, Textarea, Button } from "@/components/ui";
 import { useSession } from "next-auth/react";
 
+// --- Icons ---
+const CameraIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+    <circle cx="12" cy="13" r="3" />
+  </svg>
+);
+
+const XIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M18 6 6 18" />
+    <path d="m6 6 12 12" />
+  </svg>
+);
+
+const HeartIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+  </svg>
+);
+
+const MapPinIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+    <circle cx="12" cy="10" r="3" />
+  </svg>
+);
+
+const CalendarIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+    <line x1="16" x2="16" y1="2" y2="6" />
+    <line x1="8" x2="8" y1="2" y2="6" />
+    <line x1="3" x2="21" y1="10" y2="10" />
+  </svg>
+);
+
+const ChevronDownIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="m6 9 6 6 6-6" />
+  </svg>
+);
+
+// --- Sample Data ---
+const SAMPLE_HOBBIES: Hobby[] = [
+  { id: "h1", name: "Coffee Date", emoji: "☕", isActive: true },
+  { id: "h2", name: "Movie Night", emoji: "🎬", isActive: true },
+  { id: "h3", name: "Hiking", emoji: "🥾", isActive: true },
+  { id: "h4", name: "Foodie", emoji: "🍜", isActive: true },
+  { id: "h5", name: "Art Gallery", emoji: "🎨", isActive: true },
+  { id: "h6", name: "Live Music", emoji: "🎵", isActive: true },
+  { id: "h7", name: "Board Games", emoji: "🎲", isActive: true },
+  { id: "h8", name: "Photography", emoji: "📸", isActive: true },
+  { id: "h9", name: "Cocktails", emoji: "🍸", isActive: true },
+  { id: "h10", name: "Book Club", emoji: "📚", isActive: true },
+  { id: "h11", name: "Fitness", emoji: "💪", isActive: true },
+  { id: "h12", name: "Travel", emoji: "✈️", isActive: true },
+];
+
+const SAMPLE_LOCATIONS: Location[] = [
+  { id: "l1", name: "District 1", nameVi: "Quận 1", city: { id: "c1", name: "Ho Chi Minh", nameVi: "TP. Hồ Chí Minh" }, isActive: true },
+  { id: "l2", name: "District 2", nameVi: "Quận 2", city: { id: "c1", name: "Ho Chi Minh", nameVi: "TP. Hồ Chí Minh" }, isActive: true },
+  { id: "l3", name: "District 3", nameVi: "Quận 3", city: { id: "c1", name: "Ho Chi Minh", nameVi: "TP. Hồ Chí Minh" }, isActive: true },
+  { id: "l4", name: "Hoan Kiem", nameVi: "Hoàn Kiếm", city: { id: "c2", name: "Hanoi", nameVi: "Hà Nội" }, isActive: true },
+  { id: "l5", name: "Ba Dinh", nameVi: "Ba Đình", city: { id: "c2", name: "Hanoi", nameVi: "Hà Nội" }, isActive: true },
+  { id: "l6", name: "Cau Giay", nameVi: "Cầu Giấy", city: { id: "c2", name: "Hanoi", nameVi: "Hà Nội" }, isActive: true },
+];
+
 interface Hobby {
   id: string;
   name: string;
@@ -35,11 +103,12 @@ export default function CreateInvitePage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
+  // Form State
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     image: "",
-    hobbyId: "",
+    hobbyIds: [] as string[], // Changed from single ID to array
     locationId: "",
     date: "",
     time: "",
@@ -47,11 +116,12 @@ export default function CreateInvitePage() {
     maxParticipants: "8",
   });
 
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  // UI State
   const [imagePreview, setImagePreview] = useState<string>("");
   const [uploading, setUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
-  // Fetch hobbies and locations
+  // Fetch Data
   useEffect(() => {
     async function fetchData() {
       try {
@@ -63,15 +133,21 @@ export default function CreateInvitePage() {
         const hobbiesData = await hobbiesRes.json();
         const locationsData = await locationsRes.json();
 
-        if (hobbiesData.success) {
+        if (hobbiesData.success && hobbiesData.data.length > 0) {
           setHobbies(hobbiesData.data);
+        } else {
+          setHobbies(SAMPLE_HOBBIES);
         }
 
-        if (locationsData.success) {
+        if (locationsData.success && locationsData.data.length > 0) {
           setLocations(locationsData.data);
+        } else {
+          setLocations(SAMPLE_LOCATIONS);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
+        setHobbies(SAMPLE_HOBBIES);
+        setLocations(SAMPLE_LOCATIONS);
       } finally {
         setLoading(false);
       }
@@ -80,61 +156,91 @@ export default function CreateInvitePage() {
     fetchData();
   }, []);
 
-  // Handle image file selection and upload to Cloudinary
-  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      setUploading(true);
+  // --- Image Handling ---
+  const handleFileSelect = async (file: File) => {
+    setUploading(true);
+    
+    // Preview immediately
+    const reader = new FileReader();
+    reader.onloadend = () => setImagePreview(reader.result as string);
+    reader.readAsDataURL(file);
 
-      // Create preview URL for immediate display
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append("file", file);
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formDataUpload,
+      });
+      const result = await response.json();
 
-      try {
-        // Upload to Cloudinary
-        const formData = new FormData();
-        formData.append("file", file);
-
-        const response = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-          // Update form data with Cloudinary URL
-          setFormData((prev) => ({ ...prev, image: result.data.url }));
-        } else {
-          alert("Failed to upload image");
-          removeImage();
-        }
-      } catch (error) {
-        console.error("Upload error:", error);
+      if (result.success) {
+        setFormData((prev) => ({ ...prev, image: result.data.url }));
+      } else {
         alert("Failed to upload image");
         removeImage();
-      } finally {
-        setUploading(false);
       }
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert("Failed to upload image");
+      removeImage();
+    } finally {
+      setUploading(false);
     }
   };
 
-  // Remove image
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleFileSelect(file);
+  };
+
+  const onDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const onDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      handleFileSelect(file);
+    }
+  };
+
   const removeImage = () => {
-    setImageFile(null);
     setImagePreview("");
-    setFormData({ ...formData, image: "" });
+    setFormData((prev) => ({ ...prev, image: "" }));
+  };
+
+  // --- Logic ---
+  const toggleHobby = (id: string) => {
+    setFormData((prev) => {
+      const exists = prev.hobbyIds.includes(id);
+      return {
+        ...prev,
+        hobbyIds: exists 
+          ? prev.hobbyIds.filter(hId => hId !== id) 
+          : [...prev.hobbyIds, id]
+      };
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!session?.user?.id) {
+    const user = session?.user as any;
+    if (!user?.id) {
       alert("You must be logged in to create an event");
+      return;
+    }
+
+    if (formData.hobbyIds.length === 0) {
+      alert("Please select at least one vibe/hobby!");
       return;
     }
 
@@ -145,8 +251,8 @@ export default function CreateInvitePage() {
         title: formData.title,
         description: formData.description,
         image: formData.image || undefined,
-        hostId: session.user.id,
-        hobbyId: formData.hobbyId,
+        hostId: user.id,
+        hobbyIds: formData.hobbyIds, // Sending array
         locationId: formData.locationId,
         date: `${formData.date}T${formData.time}:00.000Z`,
         duration: parseInt(formData.duration),
@@ -159,9 +265,7 @@ export default function CreateInvitePage() {
 
       const response = await fetch("/api/events", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(eventData),
       });
 
@@ -180,314 +284,260 @@ export default function CreateInvitePage() {
     }
   };
 
-  // Decorative icon for the select arrow
-  const ChevronDownIcon = () => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="text-rose-400"
-    >
-      <path d="m6 9 6 6 6-6" />
-    </svg>
-  );
-
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-rose-50 via-purple-50 to-indigo-50 py-10 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
-      {/* Decorative background blobs */}
-      <div className="fixed top-0 left-1/4 w-96 h-96 bg-pink-200/30 rounded-full blur-3xl -z-10 mix-blend-multiply animate-pulse" />
-      <div className="fixed bottom-0 right-1/4 w-96 h-96 bg-purple-200/30 rounded-full blur-3xl -z-10 mix-blend-multiply animate-pulse delay-700" />
+    <div className="w-full h-full px-4 sm:px-6 lg:px-8 pb-6 md:pb-28 flex justify-center overflow-y-auto">
+      {/* Background Decor */}
+      <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10">
+         <div className="absolute top-[5%] right-[10%] w-64 h-64 bg-rose-200/30 rounded-full blur-[80px] mix-blend-multiply animate-pulse" />
+         <div className="absolute bottom-[5%] left-[10%] w-80 h-80 bg-purple-200/30 rounded-full blur-[100px] mix-blend-multiply animate-pulse delay-1000" />
+      </div>
 
-      <div className="w-full max-w-2xl">
-        <div className="text-center mb-10 space-y-2">
-          <span className="inline-block py-1 px-3 rounded-full bg-rose-100 text-rose-600 text-xs font-bold tracking-widest uppercase mb-2">
-            Make a Connection
+      <div className="w-full max-w-4xl">
+        <div className="mb-6 text-center">
+          <span className="inline-block py-1 px-3 rounded-full bg-white/60 backdrop-blur-sm border border-rose-100 text-rose-500 text-[10px] font-bold tracking-widest uppercase mb-2 shadow-sm">
+            ✨ Design Your Date
           </span>
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-pink-500 to-purple-600 drop-shadow-sm">
-            {t("title")}
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight text-gray-900 drop-shadow-sm mb-2">
+            {t("title") || "Create Invite"}
           </h1>
-          <p className="text-gray-500 font-medium text-lg">
-            Create a moment worth sharing
+          <p className="text-sm text-gray-500 font-medium max-w-xl mx-auto">
+            Find someone who loves what you love. Start by setting the scene.
           </p>
         </div>
 
-        <Card className="border-0 shadow-2xl shadow-rose-100/50 bg-white/80 backdrop-blur-xl rounded-[2.5rem] overflow-hidden relative">
-          {/* Top accent line */}
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-rose-400 via-pink-500 to-purple-500" />
-
-          <CardContent className="p-8 md:p-10">
-            <form onSubmit={handleSubmit} className="space-y-8">
-              {/* Title Section */}
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">
-                    Event Title
-                  </label>
-                  <Input
-                    placeholder="What's the vibe?"
-                    value={formData.title}
-                    onChange={(e) =>
-                      setFormData({ ...formData, title: e.target.value })
-                    }
-                    required
-                    className="h-14 rounded-2xl border-gray-200 bg-gray-50/50 px-5 text-base font-medium text-gray-800 placeholder:text-gray-400 focus:border-rose-400 focus:ring-4 focus:ring-rose-100 transition-all duration-300"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">
-                    Event Cover Image (Optional)
-                  </label>
-
-                  {/* Image Preview */}
-                  {imagePreview && (
-                    <div className="relative">
-                      <img
-                        src={imagePreview}
-                        alt="Event preview"
-                        className="w-full h-48 object-cover rounded-2xl border border-gray-200"
-                      />
-                      <button
-                        type="button"
-                        onClick={removeImage}
-                        className="absolute top-2 right-2 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-sm font-bold transition-colors"
-                      >
-                        ×
-                      </button>
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            
+            {/* Left Column: Visuals & Vibe */}
+            <div className="lg:col-span-7 space-y-4">
+              {/* Image Uploader */}
+              <div 
+                className={`
+                  relative group aspect-[16/9] rounded-3xl overflow-hidden transition-all duration-300 border-2
+                  ${isDragging ? 'border-rose-400 scale-[1.02] shadow-xl shadow-rose-200/50' : 'border-transparent shadow-lg shadow-rose-100/50'}
+                  bg-white
+                `}
+                onDragOver={onDragOver}
+                onDragLeave={onDragLeave}
+                onDrop={onDrop}
+              >
+                {imagePreview ? (
+                  <>
+                    <img src={imagePreview} alt="Cover" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
+                      <label htmlFor="image-upload" className="cursor-pointer opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300 bg-white/20 backdrop-blur-md border border-white/40 text-white px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2 hover:bg-white/30">
+                        <CameraIcon className="w-4 h-4" /> Change Photo
+                      </label>
                     </div>
-                  )}
-
-                  {/* File Input */}
-                  <div className="relative">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      id="image-upload"
-                      disabled={uploading}
-                    />
-                    <label
-                      htmlFor="image-upload"
-                      className={`flex items-center justify-center h-14 rounded-2xl border-2 border-dashed transition-colors group ${
-                        uploading
-                          ? "border-blue-300 bg-blue-50/50 cursor-wait"
-                          : "border-gray-300 bg-gray-50/50 hover:bg-gray-100/50 cursor-pointer"
-                      }`}
+                    <button type="button" onClick={removeImage} className="absolute top-3 right-3 p-1.5 bg-white/90 text-gray-800 rounded-full shadow-lg hover:bg-rose-50 hover:text-rose-500 transition-colors">
+                      <XIcon className="w-4 h-4" />
+                    </button>
+                  </>
+                ) : (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 text-center p-4">
+                    <div className={`w-14 h-14 rounded-2xl bg-white shadow-lg flex items-center justify-center mb-3 transition-transform duration-300 ${isDragging ? 'scale-110 text-rose-500' : 'text-gray-400'}`}>
+                      <CameraIcon className="w-6 h-6" />
+                    </div>
+                    <h3 className="text-base font-bold text-gray-800 mb-1">Add Cover Photo</h3>
+                    <p className="text-gray-400 text-xs mb-4 max-w-xs">Drag and drop or browse to upload.</p>
+                    <label 
+                      htmlFor="image-upload" 
+                      className="cursor-pointer bg-gray-900 text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-gray-800 hover:shadow-lg transition-all active:scale-95"
                     >
-                      <div className="text-center">
-                        {uploading ? (
-                          <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
-                        ) : (
-                          <svg
-                            className="mx-auto h-6 w-6 text-gray-400 group-hover:text-gray-500"
-                            stroke="currentColor"
-                            fill="none"
-                            viewBox="0 0 48 48"
-                          >
-                            <path
-                              d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        )}
-                        <p
-                          className={`text-sm font-medium ${
-                            uploading ? "text-blue-600" : "text-gray-500"
-                          }`}
+                      {uploading ? "Uploading..." : "Browse Files"}
+                    </label>
+                  </div>
+                )}
+                <input 
+                  id="image-upload" 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleImageChange} 
+                  className="hidden" 
+                  disabled={uploading} 
+                />
+              </div>
+
+              {/* Hobbies / Vibe Selection */}
+              <Card className="border-0 shadow-lg shadow-rose-100/50 bg-white/80 backdrop-blur-xl rounded-2xl">
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-base font-bold text-gray-800 flex items-center gap-2">
+                      <HeartIcon className="w-4 h-4 text-rose-500" />
+                      What&apos;s the vibe?
+                    </h3>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-rose-400 bg-rose-50 px-2 py-0.5 rounded-full">
+                      Multi-select
+                    </span>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    {hobbies.map((hobby) => {
+                      const isSelected = formData.hobbyIds.includes(hobby.id);
+                      return (
+                        <button
+                          key={hobby.id}
+                          type="button"
+                          onClick={() => toggleHobby(hobby.id)}
+                          className={`
+                            group relative flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300
+                            ${isSelected 
+                              ? "bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-md shadow-rose-200 scale-105" 
+                              : "bg-gray-50 text-gray-600 hover:bg-white hover:shadow-sm hover:text-gray-900"
+                            }
+                          `}
                         >
-                          {uploading
-                            ? "Uploading..."
-                            : imagePreview
-                            ? "Change image"
-                            : "Upload cover image"}
-                        </p>
+                          <span className="text-sm">{hobby.emoji}</span>
+                          {hobby.name}
+                          {isSelected && (
+                            <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {formData.hobbyIds.length === 0 && (
+                    <p className="mt-3 text-xs text-gray-400 italic">Select at least one interest to help find your match.</p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Right Column: Details Form */}
+            <div className="lg:col-span-5 space-y-4">
+              <Card className="border-0 shadow-lg shadow-indigo-100/50 bg-white rounded-2xl overflow-hidden">
+                <div className="h-1.5 bg-gradient-to-r from-rose-400 via-purple-500 to-indigo-500" />
+                <CardContent className="p-5 space-y-5">
+                  
+                  {/* Title & Desc */}
+                  <div className="space-y-3">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Title</label>
+                      <Input
+                        placeholder="e.g. Sunday Brunch & Books"
+                        value={formData.title}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        required
+                        className="h-11 rounded-xl border-gray-100 bg-gray-50/50 px-4 text-sm font-bold text-gray-900 placeholder:text-gray-400 focus:border-rose-400 focus:bg-white focus:ring-2 focus:ring-rose-100 transition-all"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Description</label>
+                      <Textarea
+                        placeholder="Tell people what to expect..."
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        required
+                        rows={3}
+                        className="rounded-xl border-gray-100 bg-gray-50/50 p-3 text-sm text-gray-700 placeholder:text-gray-400 focus:border-rose-400 focus:bg-white focus:ring-2 focus:ring-rose-100 transition-all resize-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Logistics Section */}
+                  <div className="bg-gray-50/80 rounded-2xl p-4 space-y-3">
+                    <h4 className="font-bold text-gray-900 flex items-center gap-1.5 text-xs uppercase tracking-wide">
+                      <CalendarIcon className="w-3.5 h-3.5" /> The Plan
+                    </h4>
+                    
+                    {/* Date & Time Row */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-gray-500 uppercase tracking-wider ml-1">Date</label>
+                        <Input
+                          type="date"
+                          value={formData.date}
+                          onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                          required
+                          className="h-9 rounded-lg border-transparent bg-white shadow-sm font-medium text-xs focus:border-rose-400 focus:ring-rose-200"
+                        />
                       </div>
-                    </label>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">
-                    Description
-                  </label>
-                  <Textarea
-                    placeholder="Tell people what to expect..."
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                    rows={4}
-                    required
-                    className="min-h-[120px] rounded-2xl border-gray-200 bg-gray-50/50 p-5 text-base text-gray-800 placeholder:text-gray-400 focus:border-rose-400 focus:ring-4 focus:ring-rose-100 transition-all duration-300 resize-none"
-                  />
-                </div>
-              </div>
-
-              {/* Selection Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">
-                    {t("hobby")}
-                  </label>
-                  <div className="relative group">
-                    <select
-                      value={formData.hobbyId}
-                      onChange={(e) =>
-                        setFormData({ ...formData, hobbyId: e.target.value })
-                      }
-                      className="w-full h-14 appearance-none rounded-2xl border border-gray-200 bg-gray-50/50 px-5 text-base font-medium text-gray-800 focus:border-rose-400 focus:outline-none focus:ring-4 focus:ring-rose-100 transition-all duration-300 cursor-pointer hover:bg-white"
-                      required
-                      disabled={loading}
-                    >
-                      <option value="">
-                        {loading ? "Loading hobbies..." : "Select a vibe..."}
-                      </option>
-                      {hobbies.map((hobby) => (
-                        <option key={hobby.id} value={hobby.id}>
-                          {hobby.emoji} {hobby.name}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 group-hover:translate-y-0.5 transition-transform">
-                      <ChevronDownIcon />
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-gray-500 uppercase tracking-wider ml-1">Time</label>
+                        <Input
+                          type="time"
+                          value={formData.time}
+                          onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                          required
+                          className="h-9 rounded-lg border-transparent bg-white shadow-sm font-medium text-xs focus:border-rose-400 focus:ring-rose-200"
+                        />
+                      </div>
                     </div>
-                    {/* Floating icon if hobby selected - strictly cosmetic logic based on mapping would go here, simplified for now */}
-                  </div>
-                </div>
 
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">
-                    {t("location")}
-                  </label>
-                  <div className="relative group">
-                    <select
-                      value={formData.locationId}
-                      onChange={(e) =>
-                        setFormData({ ...formData, locationId: e.target.value })
-                      }
-                      className="w-full h-14 appearance-none rounded-2xl border border-gray-200 bg-gray-50/50 px-5 text-base font-medium text-gray-800 focus:border-rose-400 focus:outline-none focus:ring-4 focus:ring-rose-100 transition-all duration-300 cursor-pointer hover:bg-white"
-                      required
-                      disabled={loading}
-                    >
-                      <option value="">
-                        {loading
-                          ? "Loading locations..."
-                          : "Where are we going?"}
-                      </option>
-                      {locations.map((location) => (
-                        <option key={location.id} value={location.id}>
-                          {location.name} • {location.city.name}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 group-hover:translate-y-0.5 transition-transform">
-                      <ChevronDownIcon />
+                    {/* Location Select */}
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-bold text-gray-500 uppercase tracking-wider ml-1">Location</label>
+                      <div className="relative">
+                        <select
+                          value={formData.locationId}
+                          onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
+                          className="w-full h-9 appearance-none rounded-lg border-transparent bg-white shadow-sm px-3 text-xs font-medium text-gray-900 focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all cursor-pointer"
+                          required
+                        >
+                          <option value="">Select a spot...</option>
+                          {locations.map((loc) => (
+                            <option key={loc.id} value={loc.id}>{loc.name} • {loc.city.name}</option>
+                          ))}
+                        </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-rose-400">
+                          <MapPinIcon className="w-3.5 h-3.5" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Capacity Row */}
+                    <div className="grid grid-cols-2 gap-3">
+                       <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-gray-500 uppercase tracking-wider ml-1">Duration (min)</label>
+                        <Input
+                          type="number"
+                          value={formData.duration}
+                          onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                          min="30" step="15"
+                          className="h-9 rounded-lg border-transparent bg-white shadow-sm font-medium text-xs focus:border-rose-400 focus:ring-rose-200"
+                        />
+                       </div>
+                       <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-gray-500 uppercase tracking-wider ml-1">Max People</label>
+                        <Input
+                          type="number"
+                          value={formData.maxParticipants}
+                          onChange={(e) => setFormData({ ...formData, maxParticipants: e.target.value })}
+                          min="2" max="100"
+                          className="h-9 rounded-lg border-transparent bg-white shadow-sm font-medium text-xs focus:border-rose-400 focus:ring-rose-200"
+                        />
+                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
 
-              <div className="bg-rose-50/50 p-6 rounded-3xl space-y-4 border border-rose-100">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="block text-xs font-bold text-rose-400 uppercase tracking-widest ml-1">
-                      Date
-                    </label>
-                    <Input
-                      type="date"
-                      value={formData.date}
-                      onChange={(e) =>
-                        setFormData({ ...formData, date: e.target.value })
-                      }
-                      required
-                      className="h-12 rounded-xl border-rose-200 bg-white text-gray-700 focus:border-rose-400 focus:ring-rose-200"
-                    />
+                  {/* Actions */}
+                  <div className="flex gap-3 pt-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => router.back()}
+                      className="flex-1 h-10 rounded-xl text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-100 font-bold"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={submitting}
+                      className="flex-[2] h-10 rounded-xl bg-gradient-to-r from-rose-500 to-purple-600 hover:from-rose-600 hover:to-purple-700 text-white font-bold text-sm shadow-lg shadow-rose-200 hover:shadow-xl hover:shadow-rose-300 transform transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-70"
+                    >
+                      {submitting ? "Publishing..." : "Publish Invite"}
+                    </Button>
                   </div>
-                  <div className="space-y-2">
-                    <label className="block text-xs font-bold text-rose-400 uppercase tracking-widest ml-1">
-                      Time
-                    </label>
-                    <Input
-                      type="time"
-                      value={formData.time}
-                      onChange={(e) =>
-                        setFormData({ ...formData, time: e.target.value })
-                      }
-                      required
-                      className="h-12 rounded-xl border-rose-200 bg-white text-gray-700 focus:border-rose-400 focus:ring-rose-200"
-                    />
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="block text-xs font-bold text-rose-400 uppercase tracking-widest ml-1">
-                      Duration (minutes)
-                    </label>
-                    <Input
-                      type="number"
-                      value={formData.duration}
-                      onChange={(e) =>
-                        setFormData({ ...formData, duration: e.target.value })
-                      }
-                      min="30"
-                      max="480"
-                      step="30"
-                      required
-                      className="h-12 rounded-xl border-rose-200 bg-white text-gray-700 focus:border-rose-400 focus:ring-rose-200"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="block text-xs font-bold text-rose-400 uppercase tracking-widest ml-1">
-                      Max Participants
-                    </label>
-                    <Input
-                      type="number"
-                      value={formData.maxParticipants}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          maxParticipants: e.target.value,
-                        })
-                      }
-                      min="2"
-                      max="50"
-                      required
-                      className="h-12 rounded-xl border-rose-200 bg-white text-gray-700 focus:border-rose-400 focus:ring-rose-200"
-                    />
-                  </div>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
+            </div>
 
-              {/* Actions */}
-              <div className="flex flex-col-reverse sm:flex-row gap-4 pt-4">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => router.back()}
-                  className="flex-1 h-14 rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-100 font-semibold transition-colors"
-                >
-                  {t("cancel")}
-                </Button>
-                <Button
-                  type="submit"
-                  className="flex-[2] h-14 rounded-full bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-bold text-lg shadow-lg shadow-rose-200 hover:shadow-xl hover:shadow-rose-300 transform transition-all hover:-translate-y-0.5 active:scale-95"
-                >
-                  {t("publish")}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+          </div>
+        </form>
       </div>
     </div>
   );

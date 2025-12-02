@@ -300,9 +300,9 @@ export default function HobbyMatchPage() {
     (maxDistance !== 50 ? 1 : 0);
 
   return (
-    <div className="min-h-[calc(100vh-80px)] flex flex-col items-center justify-center px-3 py-2 sm:py-4 relative overflow-hidden select-none">
+    <div className="h-[calc(100vh-80px)] flex flex-col items-center justify-center px-3 pb-6 md:pb-24 relative overflow-hidden select-none">
       {/* Decorative Background */}
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[800px] h-[600px] sm:h-[800px] bg-gradient-to-r from-rose-200/20 to-purple-200/20 rounded-full blur-[100px] -z-20 animate-pulse" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[800px] h-[600px] sm:h-[800px] bg-gradient-to-r from-rose-200/20 to-purple-200/20 rounded-full blur-[100px] -z-10 animate-pulse pointer-events-none" />
 
       {/* Header */}
       <div className="text-center mb-3 sm:mb-6 relative z-10">
@@ -627,7 +627,7 @@ export default function HobbyMatchPage() {
                   No more profiles!
                 </h3>
                 <p className="text-xs sm:text-sm md:text-base text-gray-500 mb-5 sm:mb-6 md:mb-8 max-w-[160px] sm:max-w-[180px] md:max-w-[200px]">
-                  You've seen everyone nearby. Check back later.
+                  Youve seen everyone nearby. Check back later.
                 </p>
                 <Button
                   onClick={resetDeck}
@@ -641,25 +641,6 @@ export default function HobbyMatchPage() {
           </>
         )}
       </div>
-
-      {/* Action Buttons - Responsive sizing */}
-      {currentUser && (
-        <div className="flex items-center gap-3 sm:gap-4 md:gap-6 mt-3 sm:mt-4 md:mt-6 z-20">
-          <button
-            onClick={() => onBtnSwipe("left")}
-            className="w-[56px] sm:w-[60px] md:w-[72px] h-[56px] sm:h-[60px] md:h-[72px] rounded-full bg-white text-rose-500 shadow-xl shadow-rose-100/50 border border-gray-100 hover:scale-110 hover:bg-rose-50 transition-all duration-200 flex items-center justify-center group"
-          >
-            <XIcon className="w-6 sm:w-7 md:w-9 h-6 sm:h-7 md:h-9 group-hover:scale-110 transition-transform" />
-          </button>
-
-          <button
-            onClick={() => onBtnSwipe("right")}
-            className="w-[56px] sm:w-[60px] md:w-[72px] h-[56px] sm:h-[60px] md:h-[72px] rounded-full bg-gradient-to-tr from-rose-500 to-purple-600 text-white shadow-xl shadow-purple-300/50 border-4 border-white hover:scale-110 hover:rotate-3 transition-all duration-200 flex items-center justify-center group"
-          >
-            <HeartIcon className="w-6 sm:w-7 md:w-9 h-6 sm:h-7 md:h-9 fill-current group-hover:scale-110 transition-transform" />
-          </button>
-        </div>
-      )}
     </div>
   );
 }

@@ -233,7 +233,7 @@ export default function DashboardHome() {
   const matchCount = stats.user.matches;
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-rose-50 via-purple-50 to-indigo-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen w-full bg-gradient-to-br from-rose-50 via-purple-50 to-indigo-50 py-8 px-4 sm:px-6 lg:px-8 pb-6 md:pb-32">
       {/* Background Blobs */}
       <div className="fixed top-0 right-0 w-[600px] h-[600px] bg-rose-200/20 rounded-full blur-[120px] -z-10 mix-blend-multiply animate-pulse" />
       <div className="fixed bottom-0 left-0 w-[500px] h-[500px] bg-indigo-200/20 rounded-full blur-[100px] -z-10 mix-blend-multiply animate-pulse delay-700" />
@@ -400,7 +400,7 @@ export default function DashboardHome() {
                       key={event.id}
                       className="group relative border-0 bg-white/80 backdrop-blur-xl hover:bg-white rounded-[2rem] shadow-lg shadow-indigo-50/50 hover:shadow-xl hover:shadow-indigo-100/50 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col h-full hover:-translate-y-1"
                       onClick={() =>
-                        router.push(`/dashboard/event/${event.id}`)
+                        router.push(`/event/${event.id}`)
                       }
                     >
                       <div className="h-40 bg-gradient-to-br from-indigo-400 via-purple-400 to-pink-400 relative overflow-hidden shrink-0">

@@ -88,7 +88,6 @@ async function seed() {
           longitude: location.longitude,
           cityId: location.cityId,
           isActive: location.isActive,
-          createdAt: new Date(location.createdAt),
         },
       });
     }
@@ -233,7 +232,6 @@ async function seed() {
           content: message.content,
           type: message.type,
           isEdited: message.isEdited,
-          sentAt: new Date(message.sentAt),
           editedAt: message.editedAt ? new Date(message.editedAt) : null,
         },
       });
