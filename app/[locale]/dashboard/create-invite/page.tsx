@@ -157,6 +157,8 @@ export default function CreateInvitePage() {
         requiresApproval: false,
       };
 
+      console.log("Sending event data:", eventData); // Debug log
+
       const response = await fetch("/api/events", {
         method: "POST",
         headers: {
@@ -166,6 +168,7 @@ export default function CreateInvitePage() {
       });
 
       const result = await response.json();
+      console.log("API response:", result); // Debug log
 
       if (result.success) {
         router.push("/dashboard/my-events");
