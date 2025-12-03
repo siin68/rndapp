@@ -84,6 +84,7 @@ interface Event {
   id: string;
   title: string;
   description?: string;
+  image?: string;
   date: Date | string;
   hobbyId: string;
   locationId: string;
@@ -92,6 +93,19 @@ interface Event {
   status: string;
   participants?: any[];
   _count?: { participants: number };
+  host?: {
+    id: string;
+    name: string;
+    image?: string;
+  };
+  hobbies?: Array<{
+    hobby: {
+      id: string;
+      name: string;
+      icon: string;
+    };
+    isPrimary: boolean;
+  }>;
 }
 
 export default function MyEventsPage() {
@@ -200,7 +214,11 @@ export default function MyEventsPage() {
         {/* Events Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {getActiveEvents().map((event) => {
-            const hobby = getHobbyById(event.hobbyId);
+            // Get primary hobby or fallback to hobbyId lookup
+            const primaryHobby =
+              event.hobbies?.find((h) => h.isPrimary)?.hobby ||
+              event.hobbies?.[0]?.hobby ||
+              getHobbyById(event.hobbyId);
             const location = getLocationById(event.locationId);
             const isHost = event.hostId === session?.user?.id;
             const participantCount =
@@ -213,8 +231,35 @@ export default function MyEventsPage() {
                 className="group relative border-0 bg-white/80 backdrop-blur-xl hover:bg-white rounded-[2rem] shadow-xl shadow-purple-50/50 hover:shadow-2xl hover:shadow-purple-100/50 transition-all duration-500 cursor-pointer overflow-hidden flex flex-col h-full hover:-translate-y-1 ring-1 ring-white/50"
               >
                 {/* Header Image */}
-                <div className="h-32 bg-gradient-to-br from-indigo-300 via-purple-300 to-pink-300 relative overflow-hidden shrink-0">
-                  <div className="absolute inset-0 bg-white/10 mix-blend-overlay"></div>
+                <div className="h-32 relative overflow-hidden shrink-0">
+                  {/* Event Image or Gradient Fallback */}
+                  {event.image ? (
+                    <img
+                      src={event.image}
+                      alt={event.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-indigo-300 via-purple-300 to-pink-300" />
+                  )}
+
+                  <div className="absolute inset-0 bg-black/20"></div>
+
+                  {/* Host Avatar */}
+                  <div className="absolute top-4 left-4">
+                    <Avatar className="w-12 h-12 border-2 border-white/80 shadow-lg">
+                      <AvatarImage
+                        src={
+                          event.host?.image ||
+                          `https://api.dicebear.com/7.x/avataaars/svg?seed=${event.hostId}`
+                        }
+                        alt={event.host?.name || "Host"}
+                      />
+                      <AvatarFallback className="bg-white/90 text-gray-700 font-bold">
+                        {(event.host?.name || "H").charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
 
                   {/* Status Badge */}
                   <div className="absolute top-4 right-4">
@@ -223,8 +268,8 @@ export default function MyEventsPage() {
                        border-0 px-3 py-1 text-[10px] font-bold uppercase tracking-wider shadow-sm backdrop-blur-md
                        ${
                          event.status === "OPEN"
-                           ? "bg-green-400/80 text-white"
-                           : "bg-gray-400/80 text-white"
+                           ? "bg-green-400/90 text-white"
+                           : "bg-gray-400/90 text-white"
                        }
                      `}
                     >
@@ -234,26 +279,32 @@ export default function MyEventsPage() {
 
                   {/* Role Badge */}
                   {isHost && (
-                    <div className="absolute top-4 left-4">
-                      <Badge className="bg-amber-300/90 text-amber-900 border-0 px-3 py-1 gap-1 shadow-sm backdrop-blur-md font-bold">
+                    <div className="absolute bottom-4 left-4">
+                      <Badge className="bg-amber-300/95 text-amber-900 border-0 px-2 py-1 gap-1 shadow-sm backdrop-blur-md font-bold text-[10px]">
                         <CrownIcon className="w-3 h-3" /> Host
                       </Badge>
                     </div>
                   )}
 
-                  <div className="absolute -bottom-4 -right-4 text-7xl opacity-20 transform rotate-12 transition-transform group-hover:scale-110">
-                    {hobby?.icon}
+                  {/* Hobby Icon */}
+                  <div className="absolute -bottom-4 -right-4 text-7xl opacity-30 transform rotate-12 transition-transform group-hover:scale-110 text-white/80">
+                    {primaryHobby?.icon}
                   </div>
                 </div>
 
                 <CardContent className="p-6">
                   <div className="mb-4">
                     <div className="text-xs font-bold uppercase tracking-wider text-purple-500 mb-1 flex items-center gap-1">
-                      {hobby?.name}
+                      {primaryHobby?.name}
                     </div>
                     <h3 className="font-extrabold text-xl text-gray-800 leading-tight group-hover:text-purple-600 transition-colors">
                       {event.title}
                     </h3>
+                    {event.host?.name && (
+                      <p className="text-sm text-gray-500 mt-1">
+                        by {event.host.name}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-3 mb-6">
@@ -289,11 +340,22 @@ export default function MyEventsPage() {
                   {/* Footer */}
                   <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 text-xs flex items-center justify-center">
-                        {isHost ? "H" : "P"}
-                      </div>
+                      <Avatar className="w-6 h-6">
+                        <AvatarImage
+                          src={
+                            event.host?.image ||
+                            `https://api.dicebear.com/7.x/avataaars/svg?seed=${event.hostId}`
+                          }
+                          alt={event.host?.name || "Host"}
+                        />
+                        <AvatarFallback className="bg-gray-100 text-gray-600 text-[10px] font-bold">
+                          {(event.host?.name || "H").charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
                       <span className="text-xs font-medium text-gray-500">
-                        {isHost ? "Host" : "Participant"}
+                        {isHost
+                          ? "You're hosting"
+                          : `by ${event.host?.name || "Host"}`}
                       </span>
                     </div>
 

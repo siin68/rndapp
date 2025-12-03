@@ -12,6 +12,7 @@ import {
   AvatarImage,
   AvatarFallback,
 } from "@/components/ui";
+import { uploadToCloudinaryClient } from "@/lib/cloudinary";
 
 // Icons
 const CameraIcon = ({ className }: { className?: string }) => (
@@ -82,6 +83,7 @@ export default function ProfileStep() {
 
   const [imagePreview, setImagePreview] = useState("");
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     async function checkOnboardingStatus() {
@@ -140,16 +142,46 @@ export default function ProfileStep() {
     );
   }
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size should be less than 5MB');
+      return;
+    }
+
+    try {
+      setUploadingImage(true);
+
       const reader = new FileReader();
       reader.onloadend = () => {
-        const result = reader.result as string;
-        setImagePreview(result);
-        setFormData({ ...formData, image: result });
+        setImagePreview(reader.result as string);
       };
       reader.readAsDataURL(file);
+
+      // Upload to Cloudinary using client-side upload
+      const imageUrl = await uploadToCloudinaryClient(file);
+      
+      // Update form data with the uploaded image URL
+      setFormData((prev) => ({ ...prev, image: imageUrl }));
+      setImagePreview(imageUrl);
+      
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      alert("Failed to upload image. Please try again.");
+      
+      // Reset to previous state if upload fails
+      setImagePreview(formData.image);
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -195,20 +227,33 @@ export default function ProfileStep() {
                     )}
                   </AvatarFallback>
                 </Avatar>
-                <label className="absolute bottom-1 right-1 z-20 hover:scale-110 transition-transform cursor-pointer">
+                <label
+                  className={`absolute bottom-1 right-1 z-20 hover:scale-110 transition-transform cursor-pointer ${
+                    uploadingImage ? "pointer-events-none" : ""
+                  }`}
+                >
                   <input
                     type="file"
                     accept="image/*"
                     onChange={handleImageChange}
                     className="hidden"
+                    disabled={uploadingImage}
                   />
-                  <div className="w-10 h-10 rounded-full bg-gray-900 text-white flex items-center justify-center shadow-lg border-2 border-white">
-                    <CameraIcon className="w-5 h-5" />
+                  <div
+                    className={`w-10 h-10 rounded-full bg-gray-900 text-white flex items-center justify-center shadow-lg border-2 border-white ${
+                      uploadingImage ? "animate-pulse" : ""
+                    }`}
+                  >
+                    {uploadingImage ? (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <CameraIcon className="w-5 h-5" />
+                    )}
                   </div>
                 </label>
               </div>
               <p className="mt-4 text-sm font-medium text-gray-400">
-                Tap to upload photo
+                {uploadingImage ? "Uploading photo..." : "Tap to upload photo"}
               </p>
             </div>
 

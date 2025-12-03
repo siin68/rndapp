@@ -24,7 +24,7 @@ export const eventQueries = {
           { hostId: { not: userId } },
           {
             OR: [
-              { hobbyId: { in: userHobbyIds } },
+              { hobbies: { some: { hobbyId: { in: userHobbyIds } } } },
               { locationId: { in: userLocationIds } },
             ],
           },
@@ -39,7 +39,10 @@ export const eventQueries = {
       },
       include: {
         host: { select: { id: true, name: true, image: true, bio: true } },
-        hobby: true,
+        hobbies: {
+          include: { hobby: true },
+          orderBy: { isPrimary: "desc" },
+        },
         location: { include: { city: true } },
         participants: {
           include: {
@@ -60,7 +63,10 @@ export const eventQueries = {
         host: {
           select: { id: true, name: true, image: true, bio: true },
         },
-        hobby: true,
+        hobbies: {
+          include: { hobby: true },
+          orderBy: { isPrimary: "desc" },
+        },
         location: { include: { city: true } },
         participants: {
           include: {
@@ -100,7 +106,10 @@ export const eventQueries = {
     return prisma.event.findMany({
       where: { hostId: userId },
       include: {
-        hobby: true,
+        hobbies: {
+          include: { hobby: true },
+          orderBy: { isPrimary: "desc" },
+        },
         location: { include: { city: true } },
         participants: {
           include: {
@@ -125,7 +134,10 @@ export const eventQueries = {
       },
       include: {
         host: { select: { id: true, name: true, image: true, bio: true } },
-        hobby: true,
+        hobbies: {
+          include: { hobby: true },
+          orderBy: { isPrimary: "desc" },
+        },
         location: { include: { city: true } },
         participants: {
           include: {
@@ -145,6 +157,7 @@ export const eventQueries = {
       locationIds?: string[];
       dateFrom?: Date;
       dateTo?: Date;
+      excludeHostId?: string; // Add option to exclude events by host
     },
     limit: number = 20
   ) {
@@ -159,17 +172,25 @@ export const eventQueries = {
               { description: { contains: query } },
             ],
           },
-          ...(filters?.hobbyIds ? [{ hobbyId: { in: filters.hobbyIds } }] : []),
+          ...(filters?.hobbyIds
+            ? [{ hobbies: { some: { hobbyId: { in: filters.hobbyIds } } } }]
+            : []),
           ...(filters?.locationIds
             ? [{ locationId: { in: filters.locationIds } }]
             : []),
           ...(filters?.dateFrom ? [{ date: { gte: filters.dateFrom } }] : []),
           ...(filters?.dateTo ? [{ date: { lte: filters.dateTo } }] : []),
+          ...(filters?.excludeHostId
+            ? [{ hostId: { not: filters.excludeHostId } }]
+            : []),
         ],
       },
       include: {
         host: { select: { id: true, name: true, image: true, bio: true } },
-        hobby: true,
+        hobbies: {
+          include: { hobby: true },
+          orderBy: { isPrimary: "desc" },
+        },
         location: { include: { city: true } },
         participants: {
           include: {
@@ -180,36 +201,6 @@ export const eventQueries = {
       },
       orderBy: { date: "asc" },
       take: limit,
-    });
-  },
-
-  async createEvent(data: {
-    title: string;
-    description?: string;
-    image?: string;
-    hostId: string;
-    hobbyId: string;
-    locationId: string;
-    date: Date;
-    maxParticipants?: number;
-    minParticipants?: number;
-    isPrivate?: boolean;
-    requiresApproval?: boolean;
-    status?: string;
-  }) {
-    return prisma.event.create({
-      data,
-      include: {
-        host: { select: { id: true, name: true, image: true, bio: true } },
-        hobby: true,
-        location: { include: { city: true } },
-        participants: {
-          include: {
-            user: { select: { id: true, name: true, image: true, bio: true } },
-          },
-        },
-        _count: { select: { participants: true } },
-      },
     });
   },
 };

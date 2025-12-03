@@ -20,10 +20,12 @@ export async function GET(request: NextRequest) {
     } else if (type === "recommended" && userId) {
       events = await eventQueries.findRecommendedEvents(userId, limit);
     } else {
-      events = await eventQueries.searchEvents("", {}, limit);
+      // For general search, exclude user's own events if userId is provided
+      const filters = userId ? { excludeHostId: userId } : {};
+      events = await eventQueries.searchEvents("", filters, limit);
     }
 
-    const eventsWithStats = events.map((event ) => {
+    const eventsWithStats = events.map((event) => {
       const stats = EventService.calculateEventStats(event as any);
       return {
         ...event,
@@ -53,6 +55,7 @@ export async function POST(request: NextRequest) {
       image,
       hostId,
       hobbyId,
+      hobbyIds, // Accept array of hobby IDs
       locationId,
       date,
       maxParticipants = 10,
@@ -60,22 +63,47 @@ export async function POST(request: NextRequest) {
       isPrivate = false,
       requiresApproval = false,
     } = body;
-    if (!title || !hostId || !hobbyId || !locationId || !date) {
+
+    // Determine hobbies to use - prioritize hobbyIds array, fallback to single hobbyId
+    let selectedHobbyIds: string[] = [];
+    if (hobbyIds && Array.isArray(hobbyIds) && hobbyIds.length > 0) {
+      selectedHobbyIds = hobbyIds;
+    } else if (hobbyId) {
+      selectedHobbyIds = [hobbyId];
+    }
+
+    if (
+      !title ||
+      !hostId ||
+      selectedHobbyIds.length === 0 ||
+      !locationId ||
+      !date
+    ) {
       return NextResponse.json(
         { success: false, error: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    const [hobbyExists, locationExists] = await Promise.all([
-      prisma.hobby.findUnique({ where: { id: hobbyId } }),
+    // Verify all hobbies exist
+    const [hobbiesExist, locationExists] = await Promise.all([
+      prisma.hobby.findMany({
+        where: { id: { in: selectedHobbyIds } },
+      }),
       prisma.location.findUnique({ where: { id: locationId } }),
     ]);
 
-    if (!hobbyExists) {
-      console.error("Hobby not found:", hobbyId);
+    if (hobbiesExist.length !== selectedHobbyIds.length) {
+      const foundIds = hobbiesExist.map((h) => h.id);
+      const missingIds = selectedHobbyIds.filter(
+        (id) => !foundIds.includes(id)
+      );
+      console.error("Hobbies not found:", missingIds);
       return NextResponse.json(
-        { success: false, error: "Hobby not found" },
+        {
+          success: false,
+          error: `Hobbies not found: ${missingIds.join(", ")}`,
+        },
         { status: 400 }
       );
     }
@@ -102,20 +130,65 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create event
-    const event = await eventQueries.createEvent({
-      title,
-      description,
-      image,
-      hostId,
-      hobbyId,
-      locationId,
-      date: eventDate,
-      maxParticipants: parseInt(maxParticipants.toString()),
-      minParticipants: parseInt(minParticipants.toString()),
-      isPrivate,
-      requiresApproval,
-      status: "OPEN",
+    // Create event with multiple hobbies using transaction
+    const event = await prisma.$transaction(async (prisma) => {
+      // Create the event
+      const createdEvent = await prisma.event.create({
+        data: {
+          title,
+          description,
+          image,
+          hostId,
+          locationId,
+          date: eventDate,
+          maxParticipants: parseInt(maxParticipants.toString()),
+          minParticipants: parseInt(minParticipants.toString()),
+          isPrivate,
+          requiresApproval,
+          status: "OPEN",
+        },
+        include: {
+          host: {
+            select: { id: true, name: true, image: true },
+          },
+          location: {
+            include: { city: true },
+          },
+        },
+      });
+
+      // Create EventHobby entries
+      await Promise.all(
+        selectedHobbyIds.map((hobbyId, index) =>
+          prisma.eventHobby.create({
+            data: {
+              eventId: createdEvent.id,
+              hobbyId,
+              isPrimary: index === 0, // First hobby is primary
+            },
+          })
+        )
+      );
+
+      // Fetch complete event with hobbies
+      return await prisma.event.findUnique({
+        where: { id: createdEvent.id },
+        include: {
+          host: {
+            select: { id: true, name: true, image: true },
+          },
+          location: {
+            include: { city: true },
+          },
+          hobbies: {
+            include: { hobby: true },
+            orderBy: { isPrimary: "desc" },
+          },
+          _count: {
+            select: { participants: true },
+          },
+        },
+      });
     });
 
     return NextResponse.json({

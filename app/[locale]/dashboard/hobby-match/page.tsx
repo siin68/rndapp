@@ -6,7 +6,6 @@ import { useRouter } from "@/i18n/navigation";
 import { Button, Badge } from "@/components/ui";
 import { useSession } from "next-auth/react";
 import { getHobbyById } from "@/lib/data";
-import { HOBBIES } from "@/constants/hobbies";
 
 // Icons
 const FilterIcon = ({ className }: { className?: string }) => (
@@ -141,8 +140,9 @@ export default function HobbyMatchPage() {
   const [selectedHobbies, setSelectedHobbies] = useState<string[]>([]);
   const [ageRange, setAgeRange] = useState({ min: 18, max: 50 });
   const [maxDistance, setMaxDistance] = useState(50);
+  const [hobbies, setHobbies] = useState<any[]>([]);
 
-  // Fetch matched users from API
+  // Fetch matched users from API with filters
   useEffect(() => {
     async function fetchMatches() {
       if (!session?.user?.id) return;
@@ -171,23 +171,74 @@ export default function HobbyMatchPage() {
     fetchMatches();
   }, [session?.user?.id]);
 
-  // Filter users based on selected criteria (client-side filtering for now)
-  const filteredUsers = users.filter((user) => {
-    // Hobby filter (if any hobbies selected, user must have matching hobbies)
-    if (selectedHobbies.length > 0) {
-      const userHobbyIds = user.sharedHobbies.map((h) => h.hobby.id);
-      const hasMatchingHobby = selectedHobbies.some((hobbyId) =>
-        userHobbyIds.includes(hobbyId)
-      );
-      if (!hasMatchingHobby) {
-        return false;
+  // Fetch hobbies for filter
+  useEffect(() => {
+    async function fetchHobbies() {
+      try {
+        const response = await fetch("/api/hobbies");
+        const data = await response.json();
+        
+        if (data.success) {
+          setHobbies(data.data || []);
+        } else {
+          console.error("Failed to fetch hobbies:", data.error);
+          setHobbies([]);
+        }
+      } catch (error) {
+        console.error("Error fetching hobbies:", error);
+        setHobbies([]);
       }
     }
 
-    return true;
-  });
+    fetchHobbies();
+  }, []);
 
-  const matchedUsers = filteredUsers;
+  // Apply filters function that calls API
+  const applyFiltersToAPI = async () => {
+    if (!session?.user?.id) return;
+
+    try {
+      setLoading(true);
+
+      // Build query parameters for filtering
+      const params = new URLSearchParams({
+        userId: session.user.id,
+        limit: "20",
+      });
+
+      if (selectedHobbies.length > 0) {
+        params.append("hobbies", selectedHobbies.join(","));
+      }
+      if (ageRange.min !== 18) {
+        params.append("minAge", ageRange.min.toString());
+      }
+      if (ageRange.max !== 50) {
+        params.append("maxAge", ageRange.max.toString());
+      }
+      if (maxDistance !== 50) {
+        params.append("maxDistance", maxDistance.toString());
+      }
+
+      const response = await fetch(`/api/users/matches?${params.toString()}`);
+      const data = await response.json();
+
+      if (data.success) {
+        setUsers(data.data || []);
+        setCurrentIndex(0); // Reset to first user when filters applied
+      } else {
+        console.error("Failed to fetch matches:", data.error);
+        setUsers([]);
+      }
+    } catch (error) {
+      console.error("Error fetching matches:", error);
+      setUsers([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Since we're filtering on the server, we use all users returned from API
+  const matchedUsers = users;
   const currentUser = matchedUsers[currentIndex];
   const nextUser = matchedUsers[currentIndex + 1];
 
@@ -280,8 +331,8 @@ export default function HobbyMatchPage() {
   };
 
   const applyFilters = () => {
-    setCurrentIndex(0); // Reset to first card when filters applied
-    setShowFilters(false);
+    applyFiltersToAPI(); // Call API with current filter settings
+    setShowFilters(false); // Close the filter modal
   };
 
   const resetDeck = () => {
@@ -289,7 +340,7 @@ export default function HobbyMatchPage() {
   };
 
   const onBtnSwipe = (direction: "left" | "right") => {
-    if (currentIndex < filteredUsers.length - 1) {
+    if (currentIndex < matchedUsers.length - 1) {
       setCurrentIndex(currentIndex + 1);
     }
   };
@@ -423,7 +474,7 @@ export default function HobbyMatchPage() {
                   Hobbies ({selectedHobbies.length} selected)
                 </label>
                 <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
-                  {HOBBIES.map((hobby) => (
+                  {hobbies.map((hobby) => (
                     <button
                       key={hobby.id}
                       onClick={() => toggleHobby(hobby.id)}
@@ -433,7 +484,7 @@ export default function HobbyMatchPage() {
                           : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
                       }`}
                     >
-                      <span className="text-lg">{hobby.icon}</span>
+                      <span className="text-lg">{hobby.emoji || hobby.icon}</span>
                       <span className="text-xs font-semibold truncate">
                         {hobby.name}
                       </span>

@@ -49,30 +49,9 @@ const ChevronDownIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// --- Sample Data ---
-const SAMPLE_HOBBIES: Hobby[] = [
-  { id: "h1", name: "Coffee Date", emoji: "☕", isActive: true },
-  { id: "h2", name: "Movie Night", emoji: "🎬", isActive: true },
-  { id: "h3", name: "Hiking", emoji: "🥾", isActive: true },
-  { id: "h4", name: "Foodie", emoji: "🍜", isActive: true },
-  { id: "h5", name: "Art Gallery", emoji: "🎨", isActive: true },
-  { id: "h6", name: "Live Music", emoji: "🎵", isActive: true },
-  { id: "h7", name: "Board Games", emoji: "🎲", isActive: true },
-  { id: "h8", name: "Photography", emoji: "📸", isActive: true },
-  { id: "h9", name: "Cocktails", emoji: "🍸", isActive: true },
-  { id: "h10", name: "Book Club", emoji: "📚", isActive: true },
-  { id: "h11", name: "Fitness", emoji: "💪", isActive: true },
-  { id: "h12", name: "Travel", emoji: "✈️", isActive: true },
-];
+// --- Data will be fetched from API ---
 
-const SAMPLE_LOCATIONS: Location[] = [
-  { id: "l1", name: "District 1", nameVi: "Quận 1", city: { id: "c1", name: "Ho Chi Minh", nameVi: "TP. Hồ Chí Minh" }, isActive: true },
-  { id: "l2", name: "District 2", nameVi: "Quận 2", city: { id: "c1", name: "Ho Chi Minh", nameVi: "TP. Hồ Chí Minh" }, isActive: true },
-  { id: "l3", name: "District 3", nameVi: "Quận 3", city: { id: "c1", name: "Ho Chi Minh", nameVi: "TP. Hồ Chí Minh" }, isActive: true },
-  { id: "l4", name: "Hoan Kiem", nameVi: "Hoàn Kiếm", city: { id: "c2", name: "Hanoi", nameVi: "Hà Nội" }, isActive: true },
-  { id: "l5", name: "Ba Dinh", nameVi: "Ba Đình", city: { id: "c2", name: "Hanoi", nameVi: "Hà Nội" }, isActive: true },
-  { id: "l6", name: "Cau Giay", nameVi: "Cầu Giấy", city: { id: "c2", name: "Hanoi", nameVi: "Hà Nội" }, isActive: true },
-];
+
 
 interface Hobby {
   id: string;
@@ -108,7 +87,7 @@ export default function CreateInvitePage() {
     title: "",
     description: "",
     image: "",
-    hobbyIds: [] as string[], // Changed from single ID to array
+    hobbyIds: [] as string[], // Back to array for multiple selection
     locationId: "",
     date: "",
     time: "",
@@ -132,21 +111,17 @@ export default function CreateInvitePage() {
         const hobbiesData = await hobbiesRes.json();
         const locationsData = await locationsRes.json();
 
-        if (hobbiesData.success && hobbiesData.data.length > 0) {
-          setHobbies(hobbiesData.data);
-        } else {
-          setHobbies(SAMPLE_HOBBIES);
+        if (hobbiesData.success) {
+          setHobbies(hobbiesData.data || []);
         }
 
-        if (locationsData.success && locationsData.data.length > 0) {
-          setLocations(locationsData.data);
-        } else {
-          setLocations(SAMPLE_LOCATIONS);
+        if (locationsData.success) {
+          setLocations(locationsData.data || []);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
-        setHobbies(SAMPLE_HOBBIES);
-        setLocations(SAMPLE_LOCATIONS);
+        setHobbies([]);
+        setLocations([]);
       } finally {
         setLoading(false);
       }
@@ -238,7 +213,7 @@ export default function CreateInvitePage() {
       return;
     }
 
-    if (formData.hobbyIds.length === 0) {
+    if (!formData.hobbyIds || formData.hobbyIds.length === 0) {
       alert("Please select at least one vibe/hobby!");
       return;
     }
@@ -251,7 +226,7 @@ export default function CreateInvitePage() {
         description: formData.description,
         image: formData.image || undefined,
         hostId: user.id,
-        hobbyIds: formData.hobbyIds, 
+        hobbyIds: formData.hobbyIds, // Send array to API
         locationId: formData.locationId,
         date: `${formData.date}T${formData.time}:00.000Z`,
         maxParticipants: parseInt(formData.maxParticipants),
@@ -370,7 +345,7 @@ export default function CreateInvitePage() {
                   
                   <div className="flex flex-wrap gap-2">
                     {hobbies.map((hobby) => {
-                      const isSelected = formData.hobbyIds.includes(hobby.id);
+                      const isSelected = formData.hobbyIds?.includes(hobby.id);
                       return (
                         <button
                           key={hobby.id}
@@ -396,7 +371,7 @@ export default function CreateInvitePage() {
                       );
                     })}
                   </div>
-                  {formData.hobbyIds.length === 0 && (
+                  {(!formData.hobbyIds || formData.hobbyIds.length === 0) && (
                     <p className="mt-3 text-xs text-gray-400 italic">Select at least one interest to help find your match.</p>
                   )}
                 </CardContent>

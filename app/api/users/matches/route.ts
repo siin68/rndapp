@@ -7,6 +7,17 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get("userId");
     const limit = parseInt(searchParams.get("limit") || "10");
 
+    const hobbiesFilter = searchParams.get("hobbies")?.split(",") || [];
+    const minAge = searchParams.get("minAge")
+      ? parseInt(searchParams.get("minAge")!)
+      : undefined;
+    const maxAge = searchParams.get("maxAge")
+      ? parseInt(searchParams.get("maxAge")!)
+      : undefined;
+    const maxDistance = searchParams.get("maxDistance")
+      ? parseInt(searchParams.get("maxDistance")!)
+      : undefined;
+
     if (!userId) {
       return NextResponse.json(
         { success: false, error: "userId parameter is required" },
@@ -14,12 +25,30 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get user's hobbies and locations
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
         hobbies: { include: { hobby: true } },
         locations: { include: { location: true } },
+        hostedEvents: {
+          include: {
+            participants: {
+              select: { userId: true },
+            },
+          },
+        },
+        eventParticipants: {
+          select: {
+            event: {
+              select: {
+                hostId: true,
+                participants: {
+                  select: { userId: true },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -33,36 +62,83 @@ export async function GET(request: NextRequest) {
     const userHobbyIds = user.hobbies.map((h) => h.hobbyId);
     const userLocationIds = user.locations.map((l) => l.locationId);
 
-    // Find users with matching hobbies or locations
-    const matchedUsers = await prisma.user.findMany({
-      where: {
-        AND: [
-          { id: { not: userId } },
-          { isActive: true },
+    const excludedUserIds = new Set([userId]); // Start with current user
+
+    user.hostedEvents.forEach((event) => {
+      event.participants.forEach((participant) => {
+        excludedUserIds.add(participant.userId);
+      });
+    });
+
+    user.eventParticipants.forEach((participation) => {
+      const event = participation.event;
+      excludedUserIds.add(event.hostId); 
+      event.participants.forEach((participant) => {
+        excludedUserIds.add(participant.userId);
+      });
+    });
+
+    const whereConditions: any = {
+      AND: [
+        { id: { notIn: Array.from(excludedUserIds) } }, // Exclude users who have interacted through events
+        { isActive: true },
+      ],
+    };
+
+    if (minAge !== undefined || maxAge !== undefined) {
+      const ageConditions: any = {};
+
+      if (minAge !== undefined) {
+        ageConditions.gte = minAge;
+      }
+
+      if (maxAge !== undefined) {
+        ageConditions.lte = maxAge;
+      }
+
+      if (Object.keys(ageConditions).length > 0) {
+        whereConditions.AND.push({ age: ageConditions });
+      }
+    }
+
+    if (hobbiesFilter.length > 0) {
+      whereConditions.AND.push({
+        hobbies: {
+          some: {
+            hobbyId: { in: hobbiesFilter },
+          },
+        },
+      });
+    } else {
+      whereConditions.AND.push({
+        OR: [
           {
-            OR: [
-              {
-                hobbies: {
-                  some: {
-                    hobbyId: { in: userHobbyIds },
-                  },
-                },
+            hobbies: {
+              some: {
+                hobbyId: { in: userHobbyIds },
               },
-              {
-                locations: {
-                  some: {
-                    locationId: { in: userLocationIds },
-                  },
-                },
+            },
+          },
+          {
+            locations: {
+              some: {
+                locationId: { in: userLocationIds },
               },
-            ],
+            },
           },
         ],
-      },
+      });
+    }
+
+    const matchedUsers = await prisma.user.findMany({
+      where: whereConditions,
       include: {
         hobbies: {
           include: { hobby: true },
-          where: { hobbyId: { in: userHobbyIds } },
+          where:
+            hobbiesFilter.length > 0
+              ? { hobbyId: { in: hobbiesFilter } }
+              : { hobbyId: { in: userHobbyIds } },
         },
         locations: {
           include: { location: true },
@@ -72,11 +148,10 @@ export async function GET(request: NextRequest) {
       take: limit,
     });
 
-    // Calculate match scores and add them to results
-    const usersWithScores = matchedUsers.map((matchedUser) => {
+    let usersWithScores = matchedUsers.map((matchedUser) => {
       const sharedHobbies = matchedUser.hobbies.length;
       const sharedLocations = matchedUser.locations.length;
-      const matchScore = sharedHobbies * 2 + sharedLocations; // Weight hobbies higher
+      const matchScore = sharedHobbies * 2 + sharedLocations; 
 
       return {
         id: matchedUser.id,
@@ -87,8 +162,17 @@ export async function GET(request: NextRequest) {
         sharedLocations: matchedUser.locations,
         matchScore,
         lastActive: matchedUser.lastActive,
+        // Add distance for potential filtering (mock data for now)
+        distance: Math.floor(Math.random() * 50) + 1, // 1-50 km
       };
     });
+
+    // Apply distance filtering if specified
+    if (maxDistance !== undefined) {
+      usersWithScores = usersWithScores.filter(
+        (user) => user.distance <= maxDistance
+      );
+    }
 
     // Sort by match score
     const sortedMatches = usersWithScores.sort(

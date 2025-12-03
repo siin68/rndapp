@@ -223,7 +223,6 @@ export default function DashboardHome() {
       <div className="min-h-screen w-full bg-gradient-to-br from-rose-50 via-purple-50 to-indigo-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Checking profile...</p>
         </div>
       </div>
     );
@@ -393,15 +392,14 @@ export default function DashboardHome() {
                 ))
               : upcomingEvents.map((event) => {
                   const hobby = getHobbyById(event.hobbyId);
+                  console.log("hobby: ", hobby);
                   const location = getLocationById(event.locationId);
 
                   return (
                     <Card
                       key={event.id}
                       className="group relative border-0 bg-white/80 backdrop-blur-xl hover:bg-white rounded-[2rem] shadow-lg shadow-indigo-50/50 hover:shadow-xl hover:shadow-indigo-100/50 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col h-full hover:-translate-y-1"
-                      onClick={() =>
-                        router.push(`/event/${event.id}`)
-                      }
+                      onClick={() => router.push(`/event/${event.id}`)}
                     >
                       <div className="h-40 bg-gradient-to-br from-indigo-400 via-purple-400 to-pink-400 relative overflow-hidden shrink-0">
                         {event.image && (

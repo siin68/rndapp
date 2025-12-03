@@ -66,7 +66,7 @@ model Hobby {
   
   // Relations
   users       UserHobby[]
-  events      Event[]
+  events      EventHobby[] // Many-to-many relation with events
 }
 
 model UserHobby {
@@ -130,7 +130,6 @@ model Event {
   description      String?
   image            String?            // Event cover image URL
   hostId           String
-  hobbyId          String
   locationId       String
   date             DateTime
   duration         Int?               // minutes
@@ -149,12 +148,26 @@ model Event {
   updatedAt        DateTime           @updatedAt
   
   host             User               @relation(fields: [hostId], references: [id], name: "HostEvents")
-  hobby            Hobby              @relation(fields: [hobbyId], references: [id])
   location         Location           @relation(fields: [locationId], references: [id])
+  hobbies          EventHobby[]       // Many-to-many relation with hobbies
   participants     EventParticipant[]
   invitations      EventInvitation[]
   chats            Chat[]
   reviews          Review[]
+}
+
+// Junction table for Event-Hobby many-to-many relation
+model EventHobby {
+  id        String   @id @default(cuid())
+  eventId   String
+  hobbyId   String
+  isPrimary Boolean  @default(false) // Primary hobby for the event
+  createdAt DateTime @default(now())
+  
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  hobby     Hobby    @relation(fields: [hobbyId], references: [id], onDelete: Cascade)
+  
+  @@unique([eventId, hobbyId])
 }
 
 model EventParticipant {
