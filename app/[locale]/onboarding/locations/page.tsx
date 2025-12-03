@@ -390,12 +390,10 @@ export default function LocationsStep() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-purple-50 to-indigo-50 py-8 px-4 sm:px-6 lg:px-8">
-      {/* Background Blobs */}
       <div className="fixed top-0 right-0 w-[600px] h-[600px] bg-rose-200/20 rounded-full blur-[120px] -z-10 mix-blend-multiply animate-pulse" />
       <div className="fixed bottom-0 left-0 w-[500px] h-[500px] bg-indigo-200/20 rounded-full blur-[100px] -z-10 mix-blend-multiply animate-pulse delay-700" />
 
       <div className="max-w-4xl mx-auto relative z-10">
-        {/* Progress Header */}
         <div className="mb-10 text-center space-y-4">
           <div className="flex items-center justify-center gap-2 mb-6">
             <div className="h-2 w-12 rounded-full bg-gradient-to-r from-rose-500 to-purple-600"></div>
@@ -417,7 +415,6 @@ export default function LocationsStep() {
           </div>
         </div>
 
-        {/* Current Location Section */}
         <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-purple-50/50 p-6 md:p-8 border border-white mb-8">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
@@ -526,7 +523,6 @@ export default function LocationsStep() {
           )}
         </div>
 
-        {/* Add New Location Section */}
         {userLocation && filteredLocations.length < 5 && (
           <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-purple-50/50 p-6 md:p-8 border border-white mb-8">
             <div className="flex items-center gap-3 mb-4">
@@ -577,7 +573,6 @@ export default function LocationsStep() {
           </div>
         )}
 
-        {/* Locations Grid */}
         <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-purple-50/50 p-6 md:p-8 border border-white mb-8">
           {filteredLocations.length === 0 ? (
             <div className="text-center py-12">
@@ -735,7 +730,6 @@ export default function LocationsStep() {
           )}
         </div>
 
-        {/* Success Message */}
         {successMessage && (
           <div className="mb-6 p-4 bg-emerald-50/80 backdrop-blur-sm border border-emerald-200 rounded-2xl">
             <div className="flex items-center gap-2">
@@ -761,7 +755,6 @@ export default function LocationsStep() {
           </div>
         )}
 
-        {/* Error Display */}
         {error && (
           <div className="mb-6 p-4 bg-red-50/80 backdrop-blur-sm border border-red-200 rounded-2xl">
             <div className="flex items-center gap-2">
@@ -786,7 +779,6 @@ export default function LocationsStep() {
           </div>
         )}
 
-        {/* Action Buttons */}
         <div className="flex justify-between items-center">
           <Button
             variant="outline"

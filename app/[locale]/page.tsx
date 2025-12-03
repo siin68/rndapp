@@ -19,14 +19,12 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white relative overflow-x-hidden selection:bg-rose-200 selection:text-rose-900 font-sans">
       
-      {/* --- Ambient Background --- */}
       <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
         <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-purple-200/30 rounded-full blur-[100px] mix-blend-multiply animate-pulse" />
         <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] bg-rose-200/30 rounded-full blur-[100px] mix-blend-multiply animate-pulse delay-1000" />
         <div className="absolute top-[40%] left-[20%] w-[300px] h-[300px] bg-amber-100/40 rounded-full blur-[80px] mix-blend-multiply" />
       </div>
 
-      {/* --- Navbar --- */}
       <header className="fixed top-0 left-0 right-0 z-50 px-4 pt-4 pb-2">
         <div className="max-w-7xl mx-auto">
           <div className="bg-white/70 backdrop-blur-xl border border-white/50 shadow-sm rounded-full px-6 py-3 flex justify-between items-center transition-all hover:bg-white/90 hover:shadow-md">
@@ -54,11 +52,9 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* --- Hero Section --- */}
       <main className="pt-32 pb-20 md:pt-48 md:pb-32 px-4 relative overflow-hidden">
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           
-          {/* Left: Content */}
           <div className="text-center lg:text-left space-y-8 relative z-10">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-50 border border-rose-100 text-rose-600 text-xs font-bold uppercase tracking-wider mb-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
               <SparkleIcon className="w-3 h-3" />
@@ -99,12 +95,9 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Right: Visual Composition */}
           <div className="relative h-[500px] w-full hidden lg:block perspective-1000">
-             {/* Floating Platform */}
              <div className="absolute inset-x-10 top-20 bottom-20 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-[3rem] transform rotate-y-12 rotate-z-2 shadow-2xl border border-white/50 backdrop-blur-sm"></div>
              
-             {/* Floating Cards */}
              <div className="absolute top-10 left-0 w-64 p-4 bg-white/90 backdrop-blur-xl rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white/50 animate-float">
                 <div className="aspect-[4/5] rounded-2xl bg-gray-100 mb-4 overflow-hidden relative">
                    <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&q=80&w=400" alt="Profile" className="object-cover w-full h-full" />
@@ -138,7 +131,6 @@ export default function LandingPage() {
                 </div>
              </div>
 
-             {/* Floating Tags */}
              {tags.slice(0, 5).map((tag, i) => (
                <div 
                  key={tag}
@@ -157,7 +149,6 @@ export default function LandingPage() {
         </div>
       </main>
 
-      {/* --- Marquee Section --- */}
       <div className="py-8 bg-gray-900 overflow-hidden transform -rotate-1 origin-left scale-110">
         <div className="flex items-center gap-8 animate-infinite-scroll min-w-full">
            {[...tags, ...tags, ...tags].map((tag, i) => (
@@ -168,7 +159,6 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* --- Features Grid --- */}
       <section id="features" className="py-24 px-4 bg-gray-50/50">
          <div className="max-w-6xl mx-auto space-y-16">
             <div className="text-center max-w-2xl mx-auto space-y-4">
@@ -179,9 +169,7 @@ export default function LandingPage() {
                  Weve redesigned dating from the ground up to focus on what actually matters: shared experiences.
                </p>
             </div>
-
             <div className="grid md:grid-cols-3 gap-6">
-               {/* Feature 1 */}
                <div className="group bg-white p-8 rounded-[2.5rem] shadow-xl shadow-gray-100 border border-gray-100 hover:shadow-2xl hover:shadow-rose-100/50 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-rose-50 rounded-bl-[2.5rem] -mr-8 -mt-8 transition-transform group-hover:scale-150 duration-500"></div>
                   <div className="w-16 h-16 bg-rose-100 rounded-2xl flex items-center justify-center text-rose-500 mb-6 relative z-10 group-hover:rotate-12 transition-transform">
@@ -192,8 +180,6 @@ export default function LandingPage() {
                     {t('features.hobbyDesc')} Find your running partner, your gaming squad, or your art gallery date instantly.
                   </p>
                </div>
-
-               {/* Feature 2 */}
                <div className="group bg-white p-8 rounded-[2.5rem] shadow-xl shadow-gray-100 border border-gray-100 hover:shadow-2xl hover:shadow-purple-100/50 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-purple-50 rounded-bl-[2.5rem] -mr-8 -mt-8 transition-transform group-hover:scale-150 duration-500"></div>
                   <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center text-purple-600 mb-6 relative z-10 group-hover:rotate-12 transition-transform">
@@ -204,8 +190,6 @@ export default function LandingPage() {
                     {t('features.locationDesc')} Discover events happening right now in your neighborhood. Real life, real time.
                   </p>
                </div>
-
-               {/* Feature 3 */}
                <div className="group bg-white p-8 rounded-[2.5rem] shadow-xl shadow-gray-100 border border-gray-100 hover:shadow-2xl hover:shadow-indigo-100/50 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-bl-[2.5rem] -mr-8 -mt-8 transition-transform group-hover:scale-150 duration-500"></div>
                   <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 mb-6 relative z-10 group-hover:rotate-12 transition-transform">
@@ -219,11 +203,8 @@ export default function LandingPage() {
             </div>
          </div>
       </section>
-
-      {/* --- CTA Section --- */}
       <section className="py-20 px-4">
         <div className="max-w-5xl mx-auto bg-gray-900 rounded-[3rem] p-12 md:p-20 text-center relative overflow-hidden">
-           {/* Background FX */}
            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-600/30 rounded-full blur-[100px] pointer-events-none"></div>
            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-rose-600/30 rounded-full blur-[100px] pointer-events-none"></div>
            
@@ -246,8 +227,6 @@ export default function LandingPage() {
            </div>
         </div>
       </section>
-
-      {/* --- Footer --- */}
       <footer className="border-t border-gray-100 bg-white py-12 px-4">
          <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center gap-2">
@@ -266,7 +245,6 @@ export default function LandingPage() {
          </div>
       </footer>
 
-      {/* CSS Animations */}
       <style jsx global>{`
         @keyframes float {
           0%, 100% { transform: translateY(0); }

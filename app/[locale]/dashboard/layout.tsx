@@ -56,11 +56,9 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-rose-50 via-purple-50 to-indigo-50 flex flex-col font-sans">
-      {/* Top Bar - Glassmorphism */}
       <header className="sticky top-0 z-50 w-full bg-white/70 backdrop-blur-xl border-b border-white/20 shadow-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Mobile Menu Button */}
             <button
               onClick={() => setIsSidebarOpen(true)}
               className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
@@ -68,7 +66,6 @@ export default function DashboardLayout({
               <MenuIcon className="w-6 h-6" />
             </button>
 
-            {/* Logo Area */}
             <div
               className="flex items-center gap-2 cursor-pointer transition-transform hover:scale-105"
               onClick={() => router.push(base)}
@@ -84,7 +81,6 @@ export default function DashboardLayout({
               </span>
             </div>
 
-            {/* Desktop Notification Button */}
             <div className="hidden md:flex items-center">
               <button
                 onClick={handleNotify}
@@ -112,13 +108,11 @@ export default function DashboardLayout({
         />
       )}
 
-      {/* Mobile Sidebar */}
       <aside
         className={`fixed top-0 left-0 bottom-0 w-80 bg-white shadow-2xl z-50 md:hidden transform transition-transform duration-300 ease-out ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        {/* Sidebar Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <div className="flex items-center gap-2">
             <div className="relative w-12 h-12">
@@ -139,7 +133,6 @@ export default function DashboardLayout({
           </button>
         </div>
 
-        {/* Sidebar Navigation */}
         <nav className="flex flex-col p-4 gap-2">
           {navItems.map((item) => {
             const isActive = item.exact
@@ -188,14 +181,9 @@ export default function DashboardLayout({
             </div>
       </aside>
 
-      {/* Desktop Bottom Navigation - Hidden on Mobile */}
       <div className="hidden md:flex fixed bottom-6 left-0 right-0 z-50 justify-center px-4 pointer-events-none">
         <nav className="pointer-events-auto bg-white/90 backdrop-blur-2xl border border-white/40 shadow-2xl shadow-purple-900/10 rounded-[2rem] p-2 flex items-center gap-1 sm:gap-2 max-w-full overflow-x-auto no-scrollbar">
           {navItems.map((item) => {
-            // Check active state
-            // If exact is true, path must match exactly.
-            // Otherwise, check if pathname starts with item.path
-            // AND ensure we don't match sub-paths incorrectly (e.g. /dashboard matches /dashboard/settings if not careful)
             const isActive = item.exact
               ? pathname === item.path || pathname === `/${locale}${item.path}`
               : pathname.startsWith(item.path) ||

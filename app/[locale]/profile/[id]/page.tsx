@@ -32,11 +32,9 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] relative pb-20">
-       {/* Ambient Background */}
       <div className="fixed top-0 left-0 w-[500px] h-[500px] bg-rose-100/40 rounded-full blur-[100px] pointer-events-none -z-10" />
       <div className="fixed bottom-0 right-0 w-[600px] h-[600px] bg-purple-100/40 rounded-full blur-[100px] pointer-events-none -z-10" />
 
-      {/* Nav */}
       <div className="sticky top-0 z-30 px-4 py-4">
          <div className="max-w-xl mx-auto">
             <Button 
@@ -52,11 +50,9 @@ export default function ProfilePage() {
 
       <div className="max-w-xl mx-auto px-4 space-y-8">
         
-        {/* Profile Header Card */}
         <div className="relative pt-12">
             <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] p-8 pt-24 border border-white shadow-xl shadow-purple-100/50 text-center relative overflow-visible">
                
-               {/* Avatar */}
                <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-10">
                   <div className="relative group">
                     <div className="absolute inset-0 bg-gradient-to-tr from-rose-400 to-purple-500 rounded-full blur-lg opacity-20 group-hover:opacity-40 transition-opacity"></div>
@@ -97,10 +93,8 @@ export default function ProfilePage() {
             </div>
         </div>
 
-        {/* Info Grid */}
         <div className="grid gap-6">
            
-           {/* Hobbies & Locations */}
            <div className="space-y-6">
               <div className="bg-white/60 backdrop-blur-md rounded-[2rem] p-6 border border-white shadow-sm">
                  <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -137,7 +131,6 @@ export default function ProfilePage() {
               </div>
            </div>
 
-           {/* Event History */}
            <div className="space-y-4">
               <h2 className="text-lg font-black text-gray-900 px-2">Past Events</h2>
               {userEvents.length > 0 ? (

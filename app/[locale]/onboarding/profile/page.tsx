@@ -141,12 +141,10 @@ export default function OnboardingProfilePage() {
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Background Elements */}
       <div className="fixed top-[-10%] right-[-10%] w-[500px] h-[500px] bg-rose-100/50 rounded-full blur-[100px] -z-10" />
       <div className="fixed bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-100/50 rounded-full blur-[100px] -z-10" />
 
       <div className="max-w-xl mx-auto w-full relative z-10">
-        {/* Progress Header */}
         <div className="mb-10 text-center space-y-4">
           <div className="flex items-center justify-center gap-2 mb-6">
             <div className="h-2 w-12 rounded-full bg-gradient-to-r from-rose-500 to-purple-600"></div>
@@ -163,7 +161,6 @@ export default function OnboardingProfilePage() {
 
         <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-xl shadow-purple-50/50 p-8 md:p-10 border border-white">
           <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Avatar Upload */}
             <div className="flex flex-col items-center">
               <div className="relative group cursor-pointer">
                 <div className="absolute inset-0 bg-gradient-to-tr from-rose-400 to-purple-500 rounded-full blur-lg opacity-40 group-hover:opacity-60 transition-opacity"></div>
@@ -205,7 +202,6 @@ export default function OnboardingProfilePage() {
               </p>
             </div>
 
-            {/* Inputs */}
             <div className="space-y-5">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">

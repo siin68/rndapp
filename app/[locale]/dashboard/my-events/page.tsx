@@ -170,12 +170,10 @@ export default function MyEventsPage() {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-rose-50 via-purple-50 to-indigo-50 py-10 px-4 sm:px-6 lg:px-8">
-      {/* Decorative Blobs */}
       <div className="fixed top-0 left-0 w-[500px] h-[500px] bg-rose-200/20 rounded-full blur-[100px] -z-10 mix-blend-multiply animate-pulse" />
       <div className="fixed bottom-0 right-0 w-[500px] h-[500px] bg-indigo-200/20 rounded-full blur-[100px] -z-10 mix-blend-multiply animate-pulse delay-700" />
 
       <div className="max-w-6xl mx-auto space-y-10">
-        {/* Header */}
         <div className="text-center space-y-4">
           <span className="inline-flex items-center gap-1.5 py-1 px-3 rounded-full bg-purple-100/80 text-purple-600 text-xs font-bold tracking-widest uppercase backdrop-blur-sm border border-purple-200">
             Your Schedule
@@ -188,7 +186,6 @@ export default function MyEventsPage() {
           </p>
         </div>
 
-        {/* Tabs */}
         <div className="flex justify-center">
           <div className="bg-white/40 backdrop-blur-md p-1.5 rounded-full inline-flex border border-white/40 shadow-lg shadow-purple-100/50">
             {tabs.map((tab) => (
@@ -211,10 +208,8 @@ export default function MyEventsPage() {
           </div>
         </div>
 
-        {/* Events Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {getActiveEvents().map((event) => {
-            // Get primary hobby or fallback to hobbyId lookup
             const primaryHobby =
               event.hobbies?.find((h) => h.isPrimary)?.hobby ||
               event.hobbies?.[0]?.hobby ||
@@ -230,9 +225,7 @@ export default function MyEventsPage() {
                 onClick={() => router.push(`/event/${event.id}`)}
                 className="group relative border-0 bg-white/80 backdrop-blur-xl hover:bg-white rounded-[2rem] shadow-xl shadow-purple-50/50 hover:shadow-2xl hover:shadow-purple-100/50 transition-all duration-500 cursor-pointer overflow-hidden flex flex-col h-full hover:-translate-y-1 ring-1 ring-white/50"
               >
-                {/* Header Image */}
                 <div className="h-32 relative overflow-hidden shrink-0">
-                  {/* Event Image or Gradient Fallback */}
                   {event.image ? (
                     <img
                       src={event.image}
@@ -245,7 +238,6 @@ export default function MyEventsPage() {
 
                   <div className="absolute inset-0 bg-black/20"></div>
 
-                  {/* Host Avatar */}
                   <div className="absolute top-4 left-4">
                     <Avatar className="w-12 h-12 border-2 border-white/80 shadow-lg">
                       <AvatarImage
@@ -261,7 +253,6 @@ export default function MyEventsPage() {
                     </Avatar>
                   </div>
 
-                  {/* Status Badge */}
                   <div className="absolute top-4 right-4">
                     <Badge
                       className={`
@@ -277,7 +268,6 @@ export default function MyEventsPage() {
                     </Badge>
                   </div>
 
-                  {/* Role Badge */}
                   {isHost && (
                     <div className="absolute bottom-4 left-4">
                       <Badge className="bg-amber-300/95 text-amber-900 border-0 px-2 py-1 gap-1 shadow-sm backdrop-blur-md font-bold text-[10px]">
@@ -286,7 +276,6 @@ export default function MyEventsPage() {
                     </div>
                   )}
 
-                  {/* Hobby Icon */}
                   <div className="absolute -bottom-4 -right-4 text-7xl opacity-30 transform rotate-12 transition-transform group-hover:scale-110 text-white/80">
                     {primaryHobby?.icon}
                   </div>
@@ -337,7 +326,6 @@ export default function MyEventsPage() {
                     </div>
                   </div>
 
-                  {/* Footer */}
                   <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Avatar className="w-6 h-6">
@@ -372,7 +360,6 @@ export default function MyEventsPage() {
           })}
         </div>
 
-        {/* Empty State */}
         {getActiveEvents().length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in zoom-in duration-500">
             <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-2xl shadow-purple-100 mb-6 text-4xl">

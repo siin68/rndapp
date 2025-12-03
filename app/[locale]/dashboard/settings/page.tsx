@@ -78,23 +78,19 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-rose-50 via-purple-50 to-indigo-50 py-8 px-4 sm:px-6 lg:px-8 flex justify-center pb-24">
-      {/* Decorative Blobs */}
       <div className="fixed top-0 right-0 w-[600px] h-[600px] bg-rose-200/20 rounded-full blur-[100px] -z-10 mix-blend-multiply animate-pulse" />
       <div className="fixed bottom-0 left-0 w-[500px] h-[500px] bg-indigo-200/20 rounded-full blur-[100px] -z-10 mix-blend-multiply animate-pulse delay-700" />
 
       <div className="w-full max-w-3xl space-y-8">
         
-        {/* Profile Hero Card */}
         <div className="relative">
           <Card className="border-0 shadow-2xl shadow-rose-100/50 bg-white/80 backdrop-blur-xl rounded-[2.5rem] overflow-hidden">
-            {/* Cover Photo */}
             <div className="h-40 bg-gradient-to-r from-rose-400 via-pink-500 to-purple-500 relative">
                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay"></div>
             </div>
             
             <CardContent className="px-8 pb-8 pt-0 relative">
                <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6 -mt-16 sm:-mt-12">
-                 {/* Avatar */}
                  <div className="relative group">
                    <div className="absolute -inset-1 bg-gradient-to-br from-rose-500 to-purple-600 rounded-full blur opacity-70 group-hover:opacity-100 transition-opacity"></div>
                    <Avatar className="w-32 h-32 sm:w-36 sm:h-36 border-[6px] border-white shadow-xl relative">
@@ -105,13 +101,11 @@ export default function SettingsPage() {
                    </Avatar>
                  </div>
 
-                 {/* Text Info */}
                  <div className="flex-1 text-center sm:text-left mb-2">
                    <h1 className="text-3xl font-black text-gray-900 tracking-tight">{session?.user?.name || 'Guest User'}</h1>
                    <p className="text-rose-500 font-medium">{session?.user?.email}</p>
                  </div>
                  
-                 {/* Edit Profile Button */}
                  <Button 
                    onClick={() => router.push('/dashboard/settings/profile')}
                    className="rounded-full bg-gray-900 hover:bg-gray-800 text-white font-bold shadow-lg shadow-gray-200 hover:shadow-xl transition-all hover:-translate-y-0.5 px-6 mb-2"
@@ -123,7 +117,6 @@ export default function SettingsPage() {
           </Card>
         </div>
 
-        {/* Quick Actions Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
              { title: "Hobbies", icon: HeartIcon, color: "text-rose-500", bg: "bg-rose-50", link: "/onboarding/hobbies" },
@@ -144,10 +137,8 @@ export default function SettingsPage() {
           ))}
         </div>
 
-        {/* Settings Groups */}
         <div className="space-y-6">
           
-          {/* Notifications Section */}
           <section className="space-y-3">
              <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest ml-4">Notifications</h3>
              <Card className="border-0 bg-white/80 backdrop-blur-xl shadow-lg shadow-indigo-50/50 rounded-[2rem] overflow-hidden">
@@ -174,7 +165,6 @@ export default function SettingsPage() {
              </Card>
           </section>
 
-           {/* Privacy Section */}
            <section className="space-y-3">
              <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest ml-4">Privacy</h3>
              <Card className="border-0 bg-white/80 backdrop-blur-xl shadow-lg shadow-indigo-50/50 rounded-[2rem] overflow-hidden">
@@ -195,7 +185,6 @@ export default function SettingsPage() {
              </Card>
           </section>
 
-          {/* Danger Zone */}
           <section className="space-y-3 pt-4">
              <Button 
                variant="outline" 

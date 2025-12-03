@@ -79,11 +79,9 @@ export default function OpenInvitesPage() {
 
   return (
     <div className="min-h-screen w-full bg-[#FAFAFA] py-10 px-4 sm:px-6 lg:px-8 pb-24">
-      {/* Subtle Top Gradient */}
       <div className="fixed top-0 inset-x-0 h-96 bg-gradient-to-b from-rose-50/80 to-transparent -z-10" />
 
       <div className="max-w-7xl mx-auto space-y-12">
-        {/* Header */}
         <div className="flex flex-col items-center text-center space-y-4 pt-6">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-100 text-rose-600 text-[11px] font-bold uppercase tracking-widest">
             <SparklesIcon className="w-3 h-3" /> Discover
@@ -96,7 +94,6 @@ export default function OpenInvitesPage() {
           </p>
         </div>
 
-        {/* Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {loading
             ? Array.from({ length: 4 }).map((_, i) => (
@@ -117,7 +114,6 @@ export default function OpenInvitesPage() {
                   event._count?.participants || event.participants?.length || 0;
                 const spotsLeft = event.maxParticipants - participantCount;
 
-                // Logic to limit hobbies to max 3 visual elements
                 const totalHobbies = event.hobbyIds.length;
                 const showMax = 3;
                 // If we have > 3, we show 2 items + 1 counter badge = 3 elements total.
@@ -135,7 +131,6 @@ export default function OpenInvitesPage() {
                     onClick={() => router.push(`/event/${event.id}`)}
                     className="group relative border-0 bg-white rounded-3xl shadow-sm hover:shadow-xl hover:shadow-rose-100 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col h-full hover:-translate-y-1"
                   >
-                    {/* Image Container - Taller Aspect Ratio */}
                     <div className="relative aspect-[4/5] w-full overflow-hidden">
                       {event.image ? (
                         <img
@@ -149,10 +144,8 @@ export default function OpenInvitesPage() {
                         </div>
                       )}
 
-                      {/* Gradient Overlay for Text Visibility */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60" />
 
-                      {/* Hobbies - Floating Top Left */}
                       <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 max-w-[90%]">
                         {displayHobbies.map((hid) => {
                           const h = getHobby(hid);
@@ -176,14 +169,11 @@ export default function OpenInvitesPage() {
                       </div>
                     </div>
 
-                    {/* Content */}
                     <CardContent className="p-5 flex flex-col gap-3 relative">
-                      {/* Title */}
                       <h3 className="text-lg font-bold text-gray-900 leading-snug line-clamp-2 group-hover:text-rose-600 transition-colors">
                         {event.title}
                       </h3>
 
-                      {/* Info Grid */}
                       <div className="grid grid-cols-2 gap-y-2 text-xs text-gray-500 font-medium mt-auto">
                         <div className="flex items-center gap-1.5">
                           <CalendarIcon className="w-3.5 h-3.5 text-rose-400" />

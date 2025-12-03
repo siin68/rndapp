@@ -189,7 +189,6 @@ export default function LocationsStep() {
           {t("selected", { count: selectedLocations.length })} / 1-3 locations
         </p>
 
-        {/* Nút lấy vị trí hiện tại */}
         <div className="mt-4">
           <Button
             onClick={getCurrentLocation}

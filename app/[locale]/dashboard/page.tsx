@@ -233,12 +233,10 @@ export default function DashboardHome() {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-rose-50 via-purple-50 to-indigo-50 py-8 px-4 sm:px-6 lg:px-8 pb-6 md:pb-32">
-      {/* Background Blobs */}
       <div className="fixed top-0 right-0 w-[600px] h-[600px] bg-rose-200/20 rounded-full blur-[120px] -z-10 mix-blend-multiply animate-pulse" />
       <div className="fixed bottom-0 left-0 w-[500px] h-[500px] bg-indigo-200/20 rounded-full blur-[100px] -z-10 mix-blend-multiply animate-pulse delay-700" />
 
       <div className="max-w-7xl mx-auto space-y-10">
-        {/* Hero Section */}
         <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-rose-500 via-pink-500 to-purple-600 shadow-2xl shadow-rose-200 p-8 md:p-12 text-white">
           <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-white/10 rounded-full blur-[80px] -mr-20 -mt-20 pointer-events-none mix-blend-overlay"></div>
           <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-purple-900/20 rounded-full blur-[60px] -ml-10 -mb-10 pointer-events-none mix-blend-overlay"></div>
@@ -268,7 +266,6 @@ export default function DashboardHome() {
               </div>
             </div>
 
-            {/* Stats/Action */}
             <div className="hidden lg:flex gap-4">
               <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 text-center min-w-[100px]">
                 <div className="text-3xl font-bold">
@@ -289,8 +286,6 @@ export default function DashboardHome() {
             </div>
           </div>
         </div>
-
-        {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card
             className="group relative overflow-hidden border-0 bg-white/70 backdrop-blur-xl hover:bg-white shadow-lg shadow-rose-100/50 hover:shadow-xl hover:shadow-rose-200/50 rounded-[2rem] transition-all duration-300 cursor-pointer hover:-translate-y-1"
@@ -359,7 +354,6 @@ export default function DashboardHome() {
           </Card>
         </div>
 
-        {/* Upcoming Section */}
         <div className="space-y-6">
           <div className="flex items-center justify-between px-2">
             <h2 className="text-2xl font-black text-gray-800 tracking-tight flex items-center gap-2">

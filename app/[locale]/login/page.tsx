@@ -16,15 +16,12 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen w-full relative overflow-hidden bg-[#FAFAFA] flex items-center justify-center p-4">
-      {/* Dynamic Background Blobs */}
       <div className="fixed top-[-20%] right-[-10%] w-[800px] h-[800px] bg-gradient-to-br from-rose-200/40 to-pink-200/40 rounded-full blur-[120px] mix-blend-multiply animate-pulse" />
       <div className="fixed bottom-[-20%] left-[-10%] w-[800px] h-[800px] bg-gradient-to-tr from-indigo-200/40 to-purple-200/40 rounded-full blur-[120px] mix-blend-multiply animate-pulse delay-1000" />
       <div className="fixed top-[20%] left-[20%] w-[400px] h-[400px] bg-amber-100/40 rounded-full blur-[100px] mix-blend-multiply" />
 
-      {/* Main Container */}
       <div className="relative z-10 w-full max-w-md">
         
-        {/* Floating Badges (Decorations) */}
         <div className="absolute -top-12 -left-8 animate-bounce delay-700 hidden md:block">
            <div className="bg-white/80 backdrop-blur-md px-4 py-2 rounded-2xl shadow-lg border border-white/50 flex items-center gap-2 transform -rotate-12">
              <span className="text-2xl">🎉</span>
@@ -47,10 +44,7 @@ export default function LoginPage() {
            </div>
         </div>
 
-        {/* Login Card */}
         <div className="bg-white/70 backdrop-blur-2xl rounded-[2.5rem] border border-white/60 shadow-2xl shadow-indigo-100/50 p-8 md:p-10 text-center">
-          
-          {/* Logo Section */}
           <div className="mb-8 flex flex-col items-center">
              <div className="w-24 h-24 bg-gradient-to-tr from-rose-500 to-purple-600 rounded-[2rem] flex items-center justify-center shadow-xl shadow-rose-200 mb-6 group cursor-pointer hover:scale-105 transition-transform duration-300">
                 <HeartIcon className="w-12 h-12 text-white drop-shadow-md animate-pulse" />
@@ -63,7 +57,6 @@ export default function LoginPage() {
              </p>
           </div>
 
-          {/* Action Section */}
           <div className="space-y-6">
             <Button
               size="lg"
@@ -90,7 +83,6 @@ export default function LoginPage() {
           </div>
         </div>
         
-        {/* Footer */}
         <div className="mt-8 text-center">
            <p className="text-sm font-semibold text-gray-400">
              Match. Meet. Memories.

@@ -222,7 +222,6 @@ export default function EventDetailPage() {
 
       <div className="max-w-3xl mx-auto px-4 space-y-6">
         
-        {/* Hero Card */}
         <div className="relative rounded-[2.5rem] overflow-hidden bg-white shadow-xl shadow-purple-100/50 group transform transition-all hover:scale-[1.01]">
            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 via-purple-500 to-rose-500 opacity-90 transition-opacity group-hover:opacity-100" />
            <div className="absolute -bottom-10 -right-10 text-[12rem] opacity-20 rotate-12">{hobby?.icon}</div>
@@ -255,13 +254,10 @@ export default function EventDetailPage() {
            </div>
         </div>
 
-        {/* Content Grid */}
         <div className="grid md:grid-cols-3 gap-6">
            
-           {/* Left: Details */}
            <div className="md:col-span-2 space-y-6">
               
-              {/* Host Card */}
               <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white shadow-sm flex items-center justify-between">
                  <div className="flex items-center gap-4">
                     <div className="relative">
@@ -283,14 +279,12 @@ export default function EventDetailPage() {
                  </Button>
               </div>
 
-              {/* Description */}
               <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 border border-white shadow-sm space-y-4">
                  <h3 className="font-bold text-gray-900 text-lg">About this Event</h3>
                  <p className="text-gray-600 leading-relaxed text-base">
                     {event.description}
                  </p>
                  <div className="pt-4 flex flex-wrap gap-2">
-                    {/* Mock Tags for vibe */}
                     {['Friendly', 'Casual', 'Beginners Welcome', 'English'].map(tag => (
                        <span key={tag} className="px-3 py-1 rounded-full bg-gray-100 text-xs font-bold text-gray-500 border border-gray-200">
                           #{tag}
@@ -301,7 +295,6 @@ export default function EventDetailPage() {
 
            </div>
 
-           {/* Right: Squad */}
            <div className="md:col-span-1">
               <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white shadow-sm h-full">
                  <div className="flex justify-between items-center mb-6">
@@ -342,7 +335,6 @@ export default function EventDetailPage() {
 
       </div>
 
-      {/* Floating Action Dock (Sticky Bottom) */}
       <div className="fixed bottom-8 inset-x-0 px-4 z-40 flex justify-center">
          <div className="bg-gray-900/95 backdrop-blur-xl p-2 pl-3 rounded-[2rem] shadow-2xl shadow-purple-500/20 flex items-center gap-3 max-w-md w-full border border-white/10 ring-1 ring-black/5">
             <Button 

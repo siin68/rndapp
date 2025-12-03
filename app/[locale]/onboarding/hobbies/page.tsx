@@ -86,12 +86,10 @@ export default function HobbiesStep() {
   if (checkingOnboarding || loadingHobbies) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-rose-50 via-purple-50 to-indigo-50 py-8 px-4 sm:px-6 lg:px-8">
-        {/* Background Blobs */}
         <div className="fixed top-0 right-0 w-[600px] h-[600px] bg-rose-200/20 rounded-full blur-[120px] -z-10 mix-blend-multiply animate-pulse" />
         <div className="fixed bottom-0 left-0 w-[500px] h-[500px] bg-indigo-200/20 rounded-full blur-[100px] -z-10 mix-blend-multiply animate-pulse delay-700" />
 
         <div className="max-w-4xl mx-auto relative z-10">
-          {/* Progress Header Skeleton */}
           <div className="mb-10 text-center space-y-4">
             <div className="flex items-center justify-center gap-2 mb-6">
               <div className="h-2 w-12 rounded-full bg-gradient-to-r from-rose-500 to-purple-600"></div>
@@ -103,7 +101,6 @@ export default function HobbiesStep() {
             <div className="h-4 bg-gray-200 rounded w-48 mx-auto animate-pulse"></div>
           </div>
 
-          {/* Main Content Skeleton */}
           <div className="bg-white/70 backdrop-blur-xl rounded-3xl shadow-xl shadow-rose-100/50 border border-white/60 p-8">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
               {[...Array(12)].map((_, i) => (
@@ -118,7 +115,6 @@ export default function HobbiesStep() {
               ))}
             </div>
 
-            {/* Loading Text */}
             <div className="text-center mt-8">
               <div className="flex items-center justify-center gap-2">
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-rose-500"></div>
@@ -129,7 +125,6 @@ export default function HobbiesStep() {
             </div>
           </div>
 
-          {/* Navigation Skeleton */}
           <div className="flex justify-between items-center mt-8">
             <div className="h-10 w-20 bg-gray-200 rounded-xl animate-pulse"></div>
             <div className="h-10 w-24 bg-gray-200 rounded-xl animate-pulse"></div>

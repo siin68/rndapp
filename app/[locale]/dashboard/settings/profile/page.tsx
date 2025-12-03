@@ -95,13 +95,11 @@ export default function EditProfilePage() {
 
   return (
     <div className="min-h-screen w-full bg-[#FAFAFA] py-10 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Subtle Ambient Background */}
       <div className="fixed top-0 right-0 w-[800px] h-[800px] bg-gradient-to-b from-rose-100/40 to-transparent rounded-full blur-[100px] -z-10 translate-x-1/3 -translate-y-1/3" />
       <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-gradient-to-t from-purple-100/40 to-transparent rounded-full blur-[100px] -z-10 -translate-x-1/3 translate-y-1/3" />
 
       <div className="max-w-xl mx-auto space-y-8 relative z-10 pb-24">
         
-        {/* Minimal Header */}
         <div className="flex items-center justify-between">
           <Button 
             variant="ghost" 
@@ -111,15 +109,13 @@ export default function EditProfilePage() {
             <ArrowLeftIcon className="w-5 h-5" />
           </Button>
           <h1 className="text-lg font-bold text-gray-900 tracking-tight">Edit Profile</h1>
-          <div className="w-10" /> {/* Spacer for balance */}
+          <div className="w-10" /> 
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
           
-          {/* Avatar Section */}
           <div className="flex flex-col items-center justify-center gap-4">
                <div className="relative group cursor-pointer">
-                 {/* Glow effect */}
                  <div className="absolute inset-0 bg-gradient-to-tr from-rose-400 to-purple-500 rounded-full blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
                  
                  <Avatar className="w-32 h-32 border-[4px] border-white shadow-xl relative z-10">
@@ -149,11 +145,8 @@ export default function EditProfilePage() {
                </div>
           </div>
 
-          {/* Form Fields */}
           <div className="space-y-6">
              <div className="space-y-4">
-               
-               {/* Name Input */}
                <div className="space-y-1.5">
                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Full Name</label>
                  <div className="relative group">
@@ -219,7 +212,6 @@ export default function EditProfilePage() {
         </form>
       </div>
 
-      {/* Floating Action Bar - Only shows when dirty */}
       <div 
         className={`
           fixed bottom-28 left-0 right-0 z-50 flex justify-center px-4

@@ -258,7 +258,6 @@ export default function CreateInvitePage() {
 
   return (
     <div className="w-full h-full px-4 sm:px-6 lg:px-8 pb-6 md:pb-28 flex justify-center overflow-y-auto">
-      {/* Background Decor */}
       <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10">
          <div className="absolute top-[5%] right-[10%] w-64 h-64 bg-rose-200/30 rounded-full blur-[80px] mix-blend-multiply animate-pulse" />
          <div className="absolute bottom-[5%] left-[10%] w-80 h-80 bg-purple-200/30 rounded-full blur-[100px] mix-blend-multiply animate-pulse delay-1000" />
@@ -280,9 +279,7 @@ export default function CreateInvitePage() {
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
             
-            {/* Left Column: Visuals & Vibe */}
             <div className="lg:col-span-7 space-y-4">
-              {/* Image Uploader */}
               <div 
                 className={`
                   relative group aspect-[16/9] rounded-3xl overflow-hidden transition-all duration-300 border-2
@@ -330,7 +327,6 @@ export default function CreateInvitePage() {
                 />
               </div>
 
-              {/* Hobbies / Vibe Selection */}
               <Card className="border-0 shadow-lg shadow-rose-100/50 bg-white/80 backdrop-blur-xl rounded-2xl">
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between mb-4">
@@ -378,13 +374,11 @@ export default function CreateInvitePage() {
               </Card>
             </div>
 
-            {/* Right Column: Details Form */}
             <div className="lg:col-span-5 space-y-4">
               <Card className="border-0 shadow-lg shadow-indigo-100/50 bg-white rounded-2xl overflow-hidden">
                 <div className="h-1.5 bg-gradient-to-r from-rose-400 via-purple-500 to-indigo-500" />
                 <CardContent className="p-5 space-y-5">
                   
-                  {/* Title & Desc */}
                   <div className="space-y-3">
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Title</label>
@@ -409,13 +403,11 @@ export default function CreateInvitePage() {
                     </div>
                   </div>
 
-                  {/* Logistics Section */}
                   <div className="bg-gray-50/80 rounded-2xl p-4 space-y-3">
                     <h4 className="font-bold text-gray-900 flex items-center gap-1.5 text-xs uppercase tracking-wide">
                       <CalendarIcon className="w-3.5 h-3.5" /> The Plan
                     </h4>
                     
-                    {/* Date & Time Row */}
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1">
                         <label className="text-[9px] font-bold text-gray-500 uppercase tracking-wider ml-1">Date</label>
@@ -439,7 +431,6 @@ export default function CreateInvitePage() {
                       </div>
                     </div>
 
-                    {/* Location Select */}
                     <div className="space-y-1">
                       <label className="text-[9px] font-bold text-gray-500 uppercase tracking-wider ml-1">Location</label>
                       <div className="relative">
@@ -460,7 +451,6 @@ export default function CreateInvitePage() {
                       </div>
                     </div>
 
-                    {/* Capacity Row */}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <label className="text-[9px] font-bold text-gray-500 uppercase tracking-wider ml-1">Max People</label>

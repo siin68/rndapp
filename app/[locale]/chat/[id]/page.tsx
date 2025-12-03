@@ -53,22 +53,18 @@ export default function ChatPage() {
 
   const event = getEventById(chat.eventId);
   const messages = getMessagesByChatId(chat.id);
-  const currentUserId = '1'; // Mock user ID
+  const currentUserId = '1';
 
   const handleSend = () => {
     if (!message.trim()) return;
     console.log('Sending message:', message);
     setMessage('');
-    // In a real app, optimistic UI update here
   };
 
   return (
     <div className="flex flex-col h-screen bg-[#FAFAFA] relative overflow-hidden">
-       {/* Ambient Background */}
       <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-rose-100/40 rounded-full blur-[100px] pointer-events-none -z-10" />
       <div className="fixed bottom-0 left-0 w-[500px] h-[500px] bg-purple-100/40 rounded-full blur-[100px] pointer-events-none -z-10" />
-
-      {/* Header */}
       <header className="flex-none px-4 py-3 bg-white/80 backdrop-blur-xl border-b border-gray-100 z-20 sticky top-0">
          <div className="max-w-3xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -103,8 +99,6 @@ export default function ChatPage() {
             </Button>
          </div>
       </header>
-
-      {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-4 py-6" ref={scrollRef}>
          <div className="max-w-3xl mx-auto space-y-6">
              <div className="text-center py-4">
@@ -131,7 +125,6 @@ export default function ChatPage() {
                       </AvatarFallback>
                     </Avatar>
                   )}
-                  {/* Spacer for sequence alignment */}
                   {!isCurrentUser && isSequence && <div className="w-8" />}
 
                   <div className={`group relative max-w-[80%]`}>
@@ -164,8 +157,6 @@ export default function ChatPage() {
             })}
          </div>
       </div>
-
-      {/* Input Area */}
       <div className="flex-none p-4 pb-6 bg-white/90 backdrop-blur-xl border-t border-gray-100 z-30">
          <div className="max-w-3xl mx-auto flex items-end gap-3">
             <Button 
@@ -178,10 +169,8 @@ export default function ChatPage() {
             
             <div className="flex-1">
                <div className="relative group">
-                  {/* Glow Effect */}
                   <div className="absolute -inset-[3px] bg-gradient-to-r from-rose-300 via-pink-300 to-purple-300 rounded-[28px] opacity-0 group-focus-within:opacity-50 blur-sm transition-opacity duration-300"></div>
                   
-                  {/* Input Pill */}
                   <div className="relative bg-white rounded-[24px] border border-gray-200 group-focus-within:border-white flex items-center px-5 py-3 shadow-sm transition-all">
                      <textarea
                        value={message}

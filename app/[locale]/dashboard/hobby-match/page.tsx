@@ -352,17 +352,14 @@ export default function HobbyMatchPage() {
 
   return (
     <div className="h-[calc(100vh-80px)] flex flex-col items-center justify-center px-3 pb-6 md:pb-24 relative overflow-hidden select-none">
-      {/* Decorative Background */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[800px] h-[600px] sm:h-[800px] bg-gradient-to-r from-rose-200/20 to-purple-200/20 rounded-full blur-[100px] -z-10 animate-pulse pointer-events-none" />
 
-      {/* Header */}
       <div className="text-center mb-3 sm:mb-6 relative z-10">
         <div className="flex items-center justify-center gap-3 mb-2">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-gray-900 tracking-tight flex items-center gap-2">
             <span className="text-rose-500">Discover</span> Matches
           </h1>
 
-          {/* Filter Button */}
           <button
             onClick={() => setShowFilters(!showFilters)}
             className="relative p-2.5 rounded-full bg-white shadow-lg border border-gray-200 hover:bg-gray-50 transition-all duration-200 group"
@@ -380,18 +377,14 @@ export default function HobbyMatchPage() {
         </p>
       </div>
 
-      {/* Filter Panel */}
       {showFilters && (
         <>
-          {/* Overlay */}
           <div
             className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
             onClick={() => setShowFilters(false)}
           />
 
-          {/* Filter Modal */}
           <div className="fixed inset-x-0 bottom-0 sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 z-50 bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto">
-            {/* Header */}
             <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-3xl flex items-center justify-between">
               <h2 className="text-xl font-black text-gray-900">Filters</h2>
               <button
@@ -403,7 +396,6 @@ export default function HobbyMatchPage() {
             </div>
 
             <div className="p-6 space-y-6">
-              {/* Age Range */}
               <div>
                 <label className="block text-sm font-bold text-gray-900 mb-3">
                   Age Range: {ageRange.min} - {ageRange.max}
@@ -448,7 +440,6 @@ export default function HobbyMatchPage() {
                 </div>
               </div>
 
-              {/* Distance */}
               <div>
                 <label className="block text-sm font-bold text-gray-900 mb-3">
                   Maximum Distance: {maxDistance} km
@@ -468,7 +459,6 @@ export default function HobbyMatchPage() {
                 </div>
               </div>
 
-              {/* Hobbies */}
               <div>
                 <label className="block text-sm font-bold text-gray-900 mb-3">
                   Hobbies ({selectedHobbies.length} selected)
@@ -494,7 +484,6 @@ export default function HobbyMatchPage() {
               </div>
             </div>
 
-            {/* Footer */}
             <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex gap-3">
               <button
                 onClick={clearFilters}
@@ -513,10 +502,8 @@ export default function HobbyMatchPage() {
         </>
       )}
 
-      {/* Card Area - Responsive sizing */}
       <div className="relative w-full max-w-[310px] sm:max-w-[340px] md:max-w-[360px] h-[480px] sm:h-[520px] md:h-[580px]">
         {loading ? (
-          /* Loading State */
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 sm:p-6 md:p-8 bg-white/60 backdrop-blur-xl rounded-[1.75rem] sm:rounded-[2rem] md:rounded-[2.5rem] border-2 border-dashed border-gray-300 shadow-xl animate-pulse">
             <div className="text-4xl sm:text-5xl md:text-6xl mb-3 sm:mb-4 md:mb-6">
               🔍
@@ -585,7 +572,6 @@ export default function HobbyMatchPage() {
                 onTouchMove={onTouchMove}
                 onTouchEnd={onTouchEnd}
               >
-                {/* Image */}
                 <div className="absolute inset-0 bg-gray-200 pointer-events-none">
                   {currentUser.image ? (
                     <>
@@ -609,7 +595,6 @@ export default function HobbyMatchPage() {
                   )}
                 </div>
 
-                {/* STAMPS (Visual Feedback) - Responsive */}
                 <div
                   className="absolute top-5 sm:top-6 md:top-8 left-3 sm:left-4 md:left-8 border-[3px] sm:border-4 md:border-[6px] border-green-400 text-green-400 rounded-lg px-2 sm:px-3 md:px-4 py-0.5 sm:py-1 font-black text-xl sm:text-2xl md:text-4xl tracking-widest uppercase rotate-[-15deg] pointer-events-none z-20"
                   style={{ opacity: opacityLike }}
@@ -623,7 +608,6 @@ export default function HobbyMatchPage() {
                   NOPE
                 </div>
 
-                {/* Content Overlay - Responsive */}
                 <div className="absolute bottom-0 inset-x-0 p-3 sm:p-4 md:p-6 text-white pointer-events-none z-10">
                   <div className="flex items-end justify-between mb-1.5 sm:mb-2 md:mb-3">
                     <div>
@@ -656,7 +640,6 @@ export default function HobbyMatchPage() {
                   </div>
                 </div>
 
-                {/* Info Button - Responsive */}
                 <button
                   className="absolute top-3 sm:top-4 right-3 sm:right-4 p-1.5 sm:p-2 bg-black/20 hover:bg-black/40 backdrop-blur-md rounded-full text-white transition-colors cursor-pointer pointer-events-auto"
                   onClick={(e) => {
