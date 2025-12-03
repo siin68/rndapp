@@ -22,6 +22,27 @@ interface Event {
   status: string;
   participants?: any[];
   _count?: { participants: number };
+  host?: {
+    id: string;
+    name: string;
+    image?: string;
+  };
+  location?: {
+    id: string;
+    name: string;
+    city?: {
+      id: string;
+      name: string;
+    };
+  };
+  hobbies?: Array<{
+    hobby: {
+      id: string;
+      name: string;
+      icon: string;
+    };
+    isPrimary: boolean;
+  }>;
 }
 
 // Fallback helper
@@ -109,12 +130,19 @@ export default function OpenInvitesPage() {
                 </Card>
               ))
             : openEvents.map((event) => {
-                const location = getLocationById(event.locationId);
+                const location = event.location || getLocationById(event.locationId);
+                const cityName = location?.city?.name || location?.city || '';
+                const locationName = location?.name || '';
                 const participantCount =
                   event._count?.participants || event.participants?.length || 0;
                 const spotsLeft = event.maxParticipants - participantCount;
 
-                const totalHobbies = event.hobbyIds.length;
+                // Use hobbies from event if available, otherwise use hobbyIds
+                const eventHobbies = event.hobbies?.map(h => h.hobby) || [];
+                const hobbyIds = eventHobbies.length > 0 
+                  ? eventHobbies.map(h => h.id)
+                  : event.hobbyIds;
+                const totalHobbies = hobbyIds.length;
                 const showMax = 3;
                 // If we have > 3, we show 2 items + 1 counter badge = 3 elements total.
                 // If we have <= 3, we show all items.
@@ -122,14 +150,27 @@ export default function OpenInvitesPage() {
                 const displayCount = shouldTruncate
                   ? showMax - 1
                   : totalHobbies;
-                const displayHobbies = event.hobbyIds.slice(0, displayCount);
+                const displayHobbies = hobbyIds.slice(0, displayCount);
                 const remaining = totalHobbies - displayCount;
+
+                // Helper to get hobby info
+                const getHobbyInfo = (hid: string) => {
+                  const fromEvent = eventHobbies.find(h => h.id === hid);
+                  if (fromEvent) return { name: fromEvent.name, emoji: fromEvent.icon };
+                  return getHobby(hid);
+                };
 
                 return (
                   <Card
                     key={event.id}
                     onClick={() => router.push(`/event/${event.id}`)}
                     className="group relative border-0 bg-white rounded-3xl shadow-sm hover:shadow-xl hover:shadow-rose-100 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col h-full hover:-translate-y-1"
+                    style={{ 
+                      backfaceVisibility: 'hidden',
+                      WebkitBackfaceVisibility: 'hidden',
+                      transform: 'translateZ(0)',
+                      WebkitTransform: 'translateZ(0)'
+                    }}
                   >
                     <div className="relative aspect-[4/5] w-full overflow-hidden">
                       {event.image ? (
@@ -148,7 +189,7 @@ export default function OpenInvitesPage() {
 
                       <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 max-w-[90%]">
                         {displayHobbies.map((hid) => {
-                          const h = getHobby(hid);
+                          const h = getHobbyInfo(hid);
                           return (
                             <span
                               key={hid}
@@ -174,6 +215,41 @@ export default function OpenInvitesPage() {
                         {event.title}
                       </h3>
 
+                      {/* Host Info */}
+                      {event.host && (
+                        <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+                          <img 
+                            src={event.host.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${event.host.id}`}
+                            alt={event.host.name}
+                            className="w-6 h-6 rounded-full object-cover ring-1 ring-gray-200"
+                          />
+                          <span className="text-xs text-gray-600 font-medium truncate">
+                            by {event.host.name}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Hobbies Preview */}
+                      <div className="flex flex-wrap gap-1.5 pb-2">
+                        {displayHobbies.slice(0, 2).map((hid) => {
+                          const h = getHobbyInfo(hid);
+                          return (
+                            <span
+                              key={hid}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-purple-50 text-purple-700 text-[10px] font-bold"
+                            >
+                              <span>{h?.emoji}</span>
+                              <span className="truncate max-w-[60px]">{h?.name}</span>
+                            </span>
+                          );
+                        })}
+                        {totalHobbies > 2 && (
+                          <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-lg bg-gray-100 text-gray-600 text-[10px] font-bold">
+                            +{totalHobbies - 2}
+                          </span>
+                        )}
+                      </div>
+
                       <div className="grid grid-cols-2 gap-y-2 text-xs text-gray-500 font-medium mt-auto">
                         <div className="flex items-center gap-1.5">
                           <CalendarIcon className="w-3.5 h-3.5 text-rose-400" />
@@ -193,7 +269,7 @@ export default function OpenInvitesPage() {
                         <div className="flex items-center gap-1.5 col-span-2">
                           <MapPinIcon className="w-3.5 h-3.5 text-indigo-400" />
                           <span className="truncate">
-                            {location?.name || "Online"}
+                            {cityName || locationName || "Online"}
                           </span>
                         </div>
                       </div>

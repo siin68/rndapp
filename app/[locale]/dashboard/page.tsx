@@ -135,6 +135,29 @@ interface Event {
   hostId: string;
   maxParticipants: number;
   stats?: any;
+  host?: {
+    id: string;
+    name: string;
+    image?: string;
+  };
+  hobbies?: Array<{
+    hobby: {
+      id: string;
+      name: string;
+      icon: string;
+    };
+    isPrimary: boolean;
+  }>;
+  location?: {
+    id: string;
+    name: string;
+    city?: {
+      id: string;
+      name: string;
+    };
+  };
+  _count?: { participants: number };
+  participants?: any[];
 }
 
 interface EventStats {
@@ -369,78 +392,147 @@ export default function DashboardHome() {
             </Button>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {loading
               ? // Loading skeleton
                 Array.from({ length: 3 }).map((_, i) => (
                   <Card
                     key={i}
-                    className="border-0 bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-lg shadow-indigo-50/50 overflow-hidden flex flex-col h-full animate-pulse"
+                    className="border-0 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg shadow-indigo-50/50 overflow-hidden animate-pulse"
                   >
-                    <div className="h-40 bg-gradient-to-br from-gray-200 to-gray-300"></div>
-                    <CardContent className="p-6 space-y-4">
-                      <div className="h-4 bg-gray-200 rounded"></div>
-                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-32 bg-gradient-to-br from-gray-200 to-gray-300"></div>
+                    <CardContent className="p-4 space-y-3">
+                      <div className="h-3 bg-gray-200 rounded"></div>
+                      <div className="h-3 bg-gray-200 rounded w-3/4"></div>
                     </CardContent>
                   </Card>
                 ))
               : upcomingEvents.map((event) => {
-                  const hobby = getHobbyById(event.hobbyId);
-                  console.log("hobby: ", hobby);
+                  const primaryHobby = 
+                    event.hobbies?.find((h) => h.isPrimary)?.hobby ||
+                    event.hobbies?.[0]?.hobby ||
+                    getHobbyById(event.hobbyId);
                   const location = getLocationById(event.locationId);
+                  const participantCount = event._count?.participants || event.participants?.length || 0;
+
+                  // Get location from event data if available
+                  const eventLocation = event.location || location;
+                  const cityName = eventLocation?.city?.name || eventLocation?.city || '';
+                  const locationName = eventLocation?.name || '';
 
                   return (
                     <Card
                       key={event.id}
-                      className="group relative border-0 bg-white/80 backdrop-blur-xl hover:bg-white rounded-[2rem] shadow-lg shadow-indigo-50/50 hover:shadow-xl hover:shadow-indigo-100/50 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col h-full hover:-translate-y-1"
+                      className="group relative border-0 bg-white/80 backdrop-blur-xl hover:bg-white rounded-2xl shadow-lg shadow-indigo-50/50 hover:shadow-xl hover:shadow-indigo-100/50 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col hover:-translate-y-1"
                       onClick={() => router.push(`/event/${event.id}`)}
                     >
-                      <div className="h-40 bg-gradient-to-br from-indigo-400 via-purple-400 to-pink-400 relative overflow-hidden shrink-0">
-                        {event.image && (
+                      {/* Image Section */}
+                      <div className="relative w-full h-40 shrink-0 bg-gradient-to-br from-indigo-400 via-purple-400 to-pink-400 overflow-hidden">
+                        {event.image ? (
                           <img
                             src={event.image}
                             alt={event.title}
                             className="w-full h-full object-cover"
                           />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-white/30 text-5xl">
+                            {primaryHobby?.icon || "📅"}
+                          </div>
                         )}
-                        <div className="absolute inset-0 bg-black/10 mix-blend-overlay"></div>
-                        <div className="absolute bottom-4 left-4 text-white flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-2xl shadow-sm border border-white/20">
-                            {hobby?.icon}
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-100">
-                              {hobby?.name}
-                            </p>
-                            <h3 className="font-bold text-lg leading-tight text-white drop-shadow-sm">
-                              {event.title}
-                            </h3>
-                          </div>
-                        </div>
-                        <Badge className="absolute top-4 right-4 bg-white/90 text-indigo-600 font-bold shadow-sm backdrop-blur-sm">
-                          {event.status === "open" ? "Open" : "Full"}
+                        <div className="absolute inset-0 bg-black/5"></div>
+                        
+                        <Badge className="absolute top-3 right-3 bg-white/90 text-indigo-600 font-bold text-[10px] px-2 py-0.5">
+                          {event.status === "OPEN" ? "Open" : "Closed"}
                         </Badge>
                       </div>
 
-                      <CardContent className="p-6">
-                        <div className="space-y-4">
-                          <div className="flex items-center gap-3 text-gray-600 bg-gray-50 rounded-xl p-3">
-                            <CalendarIcon className="w-5 h-5 text-purple-500" />
-                            <div className="text-sm">
-                              <span className="block font-bold text-gray-800">
-                                {event.date}
-                              </span>
-                              <span className="text-gray-500">
-                                {event.time}
-                              </span>
-                            </div>
+                      {/* Content Section */}
+                      <CardContent className="flex-1 p-4 flex flex-col">
+                        {/* Title + Description */}
+                        <div className="mb-3">
+                          <h3 className="font-black text-base text-gray-900 mb-1 line-clamp-1">
+                            {event.title}
+                          </h3>
+                          {event.description && (
+                            <p className="text-xs text-gray-500 line-clamp-1">
+                              {event.description}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Host */}
+                        {event.host && (
+                          <div className="flex items-center gap-2 mb-3">
+                            <Avatar className="w-6 h-6 border border-purple-100">
+                              <AvatarImage
+                                src={event.host.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${event.host.id}`}
+                                alt={event.host.name}
+                              />
+                              <AvatarFallback className="bg-purple-100 text-purple-700 text-[10px] font-bold">
+                                {event.host.name.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <p className="text-xs text-gray-600 truncate">by <span className="font-bold text-gray-800">{event.host.name}</span></p>
+                          </div>
+                        )}
+
+                        {/* Hobbies */}
+                        {event.hobbies && event.hobbies.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mb-3">
+                            {event.hobbies.slice(0, 2).map((h) => (
+                              <Badge
+                                key={h.hobby.id}
+                                className="bg-purple-50 text-purple-700 border-0 text-[10px] font-bold px-2 py-0.5"
+                              >
+                                {h.hobby.icon} {h.hobby.name}
+                              </Badge>
+                            ))}
+                            {event.hobbies.length > 2 && (
+                              <Badge className="bg-gray-100 text-gray-600 border-0 text-[10px] font-bold px-2 py-0.5">
+                                +{event.hobbies.length - 2}
+                              </Badge>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Date & Location */}
+                        <div className="space-y-2 mb-3">
+                          <div className="flex items-center gap-2 bg-purple-50/50 rounded-lg p-2">
+                            <CalendarIcon className="w-4 h-4 text-purple-600 shrink-0" />
+                            <p className="text-xs font-bold text-gray-900 truncate">
+                              {new Date(event.date).toLocaleDateString('en-US', { 
+                                month: 'short', 
+                                day: 'numeric',
+                                year: 'numeric'
+                              })}
+                            </p>
                           </div>
 
-                          <div className="flex items-center gap-3 text-gray-600 bg-gray-50 rounded-xl p-3">
-                            <MapPinIcon className="w-5 h-5 text-rose-500" />
-                            <span className="text-sm font-medium truncate">
-                              {location?.name}
+                          <div className="flex items-center gap-2 bg-rose-50/50 rounded-lg p-2">
+                            <MapPinIcon className="w-4 h-4 text-rose-600 shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-bold text-gray-900 truncate">
+                                {cityName || locationName}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Participants */}
+                        <div className="mt-auto">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[10px] text-gray-500">
+                              {participantCount}/{event.maxParticipants}
                             </span>
+                            <span className="text-[10px] font-bold text-purple-600">
+                              {event.maxParticipants - participantCount} left
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                            <div 
+                              className="bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 h-1.5 rounded-full transition-all duration-500"
+                              style={{ width: `${Math.min((participantCount / event.maxParticipants) * 100, 100)}%` }}
+                            ></div>
                           </div>
                         </div>
                       </CardContent>

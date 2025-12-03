@@ -1,6 +1,7 @@
 "use client";
 
-import { useParams, useRouter, usePathname } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { useState, useEffect } from "react";
 import {
@@ -14,6 +15,17 @@ import {
 } from "@/components/ui";
 import { getHobbyById, getLocationById } from "@/lib/data";
 import { useSession } from "next-auth/react";
+import { 
+  ArrowLeft, 
+  Calendar, 
+  MapPin, 
+  MessageCircle, 
+  Clock, 
+  Users, 
+  CheckCircle2, 
+  Share2,
+  Navigation
+} from "lucide-react";
 
 interface Event {
   id: string;
@@ -32,17 +44,14 @@ interface Event {
   _count?: { participants: number };
 }
 
-import { ArrowLeftIcon, CalendarIcon, MapPinIcon, MessageCircleIcon } from "@/icons/icons";
-
-const MessageIcon = MessageCircleIcon;
-
 export default function EventDetailPage() {
   const params = useParams();
   const router = useRouter();
   const pathname = usePathname();
-  const locale = pathname.split("/")[1] || "en";
-  const t = useTranslations("event");
   const { data: session } = useSession();
+  
+  // Using a fallback for translations if namespace setup varies
+  const t = useTranslations("event");
 
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,7 +61,6 @@ export default function EventDetailPage() {
     async function fetchEvent() {
       try {
         const response = await fetch(`/api/events/${params.id}`);
-        console.log("response: ", response);
         const data = await response.json();
 
         if (data.success) {
@@ -73,289 +81,290 @@ export default function EventDetailPage() {
     }
   }, [params.id]);
 
+  // Loading State - Modern Skeleton
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-orange-50 py-8">
-        <div className="container mx-auto px-4 max-w-3xl">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded mb-6"></div>
-            <Card className="mb-6">
-              <CardContent className="pt-6">
-                <div className="space-y-4">
-                  <div className="h-6 bg-gray-200 rounded"></div>
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="h-20 bg-gray-200 rounded"></div>
-                    <div className="h-20 bg-gray-200 rounded"></div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+      <div className="min-h-screen bg-gray-50/50 p-6 flex flex-col items-center justify-center space-y-8 animate-pulse">
+        <div className="w-full max-w-4xl h-80 bg-gray-200 rounded-3xl"></div>
+        <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="h-64 bg-gray-200 rounded-3xl md:col-span-2"></div>
+          <div className="h-64 bg-gray-200 rounded-3xl"></div>
         </div>
       </div>
     );
   }
 
+  // Error State
   if (error || !event) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-6xl mb-4">🔍</div>
-          <p className="text-gray-500">{error || "Event not found"}</p>
-          <Button onClick={() => router.push(`/dashboard`)} className="mt-4">
-            Back to Dashboard
-          </Button>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4">
+        <div className="w-24 h-24 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-6">
+          <MapPin className="w-10 h-10" />
         </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Event not found</h2>
+        <p className="text-gray-500 mb-8">{error || "We couldn't find the event you're looking for."}</p>
+        <Button onClick={() => router.push(`/dashboard`)} size="lg" className="rounded-full">
+          Back to Dashboard
+        </Button>
       </div>
     );
   }
 
+  // Derived Data
   const hobby = getHobbyById(event.hobbyId) || event.hobby;
   const location = getLocationById(event.locationId) || event.location;
   const host = event.host;
-  const participantCount =
-    event._count?.participants || event.participants?.length || 0;
-  const isFull = participantCount >= event.maxParticipants;
-  const spotsLeft = event.maxParticipants - participantCount;
+  const participantCount = event._count?.participants || event.participants?.length || 0;
+  const maxParticipants = event.maxParticipants || 10; // Fallback if 0
+  const isFull = participantCount >= maxParticipants;
+  const spotsLeft = maxParticipants - participantCount;
   const isParticipant = event.participants?.some(
-    (p: any) => p.userId === session?.user?.id
+    (p: any) => p.userId === (session?.user as any)?.id || p.id === (session?.user as any)?.id
   );
+  
+  const eventDate = new Date(event.date);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-orange-50 py-8">
-      <div className="container mx-auto px-4 max-w-3xl">
-        <Button
-          variant="outline"
-          onClick={() => router.back()}
-          className="mb-6"
-        >
-          ← Back
-        </Button>
+    <div className="min-h-screen bg-gray-50 font-sans pb-32">
+      {/* Navbar / Top Controls */}
+      <div className=" z-40 p-2 pointer-events-none">
+        <div className="max-w-5xl mx-auto flex justify-between items-center">
+          <Button 
+            variant="secondary" 
+            size="icon" 
+            onClick={() => router.back()}
+            className="rounded-full bg-white/80 backdrop-blur-md shadow-sm border border-gray-200 hover:bg-white pointer-events-auto h-10 w-10 transition-transform hover:scale-105"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-700" />
+          </Button>
+        </div>
+      </div>
 
-        <Card className="mb-6">
-          <CardContent className="pt-6">
-            <div className="flex justify-between items-start mb-4">
-              <h1 className="text-3xl font-extrabold text-gray-800">
-                {event.title}
-              </h1>
-              <Badge
-                variant={event.status === "OPEN" ? "default" : "secondary"}
+      <div className="max-w-5xl mx-auto px-4 pt-4 space-y-6">
+        
+        {/* HERO SECTION */}
+        <div className="relative group overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 shadow-2xl shadow-indigo-200">
+          
+          {/* Event Image Background */}
+          {event.image && (
+            <div className="absolute inset-0 z-0">
+              <img 
+                src={event.image} 
+                alt={event.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+
+          {/* Abstract Background Patterns */}
+          <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
+          <div className="relative z-10 p-8 md:p-12 flex flex-col h-full justify-between min-h-[360px]">
+            <div className="flex justify-between items-start">
+              <div className="inline-flex items-center gap-2 bg-white/90 px-3 py-1.5 rounded-xl shadow-lg text-gray-800">
+                <span>{hobby?.icon}</span>
+                <span>{hobby?.name || "Social Event"}</span>
+              </div>
+              <Badge 
+                className={`${event.status === 'OPEN' ? 'bg-green-400/90 text-green-950' : 'bg-gray-400/90 text-gray-100'} backdrop-blur-md border-0 px-4 py-1.5 text-xs font-bold uppercase tracking-wider shadow-lg`}
               >
-                {event.status === "OPEN" ? "Open" : event.status}
+                {event.status === 'OPEN' ? 'Open' : event.status}
               </Badge>
             </div>
-            <p className="text-gray-600 mb-6">{event.description}</p>
 
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <h3 className="text-xs font-semibold text-gray-500 uppercase mb-2">
-                  {t("host")}
-                </h3>
-                <div className="flex items-center gap-3">
-                  <Avatar className="w-10 h-10">
-                    <AvatarImage
-                      src={host?.image || ""}
-                      alt={host?.name || ""}
-                    />
-                    <AvatarFallback>
-                      {host?.name?.charAt(0) || "H"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <div className="font-semibold text-gray-800">
-                      {host?.name || "Event Host"}
-                    </div>
-                    {host?.id && (
-                      <button
-                        onClick={() =>
-                          router.push(`/${locale}/profile/${host.id}`)
-                        }
-                        className="text-sm text-primary-600 hover:underline"
-                      >
-                        View profile
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-xs font-semibold text-gray-500 uppercase mb-2">
-                  {t("hobby")}
-                </h3>
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">{hobby?.icon}</span>
-                  <span className="font-semibold text-gray-800">
-                    {hobby?.name}
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-xs font-semibold text-gray-500 uppercase mb-2">
-                  {t("location")}
-                </h3>
-                <div className="font-semibold text-gray-800">
-                  {location?.name}
-                </div>
-                <div className="text-sm text-gray-600">
-                  {location?.city?.name || location?.city}
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-xs font-semibold text-gray-500 uppercase mb-2">
-                  {t("when")}
-                </h3>
-                <div className="font-semibold text-gray-800">
-                  {new Date(event.date).toLocaleDateString()}
-                </div>
-                <div className="text-sm text-gray-600">
-                  {new Date(event.date).toLocaleTimeString()}
-                </div>
+            <div className="space-y-4 mt-auto">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.1] drop-shadow-md">
+                {event.title}
+              </h1>
+              
+              <div className="flex flex-wrap gap-4 text-white font-medium text-sm md:text-base">
+                 <div className="flex items-center gap-2 bg-white/90 px-3 py-1.5 rounded-xl shadow-lg text-gray-800">
+                    <Calendar className="w-4 h-4 text-indigo-600" />
+                    {eventDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                 </div>
+                 <div className="flex items-center gap-2 bg-white/90 px-3 py-1.5 rounded-xl shadow-lg text-gray-800">
+                    <Clock className="w-4 h-4 text-indigo-600" />
+                    {eventDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                 </div>
+                 <div className="flex items-center gap-2 bg-white/90 px-3 py-1.5 rounded-xl shadow-lg text-gray-800">
+                    <MapPin className="w-4 h-4 text-indigo-600" />
+                    {location?.city?.name || location?.city || "Unknown City"}
+                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="max-w-3xl mx-auto px-4 space-y-6">
-        
-        <div className="relative rounded-[2.5rem] overflow-hidden bg-white shadow-xl shadow-purple-100/50 group transform transition-all hover:scale-[1.01]">
-           <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 via-purple-500 to-rose-500 opacity-90 transition-opacity group-hover:opacity-100" />
-           <div className="absolute -bottom-10 -right-10 text-[12rem] opacity-20 rotate-12">{hobby?.icon}</div>
-           
-           <div className="relative p-8 md:p-10 text-white space-y-6">
-              <div className="flex justify-between items-start">
-                 <Badge className="bg-white/20 backdrop-blur-md border-0 text-white font-bold px-3 py-1">
-                    {hobby?.name}
-                 </Badge>
-                 <Badge className={`${event.status === 'OPEN' ? 'bg-green-400' : 'bg-gray-400'} text-white border-0 font-bold px-3 py-1 uppercase tracking-wider shadow-sm`}>
-                    {event.status === 'OPEN' ? 'Open for Joining' : 'Full / Closed'}
-                 </Badge>
-              </div>
-              
-              <div className="space-y-2">
-                 <h1 className="text-3xl md:text-5xl font-black leading-tight tracking-tight drop-shadow-sm">
-                   {event.title}
-                 </h1>
-                 <div className="flex flex-wrap gap-4 text-purple-100 font-medium pt-2">
-                    <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-xl backdrop-blur-sm border border-white/10">
-                       <CalendarIcon className="w-4 h-4" />
-                       {new Date(event.date).toLocaleDateString()} • {new Date(event.date).toLocaleTimeString()}
-                    </div>
-                    <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-xl backdrop-blur-sm border border-white/10">
-                       <MapPinIcon className="w-4 h-4" />
-                       {location?.name}, {location?.city?.name || location?.city}
-                    </div>
-                 </div>
-              </div>
-           </div>
+          </div>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-           
-           <div className="md:col-span-2 space-y-6">
-              
-              <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white shadow-sm flex items-center justify-between">
-                 <div className="flex items-center gap-4">
-                    <div className="relative">
-                       <Avatar className="w-14 h-14 border-2 border-white shadow-md">
-                          <AvatarImage src={host?.image} />
-                          <AvatarFallback className="bg-gradient-to-br from-rose-100 to-purple-100 text-purple-600 font-bold">{host?.name?.charAt(0)}</AvatarFallback>
-                       </Avatar>
-                       <div className="absolute -bottom-1 -right-1 bg-amber-400 text-[10px] font-bold px-1.5 py-0.5 rounded-md text-white border border-white shadow-sm tracking-wide">
-                          HOST
-                       </div>
+        {/* MAIN GRID LAYOUT */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          
+          {/* LEFT COLUMN (Details) - Spans 8 cols */}
+          <div className="md:col-span-8 space-y-6">
+            
+            {/* Description Card */}
+            <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
+               <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                 About this Event
+               </h3>
+               <div className="prose prose-gray max-w-none text-gray-600 leading-relaxed">
+                 {event.description ? event.description : "No description provided."}
+               </div>
+               
+               {/* Location Detail */}
+               <div className="mt-8 p-4 bg-gray-50 rounded-2xl border border-gray-100 flex items-start gap-4">
+                  <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 text-indigo-600">
+                    <Navigation className="w-6 h-6" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-1">Location</h4>
+                    <p className="font-semibold text-gray-800 text-lg">{location?.name}</p>
+                    <p className="text-gray-500 text-sm">{location?.address || location?.city?.name || location?.city}</p>
+                  </div>
+               </div>
+            </div>
+
+            {/* Host Card */}
+            <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100 flex items-center justify-between group cursor-pointer hover:border-indigo-100 transition-all" onClick={() => router.push(`/profile/${host?.id}`)}>
+               <div className="flex items-center gap-5">
+                  <div className="relative">
+                    <Avatar className="w-16 h-16 border-4 border-white shadow-lg group-hover:scale-105 transition-transform">
+                      <AvatarImage src={host?.image || ""} alt={host?.name || ""} />
+                      <AvatarFallback className="bg-gradient-to-br from-indigo-100 to-purple-100 text-indigo-600 font-bold text-xl">
+                        {host?.name?.charAt(0) || "H"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="absolute -bottom-1 -right-1 bg-gradient-to-r from-amber-400 to-orange-400 text-white text-[10px] font-bold px-2 py-0.5 rounded-full border-2 border-white shadow-sm">
+                      HOST
                     </div>
-                    <div>
-                       <div className="text-xs font-bold text-gray-400 uppercase tracking-wide">Organized by</div>
-                       <div className="text-lg font-bold text-gray-900">{host?.name}</div>
-                    </div>
-                 </div>
-                 <Button variant="ghost" size="sm" onClick={() => router.push(`/profile/${host?.id}`)} className="text-purple-600 font-bold hover:bg-purple-50 rounded-xl">
-                    Profile
-                 </Button>
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-0.5">Organized by</div>
+                    <div className="text-xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">{host?.name || "Unknown Host"}</div>
+                    <div className="text-sm text-gray-500 font-medium">View Profile</div>
+                  </div>
+               </div>
+               <div className="hidden sm:block">
+                  <Button variant="ghost" className="text-gray-400 hover:text-indigo-600">
+                    <ArrowLeft className="w-5 h-5 rotate-180" />
+                  </Button>
+               </div>
+            </div>
+
+          </div>
+
+          {/* RIGHT COLUMN (Participants & Status) - Spans 4 cols */}
+          <div className="md:col-span-4 space-y-6">
+            
+            {/* Participants Card */}
+            <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100 h-full flex flex-col">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-indigo-500" />
+                  Participants
+                </h3>
+                <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${isFull ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                  {participantCount} / {maxParticipants}
+                </span>
               </div>
 
-              <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 border border-white shadow-sm space-y-4">
-                 <h3 className="font-bold text-gray-900 text-lg">About this Event</h3>
-                 <p className="text-gray-600 leading-relaxed text-base">
-                    {event.description}
-                 </p>
-                 <div className="pt-4 flex flex-wrap gap-2">
-                    {['Friendly', 'Casual', 'Beginners Welcome', 'English'].map(tag => (
-                       <span key={tag} className="px-3 py-1 rounded-full bg-gray-100 text-xs font-bold text-gray-500 border border-gray-200">
-                          #{tag}
-                       </span>
-                    ))}
-                 </div>
+              {/* Progress Bar */}
+              <div className="w-full bg-gray-100 rounded-full h-2 mb-6 overflow-hidden">
+                <div 
+                  className={`h-full rounded-full transition-all duration-1000 ease-out ${isFull ? 'bg-red-500' : 'bg-indigo-500'}`}
+                  style={{ width: `${Math.min((participantCount / maxParticipants) * 100, 100)}%` }}
+                ></div>
               </div>
 
-           </div>
+              <div className="space-y-4 flex-1 overflow-y-auto max-h-[400px] pr-2 custom-scrollbar">
+                 {/* Current Participants */}
+                 {event.participants?.map((participant: any) => {
+                    const pUser = participant.user || participant;
+                    return (
+                      <div 
+                        key={pUser.id || Math.random()} 
+                        className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer"
+                        onClick={() => router.push(`/profile/${pUser.id}`)}
+                      >
+                        <Avatar className="w-10 h-10 border border-gray-200">
+                          <AvatarImage src={pUser.image} />
+                          <AvatarFallback className="text-xs bg-gray-100 font-bold text-gray-500">
+                            {pUser.name?.charAt(0) || "?"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-gray-800 truncate">{pUser.name}</p>
+                          <p className="text-xs text-gray-400 font-medium">Joined</p>
+                        </div>
+                      </div>
+                    );
+                 })}
 
-           <div className="md:col-span-1">
-              <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white shadow-sm h-full">
-                 <div className="flex justify-between items-center mb-6">
-                    <h3 className="font-bold text-gray-900">The Squad</h3>
-                    <span className="text-xs font-bold bg-green-100 text-green-700 px-2 py-1 rounded-lg">
-                       {participantCount}/{event.maxParticipants}
-                    </span>
-                 </div>
+                 {/* Empty Slots */}
+                 {spotsLeft > 0 && Array.from({ length: Math.min(3, spotsLeft) }).map((_, i) => (
+                   <div key={`empty-${i}`} className="flex items-center gap-3 p-2 opacity-40">
+                      <div className="w-10 h-10 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center">
+                        <div className="w-2 h-2 rounded-full bg-gray-300"></div>
+                      </div>
+                      <div className="text-sm font-medium text-gray-500">Open Spot</div>
+                   </div>
+                 ))}
                  
-                 <div className="space-y-3">
-                    {event.participants?.map((participant: any) => {
-                       const participantUser = participant.user || participant;
-                       return (
-                          <div key={participant.id || participant.userId} className="flex items-center gap-3 p-2 hover:bg-white rounded-xl transition-colors cursor-pointer group" onClick={() => router.push(`/profile/${participantUser.id || participant.userId}`)}>
-                             <Avatar className="w-10 h-10 border border-white shadow-sm group-hover:scale-105 transition-transform">
-                                <AvatarImage src={participantUser?.image} />
-                                <AvatarFallback className="text-xs font-bold text-gray-500">{participantUser?.name?.charAt(0) || 'U'}</AvatarFallback>
-                             </Avatar>
-                             <div className="truncate">
-                                <div className="text-sm font-bold text-gray-800 truncate">{participantUser?.name || 'Unknown'}</div>
-                                <div className="text-[10px] text-gray-400 font-medium">Ready to go</div>
-                             </div>
-                          </div>
-                       )
-                    }) || []}
-                    {spotsLeft > 0 && Array.from({length: Math.min(3, spotsLeft)}).map((_, i) => (
-                       <div key={i} className="flex items-center gap-3 p-2 opacity-50">
-                          <div className="w-10 h-10 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-xs font-bold">
-                             ?
-                          </div>
-                          <div className="text-sm font-medium text-gray-400">Open Spot</div>
-                       </div>
-                    ))}
-                 </div>
+                 {spotsLeft > 3 && (
+                   <div className="text-center text-xs text-gray-400 font-medium py-2">
+                     + {spotsLeft - 3} more spots available
+                   </div>
+                 )}
               </div>
-           </div>
-        </div>
+            </div>
 
+          </div>
+        </div>
       </div>
 
-      <div className="fixed bottom-8 inset-x-0 px-4 z-40 flex justify-center">
-         <div className="bg-gray-900/95 backdrop-blur-xl p-2 pl-3 rounded-[2rem] shadow-2xl shadow-purple-500/20 flex items-center gap-3 max-w-md w-full border border-white/10 ring-1 ring-black/5">
-            <Button 
-               onClick={() => router.push(`/dashboard/chat/${event.id}`)}
-               className="rounded-full w-12 h-12 bg-white/10 hover:bg-white/20 text-white border-0 flex items-center justify-center shrink-0 transition-colors"
-            >
-               <MessageIcon className="w-5 h-5" />
-            </Button>
-            <Button 
-               disabled={isFull || event.status !== 'OPEN'}
-               className={`
-                  flex-1 rounded-full h-12 text-base font-bold shadow-lg transition-all
-                  ${isFull 
+      {/* STICKY BOTTOM ACTION BAR (Glassmorphism) */}
+      <div className="fixed bottom-0 inset-x-0 p-6 z-50 flex justify-center pointer-events-none">
+        <div className="bg-gray-900/90 backdrop-blur-xl border border-white/10 rounded-[2rem] p-2 pl-3 shadow-2xl shadow-indigo-500/20 w-full max-w-md flex items-center gap-3 pointer-events-auto transform transition-all hover:scale-[1.02]">
+           
+           {/* Message Button */}
+           <Button 
+             variant="ghost"
+             size="icon"
+             onClick={() => router.push(`/dashboard/chat/${event.id}`)}
+             className="w-12 h-12 rounded-full bg-white/10 text-white hover:bg-white/20 border border-white/5"
+             title="Event Chat"
+           >
+             <MessageCircle className="w-6 h-6" />
+           </Button>
+
+           {/* Main CTA */}
+           {isParticipant ? (
+             <Button 
+                className="flex-1 h-12 rounded-full bg-green-500 hover:bg-green-600 text-white font-bold text-base shadow-lg shadow-green-500/20"
+                onClick={() => {}} 
+                disabled
+             >
+                <CheckCircle2 className="w-5 h-5 mr-2" />
+                You're Going
+             </Button>
+           ) : (
+             <Button 
+                className={`flex-1 h-12 rounded-full font-bold text-base shadow-lg transition-all
+                  ${isFull || event.status !== 'OPEN'
                     ? 'bg-gray-700 text-gray-400 cursor-not-allowed' 
-                    : 'bg-white text-gray-900 hover:bg-gray-50 hover:scale-[1.02]'}
-               `}
-               onClick={() => alert('Join functionality will be implemented')}
-            >
-               {isFull ? 'Squad Full' : 'Join Event'}
-            </Button>
-         </div>
+                    : 'bg-white text-gray-900 hover:bg-indigo-50'
+                  }
+                `}
+                onClick={() => alert("Join logic here")}
+                disabled={isFull || event.status !== 'OPEN'}
+             >
+                {isFull 
+                  ? 'Squad Full' 
+                  : event.status !== 'OPEN' 
+                    ? 'Event Closed' 
+                    : `Join Event`
+                }
+             </Button>
+           )}
+        </div>
       </div>
 
     </div>
