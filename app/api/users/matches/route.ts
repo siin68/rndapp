@@ -62,25 +62,9 @@ export async function GET(request: NextRequest) {
     const userHobbyIds = user.hobbies.map((h) => h.hobbyId);
     const userLocationIds = user.locations.map((l) => l.locationId);
 
-    const excludedUserIds = new Set([userId]); // Start with current user
-
-    user.hostedEvents.forEach((event) => {
-      event.participants.forEach((participant) => {
-        excludedUserIds.add(participant.userId);
-      });
-    });
-
-    user.eventParticipants.forEach((participation) => {
-      const event = participation.event;
-      excludedUserIds.add(event.hostId); 
-      event.participants.forEach((participant) => {
-        excludedUserIds.add(participant.userId);
-      });
-    });
-
     const whereConditions: any = {
       AND: [
-        { id: { notIn: Array.from(excludedUserIds) } }, // Exclude users who have interacted through events
+        { id: { not: userId } }, 
         { isActive: true },
       ],
     };
