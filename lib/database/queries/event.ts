@@ -28,13 +28,6 @@ export const eventQueries = {
               { locationId: { in: userLocationIds } },
             ],
           },
-          {
-            NOT: {
-              participants: {
-                some: { userId },
-              },
-            },
-          },
         ],
       },
       include: {

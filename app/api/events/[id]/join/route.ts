@@ -223,28 +223,15 @@ export async function DELETE(
       );
     }
 
-    await prisma.eventParticipant.update({
+    // Delete the participation record so user can rejoin later
+    await prisma.eventParticipant.delete({
       where: {
         eventId_userId: {
           eventId,
           userId,
         },
       },
-      data: {
-        status: "LEFT",
-        leftAt: new Date(),
-      },
     });
-
-    // Alternatively, delete the participation record completely
-    // await prisma.eventParticipant.delete({
-    //   where: {
-    //     eventId_userId: {
-    //       eventId,
-    //       userId,
-    //     },
-    //   },
-    // });
 
     // Update event status back to OPEN if it was FULL
     const newParticipantCount = event._count.participants - 1;

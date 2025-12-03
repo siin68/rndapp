@@ -134,10 +134,6 @@ export default function EventDetailPage() {
       return;
     }
 
-    if (!confirm("Are you sure you want to leave this event?")) {
-      return;
-    }
-
     setJoining(true);
     setActionError(null);
     setActionSuccess(null);
