@@ -81,7 +81,6 @@ export default function LocationsStep() {
     }
   }, [checkingOnboarding]);
 
-  // Fetch locations from API
   useEffect(() => {
     async function fetchLocations() {
       try {

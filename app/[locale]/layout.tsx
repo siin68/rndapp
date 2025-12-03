@@ -4,6 +4,8 @@ import { Inter } from 'next/font/google';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import SessionProvider from '@/components/SessionProvider';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import '../globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -35,6 +37,19 @@ export default async function RootLayout({
             {children}
           </NextIntlClientProvider>
         </SessionProvider>
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+          icon={false}
+        />
       </body>
     </html>
   );

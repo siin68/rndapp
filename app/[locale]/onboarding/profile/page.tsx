@@ -13,6 +13,7 @@ import {
   AvatarFallback,
 } from "@/components/ui";
 import { CameraIcon, UserIcon, ArrowRightIcon } from "@/icons/icons";
+import { uploadToCloudinaryClient } from "@/lib/cloudinary";
 // import { uploadToCloudinaryClient } from "@/lib/cloudinary";
 
 export default function OnboardingProfilePage() {
@@ -32,6 +33,7 @@ export default function OnboardingProfilePage() {
   const [imagePreview, setImagePreview] = useState("");
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     async function checkOnboardingStatus() {
@@ -78,13 +80,11 @@ export default function OnboardingProfilePage() {
     }
   }, [session]);
 
-  // Show loading while checking onboarding
   if (checkingOnboarding) {
     return (
       <div className="min-h-screen bg-[#FAFAFA] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-xl mx-auto w-full text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Checking profile status...</p>
         </div>
       </div>
     );
@@ -94,15 +94,11 @@ export default function OnboardingProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
+    if (!file.type.startsWith("image/")) {
       return;
     }
 
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert('Image size should be less than 5MB');
       return;
     }
 
@@ -115,28 +111,58 @@ export default function OnboardingProfilePage() {
       };
       reader.readAsDataURL(file);
 
-      // Upload to Cloudinary using client-side upload
-      // const imageUrl = await uploadToCloudinaryClient(file);
-      
-      // Update form data with the uploaded image URL
-      // setFormData((prev) => ({ ...prev, image: imageUrl }));
-      // setImagePreview(imageUrl);
-      
+      const imageUrl = await uploadToCloudinaryClient(file);
+
+      setFormData((prev) => ({ ...prev, image: imageUrl }));
+      setImagePreview(imageUrl);
     } catch (error) {
       console.error("Error uploading image:", error);
-      alert("Failed to upload image. Please try again.");
-      
-      // Reset to previous state if upload fails
+
       setImagePreview(formData.image);
     } finally {
       setUploadingImage(false);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem("onboarding-profile", JSON.stringify(formData));
-    router.push(`/onboarding/hobbies`);
+    
+    if (!session?.user?.id) {
+      console.error('No user session');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      localStorage.setItem("onboarding-profile", JSON.stringify(formData));
+      
+      const response = await fetch("/api/auth/update-profile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: session.user.id,
+          name: formData.name,
+          age: parseInt(formData.age) || null,
+          gender: formData.gender.toUpperCase(),
+          bio: formData.bio,
+          image: formData.image,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update profile');
+      }
+
+      console.log('Profile updated successfully');
+      router.push(`/onboarding/hobbies`);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      router.push(`/onboarding/hobbies`);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -286,10 +312,20 @@ export default function OnboardingProfilePage() {
 
             <Button
               type="submit"
-              className="w-full h-14 rounded-2xl bg-gray-900 hover:bg-black text-white text-lg font-bold shadow-xl shadow-gray-200 hover:shadow-2xl hover:-translate-y-1 transition-all flex items-center justify-center gap-2 group"
+              disabled={isSubmitting || uploadingImage}
+              className="w-full h-14 rounded-2xl bg-gray-900 hover:bg-black text-white text-lg font-bold shadow-xl shadow-gray-200 hover:shadow-2xl hover:-translate-y-1 transition-all flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              {tCommon("next")}
-              <ArrowRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              {isSubmitting ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Saving...
+                </>
+              ) : (
+                <>
+                  {tCommon("next")}
+                  <ArrowRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
             </Button>
           </form>
         </div>
