@@ -112,7 +112,7 @@ export default function MyEventsPage() {
   const t = useTranslations("dashboard.myEvents");
   const router = useRouter();
   const { data: session } = useSession();
-  const [activeTab, setActiveTab] = useState<"created" | "joined" | "history">(
+  const [activeTab, setActiveTab] = useState<"created" | "joined" >(
     "created"
   );
 
@@ -165,7 +165,6 @@ export default function MyEventsPage() {
   const tabs = [
     { id: "created", label: t("tabs.created"), icon: "✨" },
     { id: "joined", label: t("tabs.joined"), icon: "🎟️" },
-    { id: "history", label: t("tabs.history"), icon: "📜" },
   ] as const;
 
   return (
@@ -222,9 +221,16 @@ export default function MyEventsPage() {
             return (
               <Card
                 key={event.id}
-                onClick={() => router.push(`/event/${event.id}`)}
+                onClick={() => {
+                  // If user is the host, redirect to edit page
+                  if (isHost) {
+                    router.push(`/dashboard/create-invite?edit=${event.id}`);
+                  } else {
+                    router.push(`/event/${event.id}`);
+                  }
+                }}
                 className="group relative border-0 bg-white/80 backdrop-blur-xl hover:bg-white rounded-[2rem] shadow-xl shadow-purple-50/50 hover:shadow-2xl hover:shadow-purple-100/50 transition-all duration-500 cursor-pointer overflow-hidden flex flex-col h-full hover:-translate-y-1 ring-1 ring-white/50"
-              >
+              > 
                 <div className="h-32 relative overflow-hidden shrink-0">
                   {event.image ? (
                     <img

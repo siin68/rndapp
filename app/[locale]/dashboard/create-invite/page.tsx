@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent, Input, Textarea, Button } from "@/components/ui";
 import { useSession } from "next-auth/react";
 
@@ -75,7 +76,11 @@ interface Location {
 export default function CreateInvitePage() {
   const t = useTranslations("dashboard.createInvite");
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session } = useSession();
+
+  const editEventId = searchParams.get("edit"); // Get event ID from query param
+  const isEditMode = !!editEventId;
 
   const [hobbies, setHobbies] = useState<Hobby[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
@@ -118,6 +123,39 @@ export default function CreateInvitePage() {
         if (locationsData.success) {
           setLocations(locationsData.data || []);
         }
+
+        // If edit mode, fetch existing event data
+        if (isEditMode && editEventId) {
+          const eventRes = await fetch(`/api/events/${editEventId}`);
+          const eventData = await eventRes.json();
+          
+          if (eventData.success && eventData.data) {
+            const event = eventData.data;
+            
+            // Parse date and time
+            const eventDate = new Date(event.date);
+            const dateStr = eventDate.toISOString().split('T')[0];
+            const timeStr = eventDate.toTimeString().slice(0, 5);
+            
+            // Extract hobby IDs from event hobbies
+            const hobbyIds = event.hobbies?.map((h: any) => h.hobby?.id || h.hobbyId) || [];
+            
+            setFormData({
+              title: event.title || "",
+              description: event.description || "",
+              image: event.image || "",
+              hobbyIds: hobbyIds,
+              locationId: event.locationId || "",
+              date: dateStr,
+              time: timeStr,
+              maxParticipants: String(event.maxParticipants || 8),
+            });
+            
+            if (event.image) {
+              setImagePreview(event.image);
+            }
+          }
+        }
       } catch (error) {
         console.error("Error fetching data:", error);
         setHobbies([]);
@@ -128,7 +166,7 @@ export default function CreateInvitePage() {
     }
 
     fetchData();
-  }, []);
+  }, [isEditMode, editEventId]);
 
   // --- Image Handling ---
   const handleFileSelect = async (file: File) => {
@@ -196,11 +234,25 @@ export default function CreateInvitePage() {
   const toggleHobby = (id: string) => {
     setFormData((prev) => {
       const exists = prev.hobbyIds.includes(id);
+      
+      // If deselecting, allow it
+      if (exists) {
+        return {
+          ...prev,
+          hobbyIds: prev.hobbyIds.filter(hId => hId !== id)
+        };
+      }
+      
+      // If selecting and already at max (3), don't allow
+      if (prev.hobbyIds.length >= 3) {
+        alert("You can select a maximum of 3 hobbies");
+        return prev;
+      }
+      
+      // Otherwise, add the new hobby
       return {
         ...prev,
-        hobbyIds: exists 
-          ? prev.hobbyIds.filter(hId => hId !== id) 
-          : [...prev.hobbyIds, id]
+        hobbyIds: [...prev.hobbyIds, id]
       };
     });
   };
@@ -235,8 +287,12 @@ export default function CreateInvitePage() {
         requiresApproval: false,
       };
 
-      const response = await fetch("/api/events", {
-        method: "POST",
+      // Use PUT for edit mode, POST for create mode
+      const url = isEditMode ? `/api/events/${editEventId}` : "/api/events";
+      const method = isEditMode ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method: method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(eventData),
       });
@@ -246,11 +302,11 @@ export default function CreateInvitePage() {
       if (result.success) {
         router.push("/dashboard/my-events");
       } else {
-        alert(result.error || "Failed to create event");
+        alert(result.error || `Failed to ${isEditMode ? 'update' : 'create'} event`);
       }
     } catch (error) {
-      console.error("Error creating event:", error);
-      alert("Failed to create event");
+      console.error(`Error ${isEditMode ? 'updating' : 'creating'} event:`, error);
+      alert(`Failed to ${isEditMode ? 'update' : 'create'} event`);
     } finally {
       setSubmitting(false);
     }
@@ -266,13 +322,13 @@ export default function CreateInvitePage() {
       <div className="w-full max-w-4xl">
         <div className="mb-6 text-center">
           <span className="inline-block py-1 px-3 rounded-full bg-white/60 backdrop-blur-sm border border-rose-100 text-rose-500 text-[10px] font-bold tracking-widest uppercase mb-2 shadow-sm">
-            ✨ Design Your Date
+            {isEditMode ? "✏️ Edit Your Event" : "✨ Design Your Date"}
           </span>
           <h1 className="text-3xl md:text-4xl font-black tracking-tight text-gray-900 drop-shadow-sm mb-2">
-            {t("title") || "Create Invite"}
+            {isEditMode ? "Edit Event" : (t("title") || "Create Invite")}
           </h1>
           <p className="text-sm text-gray-500 font-medium max-w-xl mx-auto">
-            Find someone who loves what you love. Start by setting the scene.
+            {isEditMode ? "Update your event details and settings." : "Find someone who loves what you love. Start by setting the scene."}
           </p>
         </div>
 
@@ -335,23 +391,28 @@ export default function CreateInvitePage() {
                       What&apos;s the vibe?
                     </h3>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-rose-400 bg-rose-50 px-2 py-0.5 rounded-full">
-                      Multi-select
+                      Max 3
                     </span>
                   </div>
                   
                   <div className="flex flex-wrap gap-2">
                     {hobbies.map((hobby) => {
                       const isSelected = formData.hobbyIds?.includes(hobby.id);
+                      const isDisabled = !isSelected && formData.hobbyIds.length >= 3;
+                      
                       return (
                         <button
                           key={hobby.id}
                           type="button"
                           onClick={() => toggleHobby(hobby.id)}
+                          disabled={isDisabled}
                           className={`
                             group relative flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300
                             ${isSelected 
                               ? "bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-md shadow-rose-200 scale-105" 
-                              : "bg-gray-50 text-gray-600 hover:bg-white hover:shadow-sm hover:text-gray-900"
+                              : isDisabled
+                                ? "bg-gray-100 text-gray-300 cursor-not-allowed"
+                                : "bg-gray-50 text-gray-600 hover:bg-white hover:shadow-sm hover:text-gray-900"
                             }
                           `}
                         >
@@ -368,7 +429,12 @@ export default function CreateInvitePage() {
                     })}
                   </div>
                   {(!formData.hobbyIds || formData.hobbyIds.length === 0) && (
-                    <p className="mt-3 text-xs text-gray-400 italic">Select at least one interest to help find your match.</p>
+                    <p className="mt-3 text-xs text-gray-400 italic">Select up to 3 interests to help find your match.</p>
+                  )}
+                  {formData.hobbyIds && formData.hobbyIds.length > 0 && (
+                    <p className="mt-3 text-xs text-rose-500 font-medium">
+                      {formData.hobbyIds.length} of 3 selected
+                    </p>
                   )}
                 </CardContent>
               </Card>
@@ -465,11 +531,11 @@ export default function CreateInvitePage() {
                         className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-rose-500 hover:accent-rose-600 transition-all [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-rose-500 [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:hover:bg-rose-600 [&::-webkit-slider-thumb]:hover:scale-110 [&::-webkit-slider-thumb]:transition-all"
                       />
                       <div className="flex justify-between text-[8px] text-gray-400 font-medium px-1">
-                        <span>2</span>
-                        <span>25</span>
-                        <span>50</span>
-                        <span>75</span>
-                        <span>100</span>
+                        <button type="button" onClick={() => setFormData({ ...formData, maxParticipants: "2" })} className="hover:text-rose-500 hover:font-bold transition-all cursor-pointer">2</button>
+                        <button type="button" onClick={() => setFormData({ ...formData, maxParticipants: "25" })} className="hover:text-rose-500 hover:font-bold transition-all cursor-pointer">25</button>
+                        <button type="button" onClick={() => setFormData({ ...formData, maxParticipants: "50" })} className="hover:text-rose-500 hover:font-bold transition-all cursor-pointer">50</button>
+                        <button type="button" onClick={() => setFormData({ ...formData, maxParticipants: "75" })} className="hover:text-rose-500 hover:font-bold transition-all cursor-pointer">75</button>
+                        <button type="button" onClick={() => setFormData({ ...formData, maxParticipants: "100" })} className="hover:text-rose-500 hover:font-bold transition-all cursor-pointer">100</button>
                       </div>
                     </div>
                   </div>
@@ -488,7 +554,10 @@ export default function CreateInvitePage() {
                       disabled={submitting}
                       className="flex-[2] h-10 rounded-xl bg-gradient-to-r from-rose-500 to-purple-600 hover:from-rose-600 hover:to-purple-700 text-white font-bold text-sm shadow-lg shadow-rose-200 hover:shadow-xl hover:shadow-rose-300 transform transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-70"
                     >
-                      {submitting ? "Publishing..." : "Publish Invite"}
+                      {submitting 
+                        ? (isEditMode ? "Updating..." : "Publishing...") 
+                        : (isEditMode ? "Update Event" : "Publish Invite")
+                      }
                     </Button>
                   </div>
 
