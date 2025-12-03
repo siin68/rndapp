@@ -32,7 +32,7 @@ export async function GET(
     }
 
     // Calculate event stats
-    const stats = EventService.calculateEventStats(event);
+    const stats = EventService.calculateEventStats(event as any);
 
     const eventWithStats = {
       ...event,

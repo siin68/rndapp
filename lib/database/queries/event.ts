@@ -69,6 +69,7 @@ export const eventQueries = {
         },
         location: { include: { city: true } },
         participants: {
+          where: { status: "JOINED" },
           include: {
             user: {
               select: { id: true, name: true, image: true, bio: true },

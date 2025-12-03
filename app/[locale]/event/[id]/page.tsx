@@ -26,6 +26,7 @@ import {
   Share2,
   Navigation
 } from "lucide-react";
+import { MessageIcon } from "@/icons/icons";
 
 interface Event {
   id: string;
@@ -56,9 +57,14 @@ export default function EventDetailPage() {
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [joining, setJoining] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchEvent() {
+      if (!params?.id) return;
+      
       try {
         const response = await fetch(`/api/events/${params.id}`);
         const data = await response.json();
@@ -76,10 +82,91 @@ export default function EventDetailPage() {
       }
     }
 
-    if (params.id) {
+    if (params?.id) {
       fetchEvent();
     }
-  }, [params.id]);
+  }, [params?.id]);
+
+  // Handle joining event
+  const handleJoinEvent = async () => {
+    if (!params?.id) return;
+    
+    if (!session?.user?.id) {
+      router.push(`/${locale}/login`);
+      return;
+    }
+
+    setJoining(true);
+    setActionError(null);
+    setActionSuccess(null);
+
+    try {
+      const response = await fetch(`/api/events/${params.id}/join`, {
+        method: "POST",
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setActionSuccess("Successfully joined the event!");
+        // Refresh event data
+        const eventResponse = await fetch(`/api/events/${params.id}`);
+        const eventData = await eventResponse.json();
+        if (eventData.success) {
+          setEvent(eventData.data);
+        }
+      } else {
+        setActionError(data.error || "Failed to join event");
+      }
+    } catch (err) {
+      console.error("Error joining event:", err);
+      setActionError("Failed to join event. Please try again.");
+    } finally {
+      setJoining(false);
+    }
+  };
+
+  // Handle leaving event
+  const handleLeaveEvent = async () => {
+    if (!params?.id) return;
+    
+    if (!session?.user?.id) {
+      return;
+    }
+
+    if (!confirm("Are you sure you want to leave this event?")) {
+      return;
+    }
+
+    setJoining(true);
+    setActionError(null);
+    setActionSuccess(null);
+
+    try {
+      const response = await fetch(`/api/events/${params.id}/join`, {
+        method: "DELETE",
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setActionSuccess("Successfully left the event");
+        // Refresh event data
+        const eventResponse = await fetch(`/api/events/${params.id}`);
+        const eventData = await eventResponse.json();
+        if (eventData.success) {
+          setEvent(eventData.data);
+        }
+      } else {
+        setActionError(data.error || "Failed to leave event");
+      }
+    } catch (err) {
+      console.error("Error leaving event:", err);
+      setActionError("Failed to leave event. Please try again.");
+    } finally {
+      setJoining(false);
+    }
+  };
 
   // Loading State - Modern Skeleton
   if (loading) {
@@ -320,39 +407,77 @@ export default function EventDetailPage() {
         </div>
       </div>
 
-      {/* STICKY BOTTOM ACTION BAR (Glassmorphism) */}
-      <div className="fixed bottom-0 inset-x-0 p-6 z-50 flex justify-center pointer-events-none">
-        <div className="bg-gray-900/90 backdrop-blur-xl border border-white/10 rounded-[2rem] p-2 pl-3 shadow-2xl shadow-indigo-500/20 w-full max-w-md flex items-center gap-3 pointer-events-auto transform transition-all hover:scale-[1.02]">
-           
-         
-           {isParticipant ? (
-             <Button 
-                className="flex-1 h-12 rounded-full bg-green-500 hover:bg-green-600 text-white font-bold text-base shadow-lg shadow-green-500/20"
-                onClick={() => {}} 
-                disabled
-             >
-                <CheckCircle2 className="w-5 h-5 mr-2" />
-                You're Going
-             </Button>
-           ) : (
-             <Button 
-                className={`flex-1 h-12 rounded-full font-bold text-base shadow-lg transition-all
-                  ${isFull || event.status !== 'OPEN'
-                    ? 'bg-gray-700 text-gray-400 cursor-not-allowed' 
-                    : 'bg-white text-gray-900 hover:bg-indigo-50'
-                  }
-                `}
-                onClick={() => alert("Join logic here")}
-                disabled={isFull || event.status !== 'OPEN'}
-             >
-                {isFull 
-                  ? 'Squad Full' 
-                  : event.status !== 'OPEN' 
-                    ? 'Event Closed' 
-                    : `Join Event`
+      {/* Success/Error Toast */}
+      {(actionSuccess || actionError) && (
+        <div className="fixed top-8 inset-x-0 px-4 z-50 flex justify-center">
+          <div
+            className={`${
+              actionSuccess
+                ? "bg-green-500"
+                : "bg-red-500"
+            } text-white px-6 py-3 rounded-2xl shadow-xl flex items-center gap-3 animate-slide-down`}
+          >
+            <span className="text-xl">
+              {actionSuccess ? "✓" : "✗"}
+            </span>
+            <span className="font-semibold">
+              {actionSuccess || actionError}
+            </span>
+            <button
+              onClick={() => {
+                setActionSuccess(null);
+                setActionError(null);
+              }}
+              className="ml-2 text-white/80 hover:text-white"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Bottom Action Bar */}
+      <div className="fixed bottom-8 inset-x-0 px-4 z-40 flex justify-center">
+        <div className="bg-gray-900/95 backdrop-blur-xl p-2 pl-3 rounded-[2rem] shadow-2xl shadow-purple-500/20 flex items-center gap-3 max-w-md w-full border border-white/10 ring-1 ring-black/5">
+          <Button
+            onClick={() => router.push(`/dashboard/chat/${event.id}`)}
+            className="rounded-full w-12 h-12 bg-white/10 hover:bg-white/20 text-white border-0 flex items-center justify-center shrink-0 transition-colors"
+          >
+            <MessageIcon className="w-5 h-5" />
+          </Button>
+
+          {/* Show different button based on participation status */}
+          {isParticipant ? (
+            <Button
+              onClick={handleLeaveEvent}
+              disabled={joining}
+              className="flex-1 rounded-full h-12 text-base font-bold shadow-lg transition-all bg-red-500 text-white hover:bg-red-600 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {joining ? "Leaving..." : "Leave Event"}
+            </Button>
+          ) : (
+            <Button
+              onClick={handleJoinEvent}
+              disabled={isFull || event.status !== "OPEN" || joining}
+              className={`
+                flex-1 rounded-full h-12 text-base font-bold shadow-lg transition-all
+                ${
+                  isFull || event.status !== "OPEN"
+                    ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-900 hover:bg-gray-50 hover:scale-[1.02]"
                 }
-             </Button>
-           )}
+                ${joining ? "opacity-50 cursor-wait" : ""}
+              `}
+            >
+              {joining
+                ? "Joining..."
+                : isFull
+                ? "Squad Full"
+                : event.status !== "OPEN"
+                ? "Event Closed"
+                : "Join Event"}
+            </Button>
+          )}
         </div>
       </div>
 
