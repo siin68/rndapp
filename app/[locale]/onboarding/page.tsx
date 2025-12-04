@@ -7,7 +7,7 @@ import { useSession } from "next-auth/react";
 export default function OnboardingPage() {
   const router = useRouter();
   const pathname = usePathname();
-  const locale = pathname.split("/")[1] || "en";
+  const locale = (pathname ? pathname.split("/")[1] : "") || "en";
   const { data: session } = useSession();
   const [checking, setChecking] = useState(true);
 

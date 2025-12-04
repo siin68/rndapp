@@ -1,6 +1,6 @@
-export { Button } from './button';
-export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './card';
-export { Input } from './input';
-export { Textarea } from './textarea';
-export { Avatar, AvatarImage, AvatarFallback } from './avatar';
-export { Badge } from './badge';
+export { Button } from './Button';
+export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './Card';
+export { Input } from './Input';
+export { Textarea } from './TextArea';
+export { Avatar, AvatarImage, AvatarFallback } from './Avatar';
+export { Badge } from './Badge';

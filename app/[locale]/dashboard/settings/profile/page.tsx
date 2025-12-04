@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import Image from 'next/image';
 import { Button, Input, Textarea } from '@/components/ui';
 import { uploadToCloudinaryClient } from '@/lib/cloudinary';
 import { toast } from 'react-toastify';
@@ -238,11 +239,12 @@ export default function EditProfilePage() {
                  
                  <div className="w-32 h-32 border-[4px] border-white shadow-xl relative z-10 rounded-full overflow-hidden bg-gray-100">
                   {imagePreview && (
-                    <img 
+                    <Image 
                       key={imagePreview} 
                       src={imagePreview} 
                       alt="Profile" 
-                      className="w-full h-full object-cover"
+                      fill
+                      className="object-cover"
                     />
                   )}
                 </div>

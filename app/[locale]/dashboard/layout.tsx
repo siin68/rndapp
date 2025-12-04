@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import React, { useState } from "react";
+import Image from "next/image";
 import {
   MenuIcon,
   XIcon,
@@ -32,7 +33,7 @@ export default function DashboardLayout({
   const [isNotificationOn, setIsNotificationOn] = useState(true);
 
   // Derive locale if not passed (fallback parsing)
-  const locale = params?.locale || pathname.split("/")[1] || "en";
+  const locale = params?.locale || (pathname ? pathname.split("/")[1] : "") || "en";
   const handleNotify = () => {
     setIsNotificationOn(!isNotificationOn);
     console.log("Notification toggled:", !isNotificationOn);
@@ -73,7 +74,7 @@ export default function DashboardLayout({
               <div className="relative w-12 h-12">
                 <div className="absolute inset-0 bg-gradient-to-tr from-rose-500 to-purple-600 rounded-xl rotate-6 opacity-80 blur-[2px]"></div>
                 <div className="relative w-full h-full rounded-xl overflow-hidden">
-                  <img src="/assets/images/pickle-match.webp" alt="Pickle Match Logo" className="w-full h-full object-cover" />
+                  <Image src="/assets/images/pickle-match.webp" alt="Pickle Match Logo" fill className="object-cover" />
                 </div>
               </div>
               <span className="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-purple-800 to-rose-700 tracking-tight hidden sm:block">
@@ -118,7 +119,7 @@ export default function DashboardLayout({
             <div className="relative w-12 h-12">
               <div className="absolute inset-0 bg-gradient-to-tr from-rose-500 to-purple-600 rounded-xl rotate-6 opacity-80 blur-[2px]"></div>
               <div className="relative w-full h-full rounded-xl overflow-hidden">
-                <img src="/assets/images/pickle-match.webp" alt="Pickle Match Logo" className="w-full h-full object-cover" />
+                <Image src="/assets/images/pickle-match.webp" alt="Pickle Match Logo" fill className="object-cover" />
               </div>
             </div>
             <span className="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-purple-800 to-rose-700 tracking-tight">
@@ -137,8 +138,8 @@ export default function DashboardLayout({
           {navItems.map((item) => {
             const isActive = item.exact
               ? pathname === item.path || pathname === `/${locale}${item.path}`
-              : pathname.startsWith(item.path) ||
-                pathname.startsWith(`/${locale}${item.path}`);
+              : (pathname?.startsWith(item.path) ||
+                pathname?.startsWith(`/${locale}${item.path}`)) ?? false;
 
             return (
               <button
@@ -186,8 +187,8 @@ export default function DashboardLayout({
           {navItems.map((item) => {
             const isActive = item.exact
               ? pathname === item.path || pathname === `/${locale}${item.path}`
-              : pathname.startsWith(item.path) ||
-                pathname.startsWith(`/${locale}${item.path}`);
+              : (pathname?.startsWith(item.path) ||
+                pathname?.startsWith(`/${locale}${item.path}`)) ?? false;
 
             if (item.isSpecial) {
               return (

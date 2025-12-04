@@ -2,7 +2,7 @@
 
 import { CalendarIcon } from 'lucide-react';
 
-import { Button } from '../ui/button';
+import { Button } from '../ui/Button';
 import { Calendar } from '../ui/calendar';
 import { Label } from '../ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';

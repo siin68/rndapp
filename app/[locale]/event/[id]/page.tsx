@@ -4,6 +4,7 @@ import { useParams, usePathname } from "next/navigation";
 import { useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import {
   Card,
   CardContent,
@@ -32,6 +33,7 @@ interface Event {
   id: string;
   title: string;
   description?: string;
+  image?: string;
   date: Date | string;
   hobbyId: string;
   locationId: string;
@@ -50,6 +52,7 @@ export default function EventDetailPage() {
   const router = useRouter();
   const pathname = usePathname();
   const { data: session } = useSession();
+  const locale = (pathname ? pathname.split('/')[1] : '') || 'en';
   
   // Using a fallback for translations if namespace setup varies
   const t = useTranslations("event");
@@ -231,10 +234,11 @@ export default function EventDetailPage() {
           {/* Event Image Background */}
           {event.image && (
             <div className="absolute inset-0 z-0">
-              <img 
+              <Image 
                 src={event.image} 
                 alt={event.title}
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
               />
             </div>
           )}
@@ -244,8 +248,8 @@ export default function EventDetailPage() {
           <div className="relative z-10 p-8 md:p-12 flex flex-col h-full justify-between min-h-[360px]">
             <div className="flex justify-between items-start">
               <div className="inline-flex items-center gap-2 bg-white/90 px-3 py-1.5 rounded-xl shadow-lg text-gray-800">
-                <span>{hobby?.icon}</span>
-                <span>{hobby?.name || "Social Event"}</span>
+                <span>{(hobby as any)?.icon}</span>
+                <span>{(hobby as any)?.name || "Social Event"}</span>
               </div>
               <Badge 
                 className={`${event.status === 'OPEN' ? 'bg-green-400/90 text-green-950' : 'bg-gray-400/90 text-gray-100'} backdrop-blur-md border-0 px-4 py-1.5 text-xs font-bold uppercase tracking-wider shadow-lg`}

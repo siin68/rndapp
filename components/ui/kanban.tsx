@@ -25,7 +25,7 @@ import { createContext, type HTMLAttributes, type ReactNode, useContext, useStat
 import { createPortal } from 'react-dom';
 import tunnel from 'tunnel-rat';
 import { cn } from '../../lib/utils';
-import { Card } from './card';
+import { Card } from './Card';
 import { ScrollArea, ScrollBar } from './scroll-area';
 
 const t = tunnel();

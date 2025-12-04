@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from '@/lib/auth.config';
 import prisma from "@/lib/prisma";
 import { EventService } from "@/lib/database/services";
 
@@ -104,7 +104,7 @@ export async function POST(
     }
 
     // Create notification for event host
-    await prisma.notification.create({
+    const notification = await prisma.notification.create({
       data: {
         userId: event.hostId,
         type: "EVENT_JOIN",
@@ -118,6 +118,37 @@ export async function POST(
         }),
       },
     });
+
+    // Emit real-time notification via Socket.IO
+    try {
+      const { socketEmit } = await import('@/lib/socket');
+      
+      // Send notification to host
+      socketEmit.toUser(event.hostId, 'notification', {
+        id: notification.id,
+        type: 'EVENT_JOIN',
+        title: notification.title,
+        message: notification.message,
+        data: {
+          eventId,
+          participantId: userId,
+          participantName: user.name,
+          participantImage: user.image,
+        },
+        createdAt: notification.createdAt,
+      });
+
+      // Broadcast to all event participants
+      socketEmit.toEvent(eventId, 'event-joined', {
+        eventId,
+        userId,
+        userName: user.name,
+        userImage: user.image,
+        participantCount: newParticipantCount,
+      });
+    } catch (socketError) {
+      console.error('Socket emit error:', socketError);
+    }
 
     return NextResponse.json({
       success: true,

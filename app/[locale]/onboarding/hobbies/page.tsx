@@ -18,7 +18,7 @@ export default function HobbiesStep() {
   const tCommon = useTranslations("onboarding");
   const router = useRouter();
   const pathname = usePathname();
-  const locale = pathname.split("/")[1] || "en";
+  const locale = (pathname ? pathname.split("/")[1] : "") || "en";
   const { data: session } = useSession();
 
   const [selectedHobbies, setSelectedHobbies] = useState<string[]>([]);

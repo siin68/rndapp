@@ -48,7 +48,7 @@ export async function GET(
       hobbies: userProfile.hobbies.map((userHobby) => ({
         id: userHobby.hobby.id,
         name: userHobby.hobby.name,
-        emoji: userHobby.hobby.emoji,
+        emoji: userHobby.hobby.icon,
         isPrimary: userHobby.isPrimary,
       })),
       preferredLocations: userProfile.locations.map((userLocation) => ({

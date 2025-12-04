@@ -118,7 +118,7 @@ async function seed() {
           data: eventData,
           include: {
             host: { select: { id: true, name: true, image: true } },
-            hobby: true,
+            hobbies: { include: { hobby: true } },
             location: { include: { city: true } },
             _count: { select: { participants: true } }
           }

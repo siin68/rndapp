@@ -121,7 +121,7 @@ export async function PUT(
     }
 
     // Parse date if provided
-    let eventDate;
+    let eventDate: Date | undefined;
     if (date) {
       try {
         eventDate = new Date(date);

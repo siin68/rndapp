@@ -31,7 +31,7 @@ export default function LocationsStep() {
   const tCommon = useTranslations("onboarding");
   const router = useRouter();
   const pathname = usePathname();
-  const locale = pathname.split("/")[1] || "en";
+  const locale = (pathname ? pathname.split("/")[1] : "") || "en";
   const { data: session } = useSession();
 
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
@@ -189,8 +189,8 @@ export default function LocationsStep() {
       let locationName = "";
       let cityName = "";
 
-      if (userLoc?.address) {
-        const addressParts = userLoc?.address
+      if ((userLoc as any)?.address) {
+        const addressParts = (userLoc as any)?.address
           .split(",")
           .map((part: any) => part.trim());
 

@@ -4,8 +4,8 @@
 import { useTranslations } from 'next-intl';
 import { signOut, useSession } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Card, CardContent, Button, Avatar, AvatarImage, AvatarFallback, Badge } from '@/components/ui';
-import { useState } from 'react';
+import { Card, CardContent, Button, Avatar, AvatarImage, AvatarFallback } from '@/components/ui';
+import { useState, useEffect } from 'react';
 
 // --- Icons ---
 const UserIcon = ({className}: {className?: string}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
@@ -18,6 +18,44 @@ const ShieldIcon = ({className}: {className?: string}) => <svg xmlns="http://www
 const LogOutIcon = ({className}: {className?: string}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>;
 const TrashIcon = ({className}: {className?: string}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>;
 const ChevronRightIcon = ({className}: {className?: string}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m9 18 6-6-6-6"/></svg>;
+
+interface UserProfile {
+  profile: {
+    id: string;
+    name: string;
+    email: string;
+    image: string | null;
+    bio: string | null;
+    age: number | null;
+    gender: string | null;
+    isActive: boolean;
+    isVerified: boolean;
+    lastActive: Date | null;
+    createdAt: Date;
+  };
+  hobbies: Array<{
+    id: string;
+    name: string;
+    nameVi: string | null;
+    category: string;
+    icon: string;
+    skillLevel: string;
+    isPrimary: boolean;
+  }>;
+  locations: Array<{
+    id: string;
+    name: string;
+    nameVi: string | null;
+    city: any;
+    isPrimary: boolean;
+  }>;
+  stats: {
+    eventsHosted: number;
+    eventsAttended: number;
+    totalReviews: number;
+    averageRating: number;
+  };
+}
 
 // --- Components ---
 const Toggle = ({ active, onClick }: { active: boolean; onClick: () => void }) => (
@@ -57,13 +95,45 @@ export default function SettingsPage() {
   const { data: session } = useSession();
   const router = useRouter();
   const pathname = usePathname();
-  const locale = pathname.split('/')[1] || 'en';
+  const locale = (pathname ? pathname.split('/')[1] : '') || 'en';
 
+  // State for user profile from API
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Settings state
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(false);
   const [privateProfile, setPrivateProfile] = useState(false);
   const [showLocation, setShowLocation] = useState(true);
+
+  // Fetch user profile from API
+  useEffect(() => {
+    async function fetchUserProfile() {
+      if (!session?.user?.id) return;
+
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/users/profile?userId=${session.user.id}`);
+        const data = await response.json();
+
+        if (data.success) {
+          setUserProfile(data.data);
+        } else {
+          setError(data.error || 'Failed to load profile');
+        }
+      } catch (err) {
+        console.error('Error fetching user profile:', err);
+        setError('Failed to load profile');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchUserProfile();
+  }, [session?.user?.id]);
 
   const handleLogout = async () => {
     await signOut({ redirect: false });
@@ -72,9 +142,33 @@ export default function SettingsPage() {
 
   const toggleLanguage = () => {
     const newLocale = locale === 'en' ? 'vi' : 'en';
+    if (!pathname) return;
     const newPath = pathname.replace(`/${locale}/`, `/${newLocale}/`);
     router.push(newPath);
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen w-full bg-gradient-to-br from-rose-50 via-purple-50 to-indigo-50 py-8 px-4 flex justify-center items-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500 mx-auto mb-4"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !userProfile) {
+    return (
+      <div className="min-h-screen w-full bg-gradient-to-br from-rose-50 via-purple-50 to-indigo-50 py-8 px-4 flex justify-center items-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error || 'Profile not found'}</p>
+          <Button onClick={() => router.push('/dashboard')}>Back to Dashboard</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-rose-50 via-purple-50 to-indigo-50 py-8 px-4 sm:px-6 lg:px-8 flex justify-center pb-24">
@@ -94,16 +188,16 @@ export default function SettingsPage() {
                  <div className="relative group">
                    <div className="absolute -inset-1 bg-gradient-to-br from-rose-500 to-purple-600 rounded-full blur opacity-70 group-hover:opacity-100 transition-opacity"></div>
                    <Avatar className="w-32 h-32 sm:w-36 sm:h-36 border-[6px] border-white shadow-xl relative">
-                     <AvatarImage src={session?.user?.image || ''} alt={session?.user?.name || ''} className="object-cover" />
+                     <AvatarImage src={userProfile.profile.image || ''} alt={userProfile.profile.name} className="object-cover" />
                      <AvatarFallback className="text-4xl bg-gradient-to-br from-gray-100 to-gray-200 text-gray-500 font-black">
-                       {session?.user?.name?.charAt(0) || '?'}
+                       {userProfile.profile.name?.charAt(0) || '?'}
                      </AvatarFallback>
                    </Avatar>
                  </div>
 
                  <div className="flex-1 text-center sm:text-left mb-2">
-                   <h1 className="text-3xl font-black text-gray-900 tracking-tight">{session?.user?.name || 'Guest User'}</h1>
-                   <p className="text-rose-500 font-medium">{session?.user?.email}</p>
+                   <h1 className="text-3xl font-black text-gray-900 tracking-tight">{userProfile.profile.name}</h1>
+                   <p className="text-rose-500 font-medium">{userProfile.profile.email}</p>
                  </div>
                  
                  <Button 

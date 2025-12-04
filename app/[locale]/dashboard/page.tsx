@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
+import Image from "next/image";
 import {
   Card,
   CardContent,
@@ -417,7 +418,7 @@ export default function DashboardHome() {
 
                   // Get location from event data if available
                   const eventLocation = event.location || location;
-                  const cityName = eventLocation?.city?.name || eventLocation?.city || '';
+                  const cityName = (eventLocation?.city as any)?.name || eventLocation?.city || '';
                   const locationName = eventLocation?.name || '';
 
                   return (
@@ -429,14 +430,15 @@ export default function DashboardHome() {
                       {/* Image Section */}
                       <div className="relative w-full h-40 shrink-0 bg-gradient-to-br from-indigo-400 via-purple-400 to-pink-400 overflow-hidden">
                         {event.image ? (
-                          <img
+                          <Image
                             src={event.image}
                             alt={event.title}
-                            className="w-full h-full object-cover"
+                            fill
+                            className="object-cover"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-white/30 text-5xl">
-                            {primaryHobby?.icon || "📅"}
+                            {(primaryHobby as any)?.icon || "📅"}
                           </div>
                         )}
                         <div className="absolute inset-0 bg-black/5"></div>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
+import Image from "next/image";
 import { Card, CardContent, Badge, Button } from "@/components/ui";
 import { getHobbyById, getLocationById, fetchEvents } from "@/lib/data";
 import { useSession } from "next-auth/react";
@@ -131,7 +132,7 @@ export default function OpenInvitesPage() {
               ))
             : openEvents.map((event) => {
                 const location = event.location || getLocationById(event.locationId);
-                const cityName = location?.city?.name || location?.city || '';
+                const cityName = (location?.city as any)?.name || location?.city || '';
                 const locationName = location?.name || '';
                 const participantCount =
                   event._count?.participants || event.participants?.length || 0;
@@ -174,10 +175,11 @@ export default function OpenInvitesPage() {
                   >
                     <div className="relative aspect-[4/5] w-full overflow-hidden">
                       {event.image ? (
-                        <img
+                        <Image
                           src={event.image}
                           alt={event.title}
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                          fill
+                          className="object-cover transition-transform duration-700 group-hover:scale-105"
                         />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-rose-100 to-indigo-100 flex items-center justify-center">
@@ -195,9 +197,9 @@ export default function OpenInvitesPage() {
                               key={hid}
                               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-sm text-gray-800 text-[10px] font-bold shadow-sm"
                             >
-                              <span>{h?.emoji}</span>
+                              <span>{(h as any)?.emoji}</span>
                               <span className="truncate max-w-[80px]">
-                                {h?.name}
+                                {(h as any)?.name}
                               </span>
                             </span>
                           );
@@ -218,9 +220,11 @@ export default function OpenInvitesPage() {
                       {/* Host Info */}
                       {event.host && (
                         <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
-                          <img 
+                          <Image 
                             src={event.host.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${event.host.id}`}
                             alt={event.host.name}
+                            width={24}
+                            height={24}
                             className="w-6 h-6 rounded-full object-cover ring-1 ring-gray-200"
                           />
                           <span className="text-xs text-gray-600 font-medium truncate">
@@ -238,8 +242,8 @@ export default function OpenInvitesPage() {
                               key={hid}
                               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-purple-50 text-purple-700 text-[10px] font-bold"
                             >
-                              <span>{h?.emoji}</span>
-                              <span className="truncate max-w-[60px]">{h?.name}</span>
+                              <span>{(h as any)?.emoji}</span>
+                              <span className="truncate max-w-[60px]">{(h as any)?.name}</span>
                             </span>
                           );
                         })}

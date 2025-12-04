@@ -28,7 +28,7 @@ export default function ChatPage() {
   const [message, setMessage] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const chat = getChatById(params.id as string);
+  const chat = params?.id ? getChatById(params.id as string) : null;
   
   // Auto-scroll to bottom on load and new messages
   useEffect(() => {

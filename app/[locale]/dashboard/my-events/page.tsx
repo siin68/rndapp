@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
+import Image from "next/image";
 import {
   Card,
   CardContent,
@@ -231,10 +232,11 @@ export default function MyEventsPage() {
               > 
                 <div className="h-32 relative overflow-hidden shrink-0">
                   {event.image ? (
-                    <img
+                    <Image
                       src={event.image}
                       alt={event.title}
-                      className="w-full h-full object-cover"
+                      fill
+                      className="object-cover"
                     />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-indigo-300 via-purple-300 to-pink-300" />
@@ -281,14 +283,14 @@ export default function MyEventsPage() {
                   )}
 
                   <div className="absolute -bottom-4 -right-4 text-7xl opacity-30 transform rotate-12 transition-transform group-hover:scale-110 text-white/80">
-                    {primaryHobby?.icon}
+                    {(primaryHobby as any)?.icon}
                   </div>
                 </div>
 
                 <CardContent className="p-6">
                   <div className="mb-4">
                     <div className="text-xs font-bold uppercase tracking-wider text-purple-500 mb-1 flex items-center gap-1">
-                      {primaryHobby?.name}
+                      {(primaryHobby as any)?.name}
                     </div>
                     <h3 className="font-extrabold text-xl text-gray-800 leading-tight group-hover:text-purple-600 transition-colors">
                       {event.title}

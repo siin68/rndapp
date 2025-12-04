@@ -33,14 +33,14 @@ export default function LocationPage() {
   const [eventsAtLocation, setEventsAtLocation] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const location = getLocationById(params.id as string);
+  const location = params?.id ? getLocationById(params.id as string) : null;
 
   useEffect(() => {
     async function fetchLocationEvents() {
       try {
         const events = await fetchEvents({ limit: 50 });
         const filtered = events.filter(
-          (e: any) => e.locationId === params.id && e.status === "OPEN"
+          (e: any) => e.locationId === params?.id && e.status === "OPEN"
         );
         setEventsAtLocation(filtered);
       } catch (error) {
@@ -52,7 +52,7 @@ export default function LocationPage() {
     }
 
     fetchLocationEvents();
-  }, [params.id]);
+  }, [params?.id]);
 
   if (!location) return <div>Location not found</div>;
 
@@ -88,7 +88,7 @@ export default function LocationPage() {
                     </Badge>
                   </div>
                   <div className="absolute bottom-3 left-3 text-white">
-                    <div className="text-3xl opacity-80">{hobby?.icon}</div>
+                    <div className="text-3xl opacity-80">{(hobby as any)?.icon}</div>
                   </div>
                 </div>
                 <CardContent className="pt-4">
@@ -101,7 +101,7 @@ export default function LocationPage() {
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-2 text-gray-600">
                       <span>🎯</span>
-                      <span className="font-medium">{hobby?.name}</span>
+                      <span className="font-medium">{(hobby as any)?.name}</span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-600">
                       <span>📅</span>

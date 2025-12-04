@@ -5,7 +5,6 @@ import { useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, Button, Avatar, AvatarImage, AvatarFallback, Badge } from '@/components/ui';
-import { getHobbyById, getLocationById } from '@/lib/data';
 import { ArrowLeftIcon, MapPinIcon, SparklesIcon, CalendarIcon, MessageCircleIcon } from '@/icons/icons';
 
 export default function ProfilePage() {
@@ -21,6 +20,7 @@ export default function ProfilePage() {
   useEffect(() => {
     async function fetchUserProfile() {
       try {
+        if (!params?.id) return;
         const response = await fetch(`/api/users/profile/${params.id}`);
         const data = await response.json();
 
@@ -41,10 +41,10 @@ export default function ProfilePage() {
       }
     }
 
-    if (params.id) {
+    if (params?.id) {
       fetchUserProfile();
     }
-  }, [params.id]);
+  }, [params?.id]);
 
   // Helper to format date for the event card
   const formatDate = (dateString: string) => {

@@ -99,7 +99,7 @@ export default function MessagesPage() {
   const t = useTranslations("dashboard.messages");
   const router = useRouter();
   const pathname = usePathname();
-  const locale = pathname.split("/")[1] || "en";
+  const locale = (pathname ? pathname.split("/")[1] : "") || "en";
   const { data: session } = useSession();
 
   const [chats, setChats] = useState([]);

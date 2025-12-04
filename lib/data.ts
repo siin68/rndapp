@@ -26,16 +26,28 @@ export function getLocationById(id: string) {
 }
 
 // Legacy function for compatibility
-export function getUserById(id: string) {
+export function getUserById(id: string): any {
   // This would typically fetch from database in real implementation
   // For now, return a placeholder since we're transitioning away from mock data
   return null;
 }
 
-export function getEventById(id: string) {
+export function getEventById(id: string): any {
   // This would typically fetch from database in real implementation
   // For now, return a placeholder since we're transitioning away from mock data
   return null;
+}
+
+export function getChatById(id: string): any {
+  // This would typically fetch from database in real implementation
+  // For now, return a placeholder since we're transitioning away from mock data
+  return null;
+}
+
+export function getMessagesByChatId(chatId: string): any[] {
+  // This would typically fetch from database in real implementation
+  // For now, return a placeholder since we're transitioning away from mock data
+  return [];
 }
 
 // API helper functions
