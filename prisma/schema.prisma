@@ -36,6 +36,7 @@ model User {
   locations         UserLocation[]
   hostedEvents      Event[]              @relation("HostEvents")
   eventParticipants EventParticipant[]
+  eventJoinRequests EventJoinRequest[]
   sentInvitations   EventInvitation[]    @relation("SentInvitations")
   receivedInvitations EventInvitation[]  @relation("ReceivedInvitations")
   chatParticipants  ChatParticipant[]
@@ -153,9 +154,11 @@ model Event {
   location         Location           @relation(fields: [locationId], references: [id])
   hobbies          EventHobby[]       // Many-to-many relation with hobbies
   participants     EventParticipant[]
+  joinRequests     EventJoinRequest[]
   invitations      EventInvitation[]
   chats            Chat[]
   reviews          Review[]
+  notifications    Notification[]
 }
 
 // Junction table for Event-Hobby many-to-many relation
@@ -182,6 +185,21 @@ model EventParticipant {
   
   event      Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
   user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([eventId, userId])
+}
+
+model EventJoinRequest {
+  id        String   @id @default(cuid())
+  eventId   String
+  userId    String
+  status    String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  message   String?  // Optional message from user
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   @@unique([eventId, userId])
 }
@@ -329,14 +347,16 @@ model Review {
 model Notification {
   id        String           @id @default(cuid())
   userId    String
-  type      String           // FRIEND_REQUEST, EVENT_INVITATION, EVENT_REMINDER, NEW_MESSAGE, EVENT_UPDATE, SYSTEM
-  title     String
+  type      String           // FRIEND_REQUEST, EVENT_INVITATION, EVENT_REMINDER, NEW_MESSAGE, EVENT_UPDATE, SYSTEM, EVENT_INVITE, EVENT_ACCEPTED, EVENT_REJECTED
+  title     String?
   message   String
   data      String?          // JSON data for notification
+  eventId   String?          // Optional event reference
   isRead    Boolean          @default(false)
   createdAt DateTime         @default(now())
   
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event     Event?           @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 // Report & Moderation System

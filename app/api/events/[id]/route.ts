@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { eventQueries } from "@/lib/database/queries";
 import { EventService } from "@/lib/database/services";
 import prisma from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth.config";
 
 export async function GET(
   request: NextRequest,
@@ -208,6 +210,79 @@ export async function PUT(
     });
   } catch (error) {
     console.error("Error updating event:", error);
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const eventId = params.id;
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    if (!eventId) {
+      return NextResponse.json(
+        { success: false, error: "Event ID is required" },
+        { status: 400 }
+      );
+    }
+
+    // Check if event exists and user is the host
+    const existingEvent = await prisma.event.findUnique({
+      where: { id: eventId },
+      select: { hostId: true, title: true },
+    });
+
+    if (!existingEvent) {
+      return NextResponse.json(
+        { success: false, error: "Event not found" },
+        { status: 404 }
+      );
+    }
+
+    if (existingEvent.hostId !== (session.user as any).id) {
+      return NextResponse.json(
+        { success: false, error: "Only the host can delete this event" },
+        { status: 403 }
+      );
+    }
+
+    // Delete event with transaction (cascade delete will handle related records)
+    await prisma.$transaction(async (prisma) => {
+      // Delete event hobbies
+      await prisma.eventHobby.deleteMany({
+        where: { eventId },
+      });
+
+      // Delete event participants
+      await prisma.eventParticipant.deleteMany({
+        where: { eventId },
+      });
+
+      // Delete the event
+      await prisma.event.delete({
+        where: { id: eventId },
+      });
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Event deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error deleting event:", error);
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }
