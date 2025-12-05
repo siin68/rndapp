@@ -33,7 +33,6 @@ export const SocketProvider = ({ children }: SocketProviderProps) => {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    // Initialize socket connection
     const socketInstance: SocketIOClient = io(process.env.NEXT_PUBLIC_SITE_URL || '', {
       path: '/api/socket/io',
       addTrailingSlash: false,
@@ -42,27 +41,21 @@ export const SocketProvider = ({ children }: SocketProviderProps) => {
       reconnectionAttempts: 5,
     });
 
-    // Connection event handlers
     socketInstance.on('connect', () => {
-      console.log('✅ Socket connected:', socketInstance.id);
       setIsConnected(true);
     });
 
     socketInstance.on('disconnect', () => {
-      console.log('❌ Socket disconnected');
       setIsConnected(false);
     });
 
-    socketInstance.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
+    socketInstance.on('connect_error', () => {
       setIsConnected(false);
     });
 
     setSocket(socketInstance);
 
-    // Cleanup on unmount
     return () => {
-      console.log('🔌 Disconnecting socket...');
       socketInstance.disconnect();
     };
   }, []);

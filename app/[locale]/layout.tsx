@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth.config';
 import SessionProvider from '@/components/SessionProvider';
+import { SocketProvider } from '@/contexts/SocketContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../globals.css';
@@ -33,9 +34,11 @@ export default async function RootLayout({
     <html lang={locale}>
       <body className={inter.className}>
         <SessionProvider session={session}>
-          <NextIntlClientProvider messages={messages}>
-            {children}
-          </NextIntlClientProvider>
+          <SocketProvider>
+            <NextIntlClientProvider messages={messages}>
+              {children}
+            </NextIntlClientProvider>
+          </SocketProvider>
         </SessionProvider>
         <ToastContainer
           position="top-right"

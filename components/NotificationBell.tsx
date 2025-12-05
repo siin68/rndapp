@@ -39,26 +39,20 @@ export default function NotificationBell() {
     }
   }, [session?.user?.id]);
 
-  // Fetch initial notifications
   useEffect(() => {
     if (session?.user?.id) {
       fetchNotifications();
     }
   }, [session?.user?.id, fetchNotifications]);
 
-  // Listen for real-time notifications
   useEffect(() => {
     if (!socket || !isConnected) return;
 
-    // Join user's personal room
     if (session?.user?.id) {
       socket.emit('join', session.user.id);
     }
 
-    // Listen for new notifications
     socket.on('notification', (notification: Notification) => {
-      console.log('📨 New notification:', notification);
-      
       setNotifications(prev => [{
         ...notification,
         read: false,
@@ -66,7 +60,6 @@ export default function NotificationBell() {
       
       setUnreadCount(prev => prev + 1);
 
-      // Show browser notification if permission granted
       if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
         new Notification(notification.title, {
           body: notification.message,
@@ -75,8 +68,28 @@ export default function NotificationBell() {
       }
     });
 
+    socket.on('friend-request-received', (data: any) => {
+      window.dispatchEvent(new CustomEvent('friend-request-received', { detail: data }));
+    });
+
+    socket.on('friend-request-accepted', (data: any) => {
+      window.dispatchEvent(new CustomEvent('friend-request-accepted', { detail: data }));
+    });
+
+    socket.on('event-joined', (data: any) => {
+      window.dispatchEvent(new CustomEvent('event-joined', { detail: data }));
+    });
+
+    socket.on('event-left', (data: any) => {
+      window.dispatchEvent(new CustomEvent('event-left', { detail: data }));
+    });
+
     return () => {
       socket.off('notification');
+      socket.off('friend-request-received');
+      socket.off('friend-request-accepted');
+      socket.off('event-joined');
+      socket.off('event-left');
     };
   }, [socket, isConnected, session?.user?.id]);
 
@@ -99,7 +112,6 @@ export default function NotificationBell() {
     markAsRead(notification.id);
     setIsOpen(false);
 
-    // Navigate based on notification type
     if (notification.type === 'EVENT_JOIN' && notification.data.eventId) {
       router.push(`/event/${notification.data.eventId}`);
     }
@@ -119,36 +131,29 @@ export default function NotificationBell() {
 
   return (
     <div className="relative">
-      {/* Bell Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 rounded-full hover:bg-gray-100 transition-colors"
       >
         <Bell className="w-6 h-6 text-gray-700" />
         
-        {/* Unread Badge */}
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
 
-        {/* Connection Status Indicator */}
         <span className={`absolute bottom-0 right-0 w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-gray-400'}`} />
       </button>
 
-      {/* Dropdown Panel */}
       {isOpen && (
         <>
-          {/* Backdrop */}
           <div
             className="fixed inset-0 z-40"
             onClick={() => setIsOpen(false)}
           />
 
-          {/* Notification Panel */}
           <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-200 z-50 max-h-[500px] flex flex-col">
-            {/* Header */}
             <div className="p-4 border-b border-gray-200 flex items-center justify-between">
               <div>
                 <h3 className="font-bold text-gray-900">Notifications</h3>
@@ -167,7 +172,6 @@ export default function NotificationBell() {
               )}
             </div>
 
-            {/* Notifications List */}
             <div className="overflow-y-auto flex-1">
               {notifications.length === 0 ? (
                 <div className="p-8 text-center text-gray-500">
@@ -184,7 +188,6 @@ export default function NotificationBell() {
                     }`}
                   >
                     <div className="flex items-start gap-3">
-                      {/* Icon based on type */}
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
                         notification.type === 'EVENT_JOIN' ? 'bg-green-100 text-green-600' :
                         notification.type === 'EVENT_LEAVE' ? 'bg-red-100 text-red-600' :

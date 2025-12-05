@@ -15,9 +15,8 @@ import {
   CalendarIcon,
   MessageIcon,
   SettingsIcon,
-  BellOnIcon,
-  BellOffIcon,
 } from "@/icons/icons";
+import NotificationBell from "@/components/NotificationBell";
 
 export default function DashboardLayout({
   children,
@@ -30,14 +29,9 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isNotificationOn, setIsNotificationOn] = useState(true);
 
   // Derive locale if not passed (fallback parsing)
   const locale = params?.locale || (pathname ? pathname.split("/")[1] : "") || "en";
-  const handleNotify = () => {
-    setIsNotificationOn(!isNotificationOn);
-    console.log("Notification toggled:", !isNotificationOn);
-  }
 
   const base = `/dashboard`;
   const navItems = [
@@ -83,16 +77,8 @@ export default function DashboardLayout({
             </div>
 
             <div className="hidden md:flex items-center">
-              <button
-                onClick={handleNotify}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-rose-600 hover:bg-rose-50 transition-all duration-200"
-              >
-                {isNotificationOn ? (
-                  <BellOnIcon className="w-7 h-7" />
-                ) : (
-                  <BellOffIcon className="w-7 h-7" />
-                )}
-              </button>
+              {/* Real-time Notification Bell */}
+              <NotificationBell />
             </div>
           </div>
         </div>
@@ -169,16 +155,8 @@ export default function DashboardLayout({
         </nav>
 
     <div className="hidden md:flex items-center">
-              <button
-                onClick={handleNotify}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-rose-600 hover:bg-rose-50 transition-all duration-200"
-              >
-                {isNotificationOn ? (
-                  <BellOnIcon className="w-5 h-5" />
-                ) : (
-                  <BellOffIcon className="w-5 h-5" />
-                )}
-              </button>
+              {/* Real-time Notification Bell */}
+              <NotificationBell />
             </div>
       </aside>
 

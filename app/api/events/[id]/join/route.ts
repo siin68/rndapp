@@ -281,7 +281,7 @@ export async function DELETE(
 
     // Create notification for event host
     if (user) {
-      await prisma.notification.create({
+      const notification = await prisma.notification.create({
         data: {
           userId: event.hostId,
           type: "EVENT_LEAVE",
@@ -295,6 +295,37 @@ export async function DELETE(
           }),
         },
       });
+
+      // Emit real-time notification via Socket.IO
+      try {
+        const { socketEmit } = await import('@/lib/socket');
+        
+        // Send notification to host
+        socketEmit.toUser(event.hostId, 'notification', {
+          id: notification.id,
+          type: 'EVENT_LEAVE',
+          title: notification.title,
+          message: notification.message,
+          data: {
+            eventId,
+            participantId: userId,
+            participantName: user.name,
+            participantImage: user.image,
+          },
+          createdAt: notification.createdAt,
+        });
+
+        // Broadcast to all event participants
+        socketEmit.toEvent(eventId, 'event-left', {
+          eventId,
+          userId,
+          userName: user.name,
+          userImage: user.image,
+          participantCount: newParticipantCount,
+        });
+      } catch (socketError) {
+        console.error('Socket emit error:', socketError);
+      }
     }
 
     return NextResponse.json({
