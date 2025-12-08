@@ -1,13 +1,17 @@
 import prisma from "../../prisma";
+import { parseId } from "../../utils/id-parser";
 
 /**
  * User-related queries
  */
 export const userQueries = {
   // Find users by hobbies and location with distance
-  async findCompatibleUsers(userId: string, distanceKm: number = 10) {
+  async findCompatibleUsers(userId: string | number, distanceKm: number = 10) {
+    const parsedUserId = parseId(userId);
+    if (!parsedUserId) return [];
+
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: parsedUserId },
       include: { hobbies: true, locations: true },
     });
 
@@ -19,7 +23,7 @@ export const userQueries = {
     return prisma.user.findMany({
       where: {
         AND: [
-          { id: { not: userId } },
+          { id: { not: parsedUserId } },
           { isActive: true },
           {
             OR: [
@@ -41,9 +45,12 @@ export const userQueries = {
   },
 
   // Get user profile with stats
-  async getUserProfile(userId: string) {
+  async getUserProfile(userId: string | number) {
+    const parsedUserId = parseId(userId);
+    if (!parsedUserId) return null;
+
     return prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: parsedUserId },
       include: {
         hobbies: { include: { hobby: true } },
         locations: { include: { location: { include: { city: true } } } },
@@ -79,9 +86,12 @@ export const userQueries = {
   },
 
   // Update user last active
-  async updateLastActive(userId: string) {
+  async updateLastActive(userId: string | number) {
+    const parsedUserId = parseId(userId);
+    if (!parsedUserId) return null;
+
     return prisma.user.update({
-      where: { id: userId },
+      where: { id: parsedUserId },
       data: { lastActive: new Date() },
     });
   },

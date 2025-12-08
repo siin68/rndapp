@@ -12,7 +12,11 @@ export async function GET(
   try {
     const eventId = params.id;
     const { searchParams } = new URL(request.url);
-    const viewerId = searchParams.get("userId");
+    const queryViewerId = searchParams.get("userId");
+    
+    // Get session to use logged-in user as viewer if no userId in query
+    const session = await getServerSession(authOptions);
+    const viewerId = queryViewerId || session?.user?.id || undefined;
 
     if (!eventId) {
       return NextResponse.json(
@@ -23,7 +27,7 @@ export async function GET(
 
     const event = await eventQueries.getEventDetails(
       eventId,
-      viewerId || undefined
+      viewerId
     );
 
     if (!event) {

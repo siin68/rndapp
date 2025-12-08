@@ -44,6 +44,7 @@ interface Event {
   hobby?: any;
   location?: any;
   participants?: any[];
+  joinRequests?: { id: string; userId: string; status: string; createdAt: string }[];
   chats?: { id: string; type: string }[];
   _count?: { participants: number };
 }
@@ -72,6 +73,7 @@ export default function EventDetailPage() {
   const [joinRequests, setJoinRequests] = useState<any[]>([]);
   const [loadingFriends, setLoadingFriends] = useState(false);
   const [loadingRequests, setLoadingRequests] = useState(false);
+  const [hasPendingRequest, setHasPendingRequest] = useState(false);
 
   // Helper function to refresh event data
   const refreshEvent = async () => {
@@ -136,15 +138,16 @@ export default function EventDetailPage() {
       const data = await response.json();
 
       if (data.success) {
-        setActionSuccess("Successfully joined the event!");
+        setActionSuccess("Join request sent! Please wait for host approval.");
+        setHasPendingRequest(true);
         // Refresh event data
         await refreshEvent();
       } else {
-        setActionError(data.error || "Failed to join event");
+        setActionError(data.error || "Failed to send join request");
       }
     } catch (err) {
-      console.error("Error joining event:", err);
-      setActionError("Failed to join event. Please try again.");
+      console.error("Error sending join request:", err);
+      setActionError("Failed to send join request. Please try again.");
     } finally {
       setJoining(false);
     }
@@ -386,6 +389,11 @@ export default function EventDetailPage() {
     (p: any) => p.userId === (session?.user as any)?.id || p.id === (session?.user as any)?.id
   );
   const isHost = event.hostId === session?.user?.id;
+  
+  // Check if current user has a pending join request
+  const isPendingRequest = hasPendingRequest || event.joinRequests?.some(
+    (r) => r.userId === (session?.user as any)?.id && r.status === "PENDING"
+  );
   
   const eventDate = new Date(event.date);
 
@@ -814,6 +822,16 @@ export default function EventDetailPage() {
             >
               {joining ? "Leaving..." : "Leave Event"}
             </Button>
+          ) : isPendingRequest ? (
+            <Button
+              disabled={true}
+              className="flex-1 rounded-full h-12 text-base font-bold shadow-lg transition-all bg-gradient-to-r from-amber-500 to-orange-500 text-white cursor-not-allowed opacity-90"
+            >
+              <svg className="w-5 h-5 mr-2 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Request Pending
+            </Button>
           ) : (
             <Button
               onClick={handleJoinEvent}
@@ -829,12 +847,12 @@ export default function EventDetailPage() {
               `}
             >
               {joining
-                ? "Joining..."
+                ? "Sending Request..."
                 : isFull
                 ? "Squad Full"
                 : event.status !== "OPEN"
                 ? "Event Closed"
-                : "Join Event"}
+                : "Request to Join"}
             </Button>
           )}
         </div>

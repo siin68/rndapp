@@ -1,15 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { parseId } from '@/lib/utils/id-parser';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
+    const userIdParam = searchParams.get('userId');
     const limit = parseInt(searchParams.get('limit') || '20');
 
-    if (!userId) {
+    if (!userIdParam) {
       return NextResponse.json(
         { success: false, error: 'userId parameter is required' },
+        { status: 400 }
+      );
+    }
+
+    const userId = parseId(userIdParam);
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid userId' },
         { status: 400 }
       );
     }
@@ -37,11 +46,19 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
+    const userIdParam = searchParams.get('userId');
 
-    if (!userId) {
+    if (!userIdParam) {
       return NextResponse.json(
         { success: false, error: 'userId parameter is required' },
+        { status: 400 }
+      );
+    }
+
+    const userId = parseId(userIdParam);
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid userId' },
         { status: 400 }
       );
     }

@@ -1,6 +1,6 @@
 -- CreateTable
 CREATE TABLE "User" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "emailVerified" TIMESTAMP(3),
@@ -25,7 +25,7 @@ CREATE TABLE "User" (
 
 -- CreateTable
 CREATE TABLE "Hobby" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "nameVi" TEXT NOT NULL,
     "category" TEXT NOT NULL,
@@ -39,9 +39,9 @@ CREATE TABLE "Hobby" (
 
 -- CreateTable
 CREATE TABLE "UserHobby" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "hobbyId" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "userId" INTEGER NOT NULL,
+    "hobbyId" INTEGER NOT NULL,
     "skillLevel" TEXT NOT NULL DEFAULT 'BEGINNER',
     "isPrimary" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -51,7 +51,7 @@ CREATE TABLE "UserHobby" (
 
 -- CreateTable
 CREATE TABLE "City" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "nameVi" TEXT NOT NULL,
     "country" TEXT NOT NULL DEFAULT 'Vietnam',
@@ -63,10 +63,10 @@ CREATE TABLE "City" (
 
 -- CreateTable
 CREATE TABLE "Location" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "nameVi" TEXT NOT NULL,
-    "cityId" TEXT NOT NULL,
+    "cityId" INTEGER NOT NULL,
     "address" TEXT,
     "latitude" DOUBLE PRECISION,
     "longitude" DOUBLE PRECISION,
@@ -77,9 +77,9 @@ CREATE TABLE "Location" (
 
 -- CreateTable
 CREATE TABLE "UserLocation" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "locationId" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "userId" INTEGER NOT NULL,
+    "locationId" INTEGER NOT NULL,
     "isPrimary" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -88,12 +88,12 @@ CREATE TABLE "UserLocation" (
 
 -- CreateTable
 CREATE TABLE "Event" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT,
     "image" TEXT,
-    "hostId" TEXT NOT NULL,
-    "locationId" TEXT NOT NULL,
+    "hostId" INTEGER NOT NULL,
+    "locationId" INTEGER NOT NULL,
     "date" TIMESTAMP(3) NOT NULL,
     "duration" INTEGER,
     "maxParticipants" INTEGER NOT NULL DEFAULT 10,
@@ -115,9 +115,9 @@ CREATE TABLE "Event" (
 
 -- CreateTable
 CREATE TABLE "EventHobby" (
-    "id" TEXT NOT NULL,
-    "eventId" TEXT NOT NULL,
-    "hobbyId" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "eventId" INTEGER NOT NULL,
+    "hobbyId" INTEGER NOT NULL,
     "isPrimary" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -126,9 +126,9 @@ CREATE TABLE "EventHobby" (
 
 -- CreateTable
 CREATE TABLE "EventParticipant" (
-    "id" TEXT NOT NULL,
-    "eventId" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "eventId" INTEGER NOT NULL,
+    "userId" INTEGER NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'JOINED',
     "joinedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "leftAt" TIMESTAMP(3),
@@ -137,11 +137,24 @@ CREATE TABLE "EventParticipant" (
 );
 
 -- CreateTable
+CREATE TABLE "EventJoinRequest" (
+    "id" SERIAL NOT NULL,
+    "eventId" INTEGER NOT NULL,
+    "userId" INTEGER NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'PENDING',
+    "message" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "EventJoinRequest_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "EventInvitation" (
-    "id" TEXT NOT NULL,
-    "eventId" TEXT NOT NULL,
-    "fromUserId" TEXT NOT NULL,
-    "toUserId" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "eventId" INTEGER NOT NULL,
+    "fromUserId" INTEGER NOT NULL,
+    "toUserId" INTEGER NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'PENDING',
     "message" TEXT,
     "sentAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -152,8 +165,8 @@ CREATE TABLE "EventInvitation" (
 
 -- CreateTable
 CREATE TABLE "Chat" (
-    "id" TEXT NOT NULL,
-    "eventId" TEXT,
+    "id" SERIAL NOT NULL,
+    "eventId" INTEGER,
     "type" TEXT NOT NULL DEFAULT 'GROUP',
     "name" TEXT,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
@@ -165,9 +178,9 @@ CREATE TABLE "Chat" (
 
 -- CreateTable
 CREATE TABLE "ChatParticipant" (
-    "id" TEXT NOT NULL,
-    "chatId" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "chatId" INTEGER NOT NULL,
+    "userId" INTEGER NOT NULL,
     "role" TEXT NOT NULL DEFAULT 'MEMBER',
     "joinedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "leftAt" TIMESTAMP(3),
@@ -178,13 +191,13 @@ CREATE TABLE "ChatParticipant" (
 
 -- CreateTable
 CREATE TABLE "Message" (
-    "id" TEXT NOT NULL,
-    "chatId" TEXT NOT NULL,
-    "senderId" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "chatId" INTEGER NOT NULL,
+    "senderId" INTEGER NOT NULL,
     "content" TEXT NOT NULL,
     "type" TEXT NOT NULL DEFAULT 'TEXT',
     "attachments" TEXT,
-    "replyToId" TEXT,
+    "replyToId" INTEGER,
     "isEdited" BOOLEAN NOT NULL DEFAULT false,
     "timestamp" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "editedAt" TIMESTAMP(3),
@@ -193,10 +206,22 @@ CREATE TABLE "Message" (
 );
 
 -- CreateTable
+CREATE TABLE "Swipe" (
+    "id" SERIAL NOT NULL,
+    "userId" INTEGER NOT NULL,
+    "targetId" INTEGER NOT NULL,
+    "action" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "expiresAt" TIMESTAMP(3),
+
+    CONSTRAINT "Swipe_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "FriendRequest" (
-    "id" TEXT NOT NULL,
-    "senderId" TEXT NOT NULL,
-    "receiverId" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "senderId" INTEGER NOT NULL,
+    "receiverId" INTEGER NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'PENDING',
     "message" TEXT,
     "sentAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -207,9 +232,9 @@ CREATE TABLE "FriendRequest" (
 
 -- CreateTable
 CREATE TABLE "Friendship" (
-    "id" TEXT NOT NULL,
-    "user1Id" TEXT NOT NULL,
-    "user2Id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "user1Id" INTEGER NOT NULL,
+    "user2Id" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Friendship_pkey" PRIMARY KEY ("id")
@@ -217,9 +242,9 @@ CREATE TABLE "Friendship" (
 
 -- CreateTable
 CREATE TABLE "BlockedUser" (
-    "id" TEXT NOT NULL,
-    "blockerId" TEXT NOT NULL,
-    "blockedId" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "blockerId" INTEGER NOT NULL,
+    "blockedId" INTEGER NOT NULL,
     "reason" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -228,10 +253,10 @@ CREATE TABLE "BlockedUser" (
 
 -- CreateTable
 CREATE TABLE "Review" (
-    "id" TEXT NOT NULL,
-    "eventId" TEXT NOT NULL,
-    "reviewerId" TEXT NOT NULL,
-    "revieweeId" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "eventId" INTEGER NOT NULL,
+    "reviewerId" INTEGER NOT NULL,
+    "revieweeId" INTEGER NOT NULL,
     "rating" DOUBLE PRECISION NOT NULL,
     "comment" TEXT,
     "tags" TEXT,
@@ -242,12 +267,13 @@ CREATE TABLE "Review" (
 
 -- CreateTable
 CREATE TABLE "Notification" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "userId" INTEGER NOT NULL,
     "type" TEXT NOT NULL,
-    "title" TEXT NOT NULL,
+    "title" TEXT,
     "message" TEXT NOT NULL,
     "data" TEXT,
+    "eventId" INTEGER,
     "isRead" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -256,9 +282,9 @@ CREATE TABLE "Notification" (
 
 -- CreateTable
 CREATE TABLE "Report" (
-    "id" TEXT NOT NULL,
-    "reporterId" TEXT NOT NULL,
-    "reportedId" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "reporterId" INTEGER NOT NULL,
+    "reportedId" INTEGER NOT NULL,
     "type" TEXT NOT NULL,
     "reason" TEXT NOT NULL,
     "description" TEXT,
@@ -291,10 +317,19 @@ CREATE UNIQUE INDEX "EventHobby_eventId_hobbyId_key" ON "EventHobby"("eventId", 
 CREATE UNIQUE INDEX "EventParticipant_eventId_userId_key" ON "EventParticipant"("eventId", "userId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "EventJoinRequest_eventId_userId_key" ON "EventJoinRequest"("eventId", "userId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "EventInvitation_eventId_fromUserId_toUserId_key" ON "EventInvitation"("eventId", "fromUserId", "toUserId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "ChatParticipant_chatId_userId_key" ON "ChatParticipant"("chatId", "userId");
+
+-- CreateIndex
+CREATE INDEX "Swipe_expiresAt_idx" ON "Swipe"("expiresAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Swipe_userId_targetId_key" ON "Swipe"("userId", "targetId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "FriendRequest_senderId_receiverId_key" ON "FriendRequest"("senderId", "receiverId");
@@ -342,6 +377,12 @@ ALTER TABLE "EventParticipant" ADD CONSTRAINT "EventParticipant_eventId_fkey" FO
 ALTER TABLE "EventParticipant" ADD CONSTRAINT "EventParticipant_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "EventJoinRequest" ADD CONSTRAINT "EventJoinRequest_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "Event"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "EventJoinRequest" ADD CONSTRAINT "EventJoinRequest_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "EventInvitation" ADD CONSTRAINT "EventInvitation_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "Event"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -367,6 +408,12 @@ ALTER TABLE "Message" ADD CONSTRAINT "Message_senderId_fkey" FOREIGN KEY ("sende
 
 -- AddForeignKey
 ALTER TABLE "Message" ADD CONSTRAINT "Message_replyToId_fkey" FOREIGN KEY ("replyToId") REFERENCES "Message"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Swipe" ADD CONSTRAINT "Swipe_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Swipe" ADD CONSTRAINT "Swipe_targetId_fkey" FOREIGN KEY ("targetId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "FriendRequest" ADD CONSTRAINT "FriendRequest_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -397,6 +444,9 @@ ALTER TABLE "Review" ADD CONSTRAINT "Review_revieweeId_fkey" FOREIGN KEY ("revie
 
 -- AddForeignKey
 ALTER TABLE "Notification" ADD CONSTRAINT "Notification_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Notification" ADD CONSTRAINT "Notification_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "Event"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Report" ADD CONSTRAINT "Report_reporterId_fkey" FOREIGN KEY ("reporterId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

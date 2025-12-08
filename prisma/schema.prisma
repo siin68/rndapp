@@ -9,7 +9,7 @@ generator client {
 
 // Core User Model
 model User {
-  id                String               @id @default(cuid())
+  id                Int                  @id @default(autoincrement())
   name              String
   email             String               @unique
   emailVerified     DateTime?
@@ -58,7 +58,7 @@ model User {
 
 // Hobby System
 model Hobby {
-  id          String      @id @default(cuid())
+  id          Int         @id @default(autoincrement())
   name        String      @unique
   nameVi      String
   category    String
@@ -73,10 +73,10 @@ model Hobby {
 }
 
 model UserHobby {
-  id          String   @id @default(cuid())
-  userId      String
-  hobbyId     String
-  skillLevel  String     @default("BEGINNER") // BEGINNER, INTERMEDIATE, ADVANCED, EXPERT
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  hobbyId     Int
+  skillLevel  String   @default("BEGINNER") // BEGINNER, INTERMEDIATE, ADVANCED, EXPERT
   isPrimary   Boolean  @default(false)
   createdAt   DateTime @default(now())
   
@@ -88,7 +88,7 @@ model UserHobby {
 
 // Location System
 model City {
-  id          String     @id @default(cuid())
+  id          Int        @id @default(autoincrement())
   name        String     @unique
   nameVi      String
   country     String     @default("Vietnam")
@@ -99,10 +99,10 @@ model City {
 }
 
 model Location {
-  id          String         @id @default(cuid())
+  id          Int            @id @default(autoincrement())
   name        String
   nameVi      String
-  cityId      String
+  cityId      Int
   address     String?
   latitude    Float?
   longitude   Float?
@@ -114,9 +114,9 @@ model Location {
 }
 
 model UserLocation {
-  id        String   @id @default(cuid())
-  userId    String
-  locationId String
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  locationId Int
   isPrimary Boolean  @default(false)
   createdAt DateTime @default(now())
   
@@ -128,12 +128,12 @@ model UserLocation {
 
 // Event System
 model Event {
-  id               String             @id @default(cuid())
+  id               Int                @id @default(autoincrement())
   title            String
   description      String?
   image            String?            // Event cover image URL
-  hostId           String
-  locationId       String
+  hostId           Int
+  locationId       Int
   date             DateTime
   duration         Int?               // minutes
   maxParticipants  Int                @default(10)
@@ -163,9 +163,9 @@ model Event {
 
 // Junction table for Event-Hobby many-to-many relation
 model EventHobby {
-  id        String   @id @default(cuid())
-  eventId   String
-  hobbyId   String
+  id        Int      @id @default(autoincrement())
+  eventId   Int
+  hobbyId   Int
   isPrimary Boolean  @default(false) // Primary hobby for the event
   createdAt DateTime @default(now())
   
@@ -176,9 +176,9 @@ model EventHobby {
 }
 
 model EventParticipant {
-  id         String              @id @default(cuid())
-  eventId    String
-  userId     String
+  id         Int                 @id @default(autoincrement())
+  eventId    Int
+  userId     Int
   status     String              @default("JOINED") // JOINED, LEFT, KICKED, BANNED
   joinedAt   DateTime            @default(now())
   leftAt     DateTime?
@@ -190,9 +190,9 @@ model EventParticipant {
 }
 
 model EventJoinRequest {
-  id        String   @id @default(cuid())
-  eventId   String
-  userId    String
+  id        Int      @id @default(autoincrement())
+  eventId   Int
+  userId    Int
   status    String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
   message   String?  // Optional message from user
   createdAt DateTime @default(now())
@@ -205,10 +205,10 @@ model EventJoinRequest {
 }
 
 model EventInvitation {
-  id        String           @id @default(cuid())
-  eventId   String
-  fromUserId String
-  toUserId  String
+  id        Int              @id @default(autoincrement())
+  eventId   Int
+  fromUserId Int
+  toUserId  Int
   status    String           @default("PENDING") // PENDING, ACCEPTED, DECLINED, CANCELLED
   message   String?
   sentAt    DateTime         @default(now())
@@ -223,8 +223,8 @@ model EventInvitation {
 
 // Chat System
 model Chat {
-  id           String            @id @default(cuid())
-  eventId      String?
+  id           Int               @id @default(autoincrement())
+  eventId      Int?
   type         String            @default("GROUP") // DIRECT, GROUP, EVENT
   name         String?
   isActive     Boolean           @default(true)
@@ -237,9 +237,9 @@ model Chat {
 }
 
 model ChatParticipant {
-  id          String    @id @default(cuid())
-  chatId      String
-  userId      String
+  id          Int       @id @default(autoincrement())
+  chatId      Int
+  userId      Int
   role        String    @default("MEMBER") // OWNER, ADMIN, MEMBER
   joinedAt    DateTime  @default(now())
   leftAt      DateTime?
@@ -252,13 +252,13 @@ model ChatParticipant {
 }
 
 model Message {
-  id          String      @id @default(cuid())
-  chatId      String
-  senderId    String
+  id          Int         @id @default(autoincrement())
+  chatId      Int
+  senderId    Int
   content     String
   type        String      @default("TEXT") // TEXT, IMAGE, FILE, SYSTEM
   attachments String?     // JSON array of attachment URLs
-  replyToId   String?
+  replyToId   Int?
   isEdited    Boolean     @default(false)
   timestamp   DateTime    @default(now())
   editedAt    DateTime?
@@ -271,9 +271,9 @@ model Message {
 
 // Social Features
 model Swipe {
-  id        String    @id @default(cuid())
-  userId    String
-  targetId  String
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  targetId  Int
   action    String    // LIKE, NOPE
   createdAt DateTime  @default(now())
   expiresAt DateTime? // Only for NOPE actions - expires after 1 week
@@ -286,9 +286,9 @@ model Swipe {
 }
 
 model FriendRequest {
-  id          String              @id @default(cuid())
-  senderId    String
-  receiverId  String
+  id          Int                 @id @default(autoincrement())
+  senderId    Int
+  receiverId  Int
   status      String              @default("PENDING") // PENDING, ACCEPTED, DECLINED, CANCELLED
   message     String?
   sentAt      DateTime            @default(now())
@@ -301,9 +301,9 @@ model FriendRequest {
 }
 
 model Friendship {
-  id        String   @id @default(cuid())
-  user1Id   String
-  user2Id   String
+  id        Int      @id @default(autoincrement())
+  user1Id   Int
+  user2Id   Int
   createdAt DateTime @default(now())
   
   user1     User     @relation(fields: [user1Id], references: [id], name: "User1Friendships", onDelete: Cascade)
@@ -313,9 +313,9 @@ model Friendship {
 }
 
 model BlockedUser {
-  id        String   @id @default(cuid())
-  blockerId String
-  blockedId String
+  id        Int      @id @default(autoincrement())
+  blockerId Int
+  blockedId Int
   reason    String?
   createdAt DateTime @default(now())
   
@@ -327,10 +327,10 @@ model BlockedUser {
 
 // Rating & Review System
 model Review {
-  id          String     @id @default(cuid())
-  eventId     String
-  reviewerId  String
-  revieweeId  String
+  id          Int        @id @default(autoincrement())
+  eventId     Int
+  reviewerId  Int
+  revieweeId  Int
   rating      Float      // 1.0 to 5.0
   comment     String?
   tags        String?    // JSON array of review tags
@@ -345,13 +345,13 @@ model Review {
 
 // Notification System
 model Notification {
-  id        String           @id @default(cuid())
-  userId    String
-  type      String           // FRIEND_REQUEST, EVENT_INVITATION, EVENT_REMINDER, NEW_MESSAGE, EVENT_UPDATE, SYSTEM, EVENT_INVITE, EVENT_ACCEPTED, EVENT_REJECTED
+  id        Int              @id @default(autoincrement())
+  userId    Int
+  type      String           // FRIEND_REQUEST, EVENT_INVITATION, EVENT_REMINDER, NEW_MESSAGE, EVENT_UPDATE, SYSTEM, EVENT_INVITE, EVENT_ACCEPTED, EVENT_REJECTED, EVENT_JOIN_REQUEST
   title     String?
   message   String
   data      String?          // JSON data for notification
-  eventId   String?          // Optional event reference
+  eventId   Int?             // Optional event reference
   isRead    Boolean          @default(false)
   createdAt DateTime         @default(now())
   
@@ -361,9 +361,9 @@ model Notification {
 
 // Report & Moderation System
 model Report {
-  id          String       @id @default(cuid())
-  reporterId  String
-  reportedId  String
+  id          Int          @id @default(autoincrement())
+  reporterId  Int
+  reportedId  Int
   type        String       // SPAM, HARASSMENT, INAPPROPRIATE_CONTENT, FAKE_PROFILE, OTHER
   reason      String
   description String?
@@ -374,5 +374,4 @@ model Report {
   reporter    User         @relation(fields: [reporterId], references: [id], name: "ReportSender", onDelete: Cascade)
   reported    User         @relation(fields: [reportedId], references: [id], name: "ReportReceiver", onDelete: Cascade)
 }
-
 

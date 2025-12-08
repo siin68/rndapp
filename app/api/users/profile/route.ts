@@ -1,15 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { userQueries } from "@/lib/database/queries";
+import { parseId, parseIds } from "@/lib/utils/id-parser";
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
+    const userIdParam = searchParams.get("userId");
 
-    if (!userId) {
+    if (!userIdParam) {
       return NextResponse.json(
         { success: false, error: "userId parameter is required" },
+        { status: 400 }
+      );
+    }
+
+    const userId = parseId(userIdParam);
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, error: "Invalid userId" },
         { status: 400 }
       );
     }
@@ -90,12 +99,20 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
+    const userIdParam = searchParams.get("userId");
     const body = await request.json();
 
-    if (!userId) {
+    if (!userIdParam) {
       return NextResponse.json(
         { success: false, error: "userId parameter is required" },
+        { status: 400 }
+      );
+    }
+
+    const userId = parseId(userIdParam);
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, error: "Invalid userId" },
         { status: 400 }
       );
     }
@@ -122,14 +139,17 @@ export async function PUT(request: NextRequest) {
       });
 
       for (const hobby of hobbies) {
-        await prisma.userHobby.create({
-          data: {
-            userId,
-            hobbyId: hobby.hobbyId,
-            skillLevel: hobby.skillLevel || "BEGINNER",
-            isPrimary: hobby.isPrimary || false,
-          },
-        });
+        const hobbyId = parseId(hobby.hobbyId);
+        if (hobbyId) {
+          await prisma.userHobby.create({
+            data: {
+              userId,
+              hobbyId,
+              skillLevel: hobby.skillLevel || "BEGINNER",
+              isPrimary: hobby.isPrimary || false,
+            },
+          });
+        }
       }
     }
 
@@ -139,13 +159,16 @@ export async function PUT(request: NextRequest) {
       });
 
       for (const location of locations) {
-        await prisma.userLocation.create({
-          data: {
-            userId,
-            locationId: location.locationId,
-            isPrimary: location.isPrimary || false,
-          },
-        });
+        const locationId = parseId(location.locationId);
+        if (locationId) {
+          await prisma.userLocation.create({
+            data: {
+              userId,
+              locationId,
+              isPrimary: location.isPrimary || false,
+            },
+          });
+        }
       }
     }
 

@@ -78,14 +78,31 @@ export default function SocketListener() {
       window.dispatchEvent(new CustomEvent('new-message', { detail: data }));
     };
 
+    // Event join request handlers (for host to receive join requests)
+    const handleEventJoinRequest = (data: any) => {
+      window.dispatchEvent(new CustomEvent('event-join-request', { detail: data }));
+    };
+
+    // Event request accepted/rejected handlers (for user to receive response)
+    const handleEventRequestAccepted = (data: any) => {
+      window.dispatchEvent(new CustomEvent('event-request-accepted', { detail: data }));
+    };
+
+    const handleEventRequestRejected = (data: any) => {
+      window.dispatchEvent(new CustomEvent('event-request-rejected', { detail: data }));
+    };
+
     socket.on('notification', handleNotification);
     socket.on('event-joined', handleEventJoined);
     socket.on('event-left', handleEventLeft);
     socket.on('friend-request-received', handleFriendRequestReceived);
     socket.on('friend-request-accepted', handleFriendRequestAccepted);
-    // socket.on('chat-member-joined', handleChatMemberJoined);
-    // socket.on('chat-member-left', handleChatMemberLeft);
+    socket.on('chat-member-joined', handleChatMemberJoined);
+    socket.on('chat-member-left', handleChatMemberLeft);
     socket.on('new-message', handleNewMessage);
+    socket.on('event-join-request', handleEventJoinRequest);
+    socket.on('event-request-accepted', handleEventRequestAccepted);
+    socket.on('event-request-rejected', handleEventRequestRejected);
 
     return () => {
       socket.off('notification', handleNotification);
@@ -93,9 +110,12 @@ export default function SocketListener() {
       socket.off('event-left', handleEventLeft);
       socket.off('friend-request-received', handleFriendRequestReceived);
       socket.off('friend-request-accepted', handleFriendRequestAccepted);
-      // socket.off('chat-member-joined', handleChatMemberJoined);
-      // socket.off('chat-member-left', handleChatMemberLeft);
+      socket.off('chat-member-joined', handleChatMemberJoined);
+      socket.off('chat-member-left', handleChatMemberLeft);
       socket.off('new-message', handleNewMessage);
+      socket.off('event-join-request', handleEventJoinRequest);
+      socket.off('event-request-accepted', handleEventRequestAccepted);
+      socket.off('event-request-rejected', handleEventRequestRejected);
     };
   }, [socket, isConnected]);
 

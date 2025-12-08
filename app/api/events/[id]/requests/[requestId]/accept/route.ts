@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
 import prisma from "@/lib/prisma";
+import { parseId } from "@/lib/utils/id-parser";
 
 export async function POST(
   request: NextRequest,
@@ -9,9 +10,11 @@ export async function POST(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    const { id: eventId, requestId } = params;
+    const eventId = parseId(params.id);
+    const requestId = parseId(params.requestId);
+    const userId = parseId(session?.user?.id);
 
-    if (!session?.user?.id) {
+    if (!session?.user?.id || !userId) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
         { status: 401 }
@@ -20,18 +23,15 @@ export async function POST(
 
     if (!eventId || !requestId) {
       return NextResponse.json(
-        { success: false, error: "Event ID and Request ID are required" },
+        { success: false, error: "Invalid Event ID or Request ID" },
         { status: 400 }
       );
     }
 
-    // Check if user is the host
     const event = await prisma.event.findUnique({
       where: { id: eventId },
-      select: { 
-        hostId: true,
-        title: true,
-        maxParticipants: true,
+      include: {
+        host: { select: { id: true, name: true } },
         _count: {
           select: { participants: true }
         }
@@ -45,7 +45,7 @@ export async function POST(
       );
     }
 
-    if (event.hostId !== (session.user as any).id) {
+    if (event.hostId !== userId) {
       return NextResponse.json(
         { success: false, error: "Only the host can accept join requests" },
         { status: 403 }
@@ -63,7 +63,11 @@ export async function POST(
     // Get the join request
     const joinRequest = await prisma.eventJoinRequest.findUnique({
       where: { id: requestId },
-      include: { user: true },
+      include: { 
+        user: {
+          select: { id: true, name: true, image: true, bio: true }
+        } 
+      },
     });
 
     if (!joinRequest) {
@@ -80,36 +84,178 @@ export async function POST(
       );
     }
 
+    if (joinRequest.status !== "PENDING") {
+      return NextResponse.json(
+        { success: false, error: "This request has already been processed" },
+        { status: 400 }
+      );
+    }
+
+    // Get or create event chat
+    let eventChat = await prisma.chat.findFirst({
+      where: { eventId, type: "EVENT" },
+    });
+
     // Accept the request in a transaction
-    await prisma.$transaction(async (prisma) => {
+    const result = await prisma.$transaction(async (tx) => {
       // Update request status
-      await prisma.eventJoinRequest.update({
+      await tx.eventJoinRequest.update({
         where: { id: requestId },
         data: { status: "ACCEPTED" },
       });
 
       // Add user as participant
-      await prisma.eventParticipant.create({
+      const participant = await tx.eventParticipant.create({
         data: {
           eventId,
           userId: joinRequest.userId,
+          status: "JOINED",
         },
+        include: {
+          user: {
+            select: { id: true, name: true, image: true, bio: true }
+          }
+        }
       });
 
       // Create notification for the user
-      await prisma.notification.create({
+      const notification = await tx.notification.create({
         data: {
           userId: joinRequest.userId,
           type: "EVENT_ACCEPTED",
+          title: "Join request accepted",
           message: `Your request to join "${event.title}" has been accepted`,
           eventId,
+          data: JSON.stringify({
+            eventId,
+            eventTitle: event.title,
+          }),
         },
       });
+
+      // Handle chat participation
+      if (!eventChat) {
+        // Create new group chat for the event
+        eventChat = await tx.chat.create({
+          data: {
+            eventId,
+            type: "EVENT",
+            name: event.title,
+            participants: {
+              create: [
+                { userId: event.hostId, role: "OWNER" },
+                { userId: joinRequest.userId, role: "MEMBER" },
+              ],
+            },
+          },
+        });
+
+        // Send system message
+        await tx.message.create({
+          data: {
+            chatId: eventChat.id,
+            senderId: joinRequest.userId,
+            content: `${joinRequest.user.name} joined the group`,
+            type: "SYSTEM",
+          },
+        });
+      } else {
+        // Check if user is already in chat
+        const existingChatParticipant = await tx.chatParticipant.findUnique({
+          where: {
+            chatId_userId: {
+              chatId: eventChat.id,
+              userId: joinRequest.userId,
+            },
+          },
+        });
+
+        if (!existingChatParticipant) {
+          // Add user to existing chat
+          await tx.chatParticipant.create({
+            data: {
+              chatId: eventChat.id,
+              userId: joinRequest.userId,
+              role: "MEMBER",
+            },
+          });
+
+          // Send system message
+          await tx.message.create({
+            data: {
+              chatId: eventChat.id,
+              senderId: joinRequest.userId,
+              content: `${joinRequest.user.name} joined the group`,
+              type: "SYSTEM",
+            },
+          });
+        }
+      }
+
+      // Update event status to FULL if needed
+      const newParticipantCount = event._count.participants + 1;
+      if (newParticipantCount >= event.maxParticipants && event.status === "OPEN") {
+        await tx.event.update({
+          where: { id: eventId },
+          data: { status: "FULL" },
+        });
+      }
+
+      return { participant, notification, newParticipantCount };
     });
+
+    // Emit real-time notifications via Socket.IO
+    try {
+      const { socketEmit } = await import('@/lib/socket');
+      
+      await socketEmit.toUser(joinRequest.userId.toString(), 'notification', {
+        id: result.notification.id,
+        type: 'EVENT_ACCEPTED',
+        title: result.notification.title,
+        message: result.notification.message,
+        data: {
+          eventId,
+          eventTitle: event.title,
+          chatId: eventChat?.id,
+        },
+        createdAt: result.notification.createdAt,
+      });
+
+      await socketEmit.toUser(joinRequest.userId.toString(), 'event-request-accepted', {
+        eventId,
+        requestId,
+        eventTitle: event.title,
+        chatId: eventChat?.id,
+      });
+
+      await socketEmit.toEvent(eventId.toString(), 'event-joined', {
+        eventId,
+        userId: joinRequest.userId,
+        userName: joinRequest.user.name,
+        userImage: joinRequest.user.image,
+        participantCount: result.newParticipantCount,
+        chatId: eventChat?.id,
+      });
+
+      if (eventChat) {
+        await socketEmit.toChat(eventChat.id.toString(), 'chat-member-joined', {
+          chatId: eventChat.id,
+          userId: joinRequest.userId,
+          userName: joinRequest.user.name,
+          userImage: joinRequest.user.image,
+        });
+      }
+    } catch (socketError) {
+      console.error('Socket emit error:', socketError);
+    }
 
     return NextResponse.json({
       success: true,
       message: "Join request accepted",
+      data: {
+        participant: result.participant,
+        chatId: eventChat?.id,
+      },
     });
   } catch (error) {
     console.error("Error accepting join request:", error);
@@ -119,3 +265,4 @@ export async function POST(
     );
   }
 }
+

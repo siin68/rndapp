@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { eventQueries } from "@/lib/database/queries";
 import { EventService } from "@/lib/database/services";
 import prisma from "@/lib/prisma";
+import { parseId, parseIds } from "@/lib/utils/id-parser";
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,8 +21,13 @@ export async function GET(request: NextRequest) {
     } else if (type === "recommended" && userId) {
       events = await eventQueries.findRecommendedEvents(userId, limit);
     } else {
-      // For general search, exclude user's own events if userId is provided
-      const filters = userId ? { excludeHostId: userId } : {};
+      // For general search, exclude user's own events and events they've already joined
+      const filters = userId 
+        ? { 
+            excludeHostId: userId,
+            excludeParticipantId: userId  // Exclude events already joined
+          } 
+        : {};
       events = await eventQueries.searchEvents("", filters, limit);
     }
 
@@ -53,10 +59,10 @@ export async function POST(request: NextRequest) {
       title,
       description,
       image,
-      hostId,
-      hobbyId,
-      hobbyIds, // Accept array of hobby IDs
-      locationId,
+      hostId: hostIdRaw,
+      hobbyId: hobbyIdRaw,
+      hobbyIds: hobbyIdsRaw, // Accept array of hobby IDs
+      locationId: locationIdRaw,
       date,
       maxParticipants = 10,
       minParticipants = 2,
@@ -64,12 +70,17 @@ export async function POST(request: NextRequest) {
       requiresApproval = false,
     } = body;
 
+    // Parse IDs
+    const hostId = parseId(hostIdRaw);
+    const locationId = parseId(locationIdRaw);
+
     // Determine hobbies to use - prioritize hobbyIds array, fallback to single hobbyId
-    let selectedHobbyIds: string[] = [];
-    if (hobbyIds && Array.isArray(hobbyIds) && hobbyIds.length > 0) {
-      selectedHobbyIds = hobbyIds;
-    } else if (hobbyId) {
-      selectedHobbyIds = [hobbyId];
+    let selectedHobbyIds: number[] = [];
+    if (hobbyIdsRaw && Array.isArray(hobbyIdsRaw) && hobbyIdsRaw.length > 0) {
+      selectedHobbyIds = parseIds(hobbyIdsRaw);
+    } else if (hobbyIdRaw) {
+      const parsed = parseId(hobbyIdRaw);
+      if (parsed) selectedHobbyIds = [parsed];
     }
 
     if (
