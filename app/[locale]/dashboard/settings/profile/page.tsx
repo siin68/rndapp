@@ -75,7 +75,8 @@ export default function EditProfilePage() {
     }
     
     fetchUserData();
-  }, [session]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.email]);
 
   useEffect(() => {
     if (!initialData) return;

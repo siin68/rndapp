@@ -3,7 +3,7 @@
 import { useParams, usePathname } from "next/navigation";
 import { useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import {
   Card,
@@ -76,7 +76,7 @@ export default function EventDetailPage() {
   const [hasPendingRequest, setHasPendingRequest] = useState(false);
 
   // Helper function to refresh event data
-  const refreshEvent = async () => {
+  const refreshEvent = useCallback(async () => {
     if (!params?.id) return;
     
     try {
@@ -89,7 +89,7 @@ export default function EventDetailPage() {
     } catch (err) {
       console.error("Error refreshing event:", err);
     }
-  };
+  }, [params?.id]);
 
   useEffect(() => {
     async function fetchEvent() {
@@ -117,7 +117,36 @@ export default function EventDetailPage() {
     }
   }, [params?.id]);
 
-  // Handle joining event
+  // Listen for socket event when request is accepted
+  useEffect(() => {
+    const handleRequestAccepted = (event: CustomEvent) => {
+      const data = event.detail;
+      console.log('[Event Detail] Request accepted:', data);
+      
+      // Check if this event is for current event page
+      if (data.eventId?.toString() === params?.id?.toString()) {
+        setHasPendingRequest(false);
+        setActionSuccess("Your request has been accepted! Welcome to the event!");
+        
+        // Refresh event data to show updated participant list
+        refreshEvent();
+      }
+    };
+
+    window.addEventListener('event-request-accepted' as any, handleRequestAccepted as any);
+
+    return () => {
+      window.removeEventListener('event-request-accepted' as any, handleRequestAccepted as any);
+    };
+  }, [params?.id, refreshEvent]);
+
+  // Fetch join requests count for host badge
+  useEffect(() => {
+    if (event?.hostId && event.hostId === session?.user?.id) {
+      fetchJoinRequests();
+    }
+  }, [event?.hostId, session?.user?.id]);
+
   const handleJoinEvent = async () => {
     if (!params?.id) return;
     
@@ -780,8 +809,14 @@ export default function EventDetailPage() {
                   setShowJoinRequestsModal(true);
                   fetchJoinRequests();
                 }}
-                className="rounded-full h-12 px-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0 flex items-center gap-2 transition-all font-bold text-sm shadow-lg hover:shadow-xl hover:scale-105"
+                className="relative rounded-full h-12 px-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0 flex items-center gap-2 transition-all font-bold text-sm shadow-lg hover:shadow-xl hover:scale-105"
               >
+                {/* Badge for pending requests */}
+                {joinRequests.filter(r => r.status === 'PENDING').length > 0 && (
+                  <span className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-lg">
+                    {joinRequests.filter(r => r.status === 'PENDING').length > 9 ? '9+' : joinRequests.filter(r => r.status === 'PENDING').length}
+                  </span>
+                )}
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>

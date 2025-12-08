@@ -221,11 +221,15 @@ export async function POST(
         createdAt: result.notification.createdAt,
       });
 
+      // Send complete event info to user B so they can update their UI
       await socketEmit.toUser(joinRequest.userId.toString(), 'event-request-accepted', {
         eventId,
         requestId,
         eventTitle: event.title,
         chatId: eventChat?.id,
+        status: 'ACCEPTED',
+        participantCount: result.newParticipantCount,
+        participant: result.participant,
       });
 
       await socketEmit.toEvent(eventId.toString(), 'event-joined', {

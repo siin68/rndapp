@@ -78,7 +78,8 @@ export default function OnboardingProfilePage() {
         setImagePreview(session.user.image);
       }
     }
-  }, [session]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.id]);
 
   if (checkingOnboarding) {
     return (

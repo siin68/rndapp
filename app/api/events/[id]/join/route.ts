@@ -100,6 +100,15 @@ export async function POST(
       );
     }
 
+    // Check if user has old ACCEPTED request but left the event
+    // Delete old request to allow rejoin
+    const acceptedRequest = event.joinRequests.find(r => r.status === "ACCEPTED");
+    if (acceptedRequest && !isAlreadyParticipant) {
+      await prisma.eventJoinRequest.delete({
+        where: { id: acceptedRequest.id }
+      });
+    }
+
     // Fetch user data for validation
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -246,8 +255,15 @@ export async function DELETE(
       );
     }
 
-    const eventId = params.id;
-    const userId = session.user.id;
+    const eventId = parseId(params.id);
+    const userId = parseId(session.user.id);
+
+    if (!eventId || !userId) {
+      return NextResponse.json(
+        { success: false, error: "Invalid ID" },
+        { status: 400 }
+      );
+    }
 
     const participation = await prisma.eventParticipant.findUnique({
       where: {
@@ -306,13 +322,19 @@ export async function DELETE(
       );
     }
 
-    // Delete the participation record so user can rejoin later
     await prisma.eventParticipant.delete({
       where: {
         eventId_userId: {
           eventId,
           userId,
         },
+      },
+    });
+
+    await prisma.eventJoinRequest.deleteMany({
+      where: {
+        eventId,
+        userId,
       },
     });
 
@@ -357,31 +379,6 @@ export async function DELETE(
           type: "SYSTEM",
         },
       });
-    }
-
-    // Emit real-time events for UI updates (no notification for leave)
-    if (user) {
-      try {
-        const { socketEmit } = await import('@/lib/socket');
-
-        await socketEmit.toEvent(eventId, 'event-left', {
-          eventId,
-          userId,
-          userName: user.name,
-          userImage: user.image,
-          participantCount: newParticipantCount,
-        });
-
-        if (eventChat) {
-          await socketEmit.toChat(eventChat.id, 'chat-member-left', {
-            chatId: eventChat.id,
-            userId,
-            userName: user.name,
-          });
-        }
-      } catch (socketError) {
-        console.error('Socket emit error:', socketError);
-      }
     }
 
     return NextResponse.json({

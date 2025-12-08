@@ -13,7 +13,7 @@ interface Notification {
   message: string;
   data: any;
   createdAt: Date;
-  read: boolean;
+  isRead: boolean;
 }
 
 export default function NotificationBell() {
@@ -32,7 +32,7 @@ export default function NotificationBell() {
 
       if (data.success) {
         setNotifications(data.data || []);
-        setUnreadCount(data.data?.filter((n: Notification) => !n.read).length || 0);
+        setUnreadCount(data.data?.filter((n: Notification) => !n.isRead).length || 0);
       }
     } catch (error) {
       console.error('Error fetching notifications:', error);
@@ -51,7 +51,7 @@ export default function NotificationBell() {
       
       setNotifications(prev => [{
         ...notification,
-        read: false,
+        isRead: false,
       }, ...prev]);
       setUnreadCount(prev => prev + 1);
 
@@ -77,7 +77,7 @@ export default function NotificationBell() {
       });
 
       setNotifications(prev =>
-        prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+        prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
       );
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (error) {
@@ -89,14 +89,44 @@ export default function NotificationBell() {
     markAsRead(notification.id);
     setIsOpen(false);
 
-    if (notification.type === 'EVENT_JOIN' && notification.data.eventId) {
-      router.push(`/event/${notification.data.eventId}`);
-    } else if (notification.type === 'EVENT_JOIN_REQUEST' && notification.data.eventId) {
-      router.push(`/event/${notification.data.eventId}`);
-    } else if (notification.type === 'EVENT_ACCEPTED' && notification.data.eventId) {
-      router.push(`/event/${notification.data.eventId}`);
-    } else if (notification.type === 'EVENT_REJECTED' && notification.data.eventId) {
-      router.push(`/event/${notification.data.eventId}`);
+    let notificationData = notification.data;
+    if (typeof notificationData === 'string') {
+      try {
+        notificationData = JSON.parse(notificationData);
+      } catch (e) {
+        console.error('Error parsing notification data:', e);
+      }
+    }
+
+    const eventTypes = [
+      'EVENT_JOIN', 
+      'EVENT_JOIN_REQUEST', 
+      'EVENT_ACCEPTED', 
+      'EVENT_REJECTED',
+      'EVENT_LEAVE',
+      'EVENT_INVITE',
+      'EVENT_CANCELLED',
+      'EVENT_UPDATED'
+    ];
+
+    if (eventTypes.includes(notification.type) && notificationData?.eventId) {
+      router.push(`/event/${notificationData.eventId}`);
+      return;
+    }
+
+    if (notification.type === 'FRIEND_REQUEST' && notificationData?.senderId) {
+      router.push(`/profile/${notificationData.senderId}`);
+      return;
+    }
+
+    if (notification.type === 'MATCH_FOUND' && notificationData?.matchedUserId) {
+      router.push(`/profile/${notificationData.matchedUserId}`);
+      return;
+    }
+
+    if (notification.type === 'NEW_MESSAGE' && notificationData?.chatId) {
+      router.push(`/chat/${notificationData.chatId}`);
+      return;
     }
   };
 
@@ -167,7 +197,7 @@ export default function NotificationBell() {
                     key={notification.id}
                     onClick={() => handleNotificationClick(notification)}
                     className={`w-full p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors text-left ${
-                      !notification.read ? 'bg-rose-50/30' : ''
+                      !notification.isRead ? 'bg-rose-50/30' : ''
                     }`}
                   >
                     <div className="flex items-start gap-3">
@@ -201,7 +231,7 @@ export default function NotificationBell() {
                         </p>
                       </div>
 
-                      {!notification.read && (
+                      {!notification.isRead && (
                         <div className="w-2 h-2 bg-rose-500 rounded-full flex-shrink-0" />
                       )}
                     </div>
