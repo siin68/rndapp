@@ -195,7 +195,7 @@ export default function ChatPage() {
             </div>
           ) : (
             messages.map((msg, index) => {
-              const isCurrentUser = msg.sender.id === currentUserId;
+              const isCurrentUser = msg.sender.id.toString() === currentUserId?.toString();
               const isSequence = index > 0 && messages[index - 1].sender.id === msg.sender.id;
               const isSystemMessage = msg.type === 'SYSTEM';
 
@@ -214,15 +214,18 @@ export default function ChatPage() {
                   key={msg.id}
                   className={`flex gap-3 ${isCurrentUser ? 'flex-row-reverse' : ''} ${isSequence ? 'mt-1' : 'mt-4'}`}
                 >
-                  {!isCurrentUser && !isSequence && (
-                    <Avatar className="w-8 h-8 self-end mb-1 ring-2 ring-white shadow-sm">
-                      <AvatarImage src={msg.sender.image} alt={msg.sender.name} />
-                      <AvatarFallback className="bg-gray-100 text-gray-500 text-xs font-bold">
-                        {msg.sender.name?.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
-                  {!isCurrentUser && isSequence && <div className="w-8" />}
+                  {!isCurrentUser ? (
+                    !isSequence ? (
+                      <Avatar className="w-8 h-8 self-end mb-1 ring-2 ring-white shadow-sm">
+                        <AvatarImage src={msg.sender.image} alt={msg.sender.name} />
+                        <AvatarFallback className="bg-gray-100 text-gray-500 text-xs font-bold">
+                          {msg.sender.name?.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                    ) : (
+                      <div className="w-8" />
+                    )
+                  ) : null}
 
                   <div className="group relative max-w-[80%]">
                     {!isCurrentUser && !isSequence && (
