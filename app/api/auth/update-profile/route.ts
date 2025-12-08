@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const updatedUser = await prisma.user.update({
+    await prisma.user.update({
       where: { id: existingUser.id },
       data: {
         name: profile.name || existingUser.name,
@@ -41,14 +41,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Mark onboarding as completed using raw SQL
     await prisma.$executeRaw`UPDATE "User" SET "onboardingCompleted" = true WHERE "id" = ${existingUser.id}`;
-    
-    // Verify the update was successful
-    const verifyUpdate = await prisma.$queryRaw<{onboardingCompleted: boolean}[]>`
-      SELECT "onboardingCompleted" FROM "User" WHERE "id" = ${existingUser.id}
-    `;
-    console.log(`Updated user ${existingUser.id} onboarding status:`, verifyUpdate[0]?.onboardingCompleted);
 
     if (hobbies && Array.isArray(hobbies)) {
       await prisma.userHobby.deleteMany({
@@ -57,10 +50,16 @@ export async function POST(request: NextRequest) {
 
       for (let i = 0; i < hobbies.length; i++) {
         const hobbyData = hobbies[i];
-        // Handle both formats: string ID or object with hobbyId
-        const hobbyId = typeof hobbyData === 'string' ? hobbyData : hobbyData.hobbyId;
+        let hobbyId: number | undefined;
+        if (typeof hobbyData === 'number') {
+          hobbyId = hobbyData;
+        } else if (typeof hobbyData === 'string') {
+          hobbyId = parseInt(hobbyData, 10);
+        } else if (hobbyData && typeof hobbyData === 'object') {
+          hobbyId = typeof hobbyData.hobbyId === 'number' ? hobbyData.hobbyId : parseInt(hobbyData.hobbyId, 10);
+        }
         
-        if (hobbyId) {
+        if (hobbyId && !isNaN(hobbyId)) {
           await prisma.userHobby.create({
             data: {
               userId: existingUser.id,
@@ -80,10 +79,16 @@ export async function POST(request: NextRequest) {
 
       for (let i = 0; i < locations.length; i++) {
         const locationData = locations[i];
-        // Handle both formats: string ID or object with locationId  
-        const locationId = typeof locationData === 'string' ? locationData : locationData.locationId;
+        let locationId: number | undefined;
+        if (typeof locationData === 'number') {
+          locationId = locationData;
+        } else if (typeof locationData === 'string') {
+          locationId = parseInt(locationData, 10);
+        } else if (locationData && typeof locationData === 'object') {
+          locationId = typeof locationData.locationId === 'number' ? locationData.locationId : parseInt(locationData.locationId, 10);
+        }
         
-        if (locationId) {
+        if (locationId && !isNaN(locationId)) {
           await prisma.userLocation.create({
             data: {
               userId: existingUser.id,
