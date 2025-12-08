@@ -9,9 +9,8 @@ export async function POST(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    const eventId = params.id;
     const body = await request.json();
-    const { userId } = body;
+    const { userId: userIdStr } = body;
 
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -20,9 +19,12 @@ export async function POST(
       );
     }
 
-    if (!eventId || !userId) {
+    const eventId = parseInt(params.id, 10);
+    const userId = parseInt(userIdStr, 10);
+
+    if (isNaN(eventId) || isNaN(userId)) {
       return NextResponse.json(
-        { success: false, error: "Event ID and User ID are required" },
+        { success: false, error: "Invalid Event ID or User ID" },
         { status: 400 }
       );
     }

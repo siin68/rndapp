@@ -13,11 +13,19 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const userIdNum = parseInt(userId, 10);
+    if (isNaN(userIdNum)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid userId" },
+        { status: 400 }
+      );
+    }
+
     const chats = await prisma.chat.findMany({
       where: {
         participants: {
           some: {
-            userId: userId,
+            userId: userIdNum,
           },
         },
       },

@@ -18,7 +18,16 @@ export async function POST(
       );
     }
 
-    const chatId = params.id;
+    const chatId = parseInt(params.id, 10);
+
+    // Validate chatId is a valid number
+    if (isNaN(chatId)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid chat ID" },
+        { status: 400 }
+      );
+    }
+
     const body = await request.json();
     const { content, type = "TEXT" } = body;
 
@@ -78,8 +87,8 @@ export async function POST(
       data: { updatedAt: new Date() },
     });
 
-    socketEmit.toChat(chatId, "new-message", {
-      chatId,
+    socketEmit.toChat(chatId.toString(), "new-message", {
+      chatId: chatId.toString(),
       message: {
         id: message.id,
         content: message.content,

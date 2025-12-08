@@ -229,7 +229,7 @@ export default function HobbyMatchPage() {
 
       // Build query parameters for filtering
       const params = new URLSearchParams({
-        userId: session.user.id,
+        userId: session.user.id.toString(),
         limit: "20",
       });
 

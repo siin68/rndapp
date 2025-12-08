@@ -30,22 +30,22 @@ import {
 import { MessageIcon } from "@/icons/icons";
 
 interface Event {
-  id: string;
+  id: number;
   title: string;
   description?: string;
   image?: string;
   date: Date | string;
-  hobbyId: string;
-  locationId: string;
-  hostId: string;
+  hobbyId: number;
+  locationId: number;
+  hostId: number;
   maxParticipants: number;
   status: string;
   host?: any;
   hobby?: any;
   location?: any;
   participants?: any[];
-  joinRequests?: { id: string; userId: string; status: string; createdAt: string }[];
-  chats?: { id: string; type: string }[];
+  joinRequests?: { id: number; userId: number; status: string; createdAt: string }[];
+  chats?: { id: number; type: string }[];
   _count?: { participants: number };
 }
 
@@ -407,8 +407,8 @@ export default function EventDetailPage() {
   }
 
   // Derived Data
-  const hobby = getHobbyById(event.hobbyId) || event.hobby;
-  const location = getLocationById(event.locationId) || event.location;
+  const hobby = event.hobbyId ? (getHobbyById(event.hobbyId.toString()) || event.hobby) : event.hobby;
+  const location = event.locationId ? (getLocationById(event.locationId.toString()) || event.location) : event.location;
   const host = event.host;
   const participantCount = event._count?.participants || event.participants?.length || 0;
   const maxParticipants = event.maxParticipants || 10; // Fallback if 0
@@ -850,13 +850,31 @@ export default function EventDetailPage() {
               </Button>
             </>
           ) : isParticipant ? (
-            <Button
-              onClick={handleLeaveEvent}
-              disabled={joining}
-              className="flex-1 rounded-full h-12 text-base font-bold shadow-lg transition-all bg-gradient-to-r from-red-500 to-rose-600 text-white hover:from-red-600 hover:to-rose-700 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {joining ? "Leaving..." : "Leave Event"}
-            </Button>
+            <>
+              <Button
+                onClick={() => {
+                  // Find or create chat for this event
+                  const eventChat = event.chats?.find((chat: any) => chat.type === 'EVENT');
+                  if (eventChat) {
+                    router.push(`/${locale}/chat/${eventChat.id}`);
+                  } else {
+                    // Handle case where chat doesn't exist yet
+                    console.log('Chat not found for event');
+                  }
+                }}
+                className="rounded-full h-12 px-4 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white border-0 flex items-center gap-2 transition-all font-bold text-sm shadow-lg hover:shadow-xl hover:scale-105"
+              >
+                <MessageCircle className="w-5 h-5" />
+                <span className="hidden sm:inline">Chat</span>
+              </Button>
+              <Button
+                onClick={handleLeaveEvent}
+                disabled={joining}
+                className="flex-1 rounded-full h-12 text-base font-bold shadow-lg transition-all bg-gradient-to-r from-red-500 to-rose-600 text-white hover:from-red-600 hover:to-rose-700 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {joining ? "Leaving..." : "Leave Event"}
+              </Button>
+            </>
           ) : isPendingRequest ? (
             <Button
               disabled={true}

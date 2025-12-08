@@ -4,7 +4,11 @@ import prisma from "@/lib/prisma";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { userId, targetId, action } = body;
+    const { userId: userIdRaw, targetId: targetIdRaw, action } = body;
+
+    // Convert to integers
+    const userId = typeof userIdRaw === 'string' ? parseInt(userIdRaw, 10) : userIdRaw;
+    const targetId = typeof targetIdRaw === 'string' ? parseInt(targetIdRaw, 10) : targetIdRaw;
 
     console.log(`[SWIPE] Received request: userId=${userId}, targetId=${targetId}, action=${action}`);
 
@@ -12,6 +16,13 @@ export async function POST(request: NextRequest) {
     if (!userId || !targetId || !action) {
       return NextResponse.json(
         { success: false, error: "Missing required fields: userId, targetId, action" },
+        { status: 400 }
+      );
+    }
+
+    if (isNaN(userId) || isNaN(targetId)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid userId or targetId format" },
         { status: 400 }
       );
     }
@@ -282,12 +293,22 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
-    const targetId = searchParams.get("targetId");
+    const userIdStr = searchParams.get("userId");
+    const targetIdStr = searchParams.get("targetId");
 
-    if (!userId || !targetId) {
+    if (!userIdStr || !targetIdStr) {
       return NextResponse.json(
         { success: false, error: "Missing userId or targetId" },
+        { status: 400 }
+      );
+    }
+
+    const userId = parseInt(userIdStr, 10);
+    const targetId = parseInt(targetIdStr, 10);
+
+    if (isNaN(userId) || isNaN(targetId)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid userId or targetId format" },
         { status: 400 }
       );
     }

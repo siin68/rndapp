@@ -7,7 +7,8 @@ import Image from "next/image";
 import { Card, CardContent, Badge, Button } from "@/components/ui";
 import { getHobbyById, getLocationById, fetchEvents } from "@/lib/data";
 import { useSession } from "next-auth/react";
-import { MapPinIcon, CalendarIcon, HeartIcon, SparklesIcon, HeartHandshakeIcon } from "@/icons/icons";
+import { MapPinIcon, CalendarIcon, HeartIcon, SparklesIcon, HeartHandshakeIcon, SearchIcon, FilterIcon, XIcon } from "@/icons/icons";
+import { HOBBIES } from "@/constants/hobbies";
 
 // --- Types ---
 interface Event {
@@ -63,6 +64,9 @@ export default function OpenInvitesPage() {
 
   const [openEvents, setOpenEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedHobbies, setSelectedHobbies] = useState<string[]>([]);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   useEffect(() => {
     async function fetchOpenEvents() {
@@ -71,12 +75,29 @@ export default function OpenInvitesPage() {
       try {
         const events = await fetchEvents({
           limit: 20,
-          userId: session.user.id, // Pass userId to exclude user's own events
+          userId: session.user.id.toString(), // Pass userId to exclude user's own events
         });
-        const processedEvents = events.map((e: any) => ({
-          ...e,
-          hobbyIds: e.hobbyIds || (e.hobbyId ? [e.hobbyId] : []),
-        }));
+        const processedEvents = events.map((e: any) => {
+          // Extract hobby IDs from hobbies array structure
+          // API returns: hobbies: [{ hobby: { id: 1, name: "...", icon: "..." }, isPrimary: true }]
+          let hobbyIds: string[] = [];
+
+          if (e.hobbies && Array.isArray(e.hobbies)) {
+            // Extract from hobbies array and convert to strings
+            hobbyIds = e.hobbies.map((h: any) => String(h.hobby.id));
+          } else if (e.hobbyId) {
+            // Fallback to single hobbyId
+            hobbyIds = [String(e.hobbyId)];
+          } else if (e.hobbyIds) {
+            // Already have hobbyIds array
+            hobbyIds = e.hobbyIds.map((id: any) => String(id));
+          }
+
+          return {
+            ...e,
+            hobbyIds,
+          };
+        });
         setOpenEvents(processedEvents || []);
       } catch (error) {
         console.error("Error fetching open events:", error);
@@ -99,6 +120,39 @@ export default function OpenInvitesPage() {
     return SAMPLE_HOBBIES[id] || { name: "Social", emoji: "✨" };
   };
 
+  // Filter events based on search term and selected hobbies
+  const filteredEvents = openEvents.filter((event) => {
+    // Search filter
+    const matchesSearch = searchTerm === "" ||
+      event.title.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // Hobby filter
+    const matchesHobby = selectedHobbies.length === 0 ||
+      event.hobbyIds.some(hobbyId => selectedHobbies.includes(hobbyId));
+
+    // Debug logging
+    if (selectedHobbies.length > 0 && event.hobbyIds.length > 0) {
+      console.log('Event:', event.title, 'Event hobbyIds:', event.hobbyIds, 'Selected:', selectedHobbies, 'Match:', matchesHobby);
+    }
+
+    return matchesSearch && matchesHobby;
+  });
+
+  // Toggle hobby selection
+  const toggleHobby = (hobbyId: string) => {
+    setSelectedHobbies(prev =>
+      prev.includes(hobbyId)
+        ? prev.filter(id => id !== hobbyId)
+        : [...prev, hobbyId]
+    );
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchTerm("");
+    setSelectedHobbies([]);
+  };
+
   return (
     <div className="min-h-screen w-full bg-[#FAFAFA] py-10 px-4 sm:px-6 lg:px-8 pb-24">
       <div className="fixed top-0 inset-x-0 h-96 bg-gradient-to-b from-rose-50/80 to-transparent -z-10" />
@@ -116,6 +170,138 @@ export default function OpenInvitesPage() {
           </p>
         </div>
 
+        {/* Search and Filter Section */}
+        <div className="max-w-3xl mx-auto space-y-4">
+          {/* Search Input */}
+          <div className="relative group">
+            <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-rose-500 transition-colors" />
+            <input
+              type="text"
+              placeholder="Search events by name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-12 pr-12 py-4 bg-white border-2 border-gray-200 rounded-2xl text-gray-900 placeholder-gray-400 focus:border-rose-400 focus:ring-4 focus:ring-rose-100 transition-all duration-300 outline-none shadow-sm hover:shadow-md"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 transition-colors"
+              >
+                <XIcon className="w-3.5 h-3.5 text-gray-600" />
+              </button>
+            )}
+          </div>
+
+          {/* Filter Button & Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+              className={`w-full flex items-center justify-between px-6 py-4 rounded-2xl border-2 transition-all duration-300 shadow-sm hover:shadow-md ${selectedHobbies.length > 0
+                ? 'bg-gradient-to-r from-rose-50 to-purple-50 border-rose-300 text-rose-700'
+                : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
+                }`}
+            >
+              <div className="flex items-center gap-3">
+                <FilterIcon className={`w-5 h-5 ${selectedHobbies.length > 0 ? 'text-rose-500' : 'text-gray-400'}`} />
+                <span className="font-semibold">
+                  {selectedHobbies.length > 0
+                    ? `${selectedHobbies.length} ${selectedHobbies.length === 1 ? 'hobby' : 'hobbies'} selected`
+                    : 'Filter by hobbies'}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                {selectedHobbies.length > 0 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      clearFilters();
+                    }}
+                    className="px-3 py-1 text-xs font-bold text-rose-600 bg-white rounded-lg hover:bg-rose-50 transition-colors"
+                  >
+                    Clear
+                  </button>
+                )}
+                <div className={`transform transition-transform duration-300 ${isFilterOpen ? 'rotate-180' : ''}`}>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+            </button>
+
+            {/* Filter Dropdown */}
+            <div
+              className={`absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl border-2 border-gray-200 shadow-xl overflow-hidden transition-all duration-300 z-10 ${isFilterOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'
+                }`}
+            >
+              <div className="p-4 bg-gradient-to-r from-rose-50 to-purple-50 border-b border-gray-200">
+                <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Select Hobbies</h3>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-4 max-h-80 overflow-y-auto">
+                {HOBBIES.map((hobby) => {
+                  const isSelected = selectedHobbies.includes(hobby.id);
+                  return (
+                    <button
+                      key={hobby.id}
+                      onClick={() => toggleHobby(hobby.id)}
+                      className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${isSelected
+                        ? 'bg-gradient-to-r from-rose-500 to-purple-500 text-white shadow-md scale-[1.02]'
+                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100 hover:scale-[1.02]'
+                        }`}
+                    >
+                      <span className="text-xl">{hobby.icon}</span>
+                      <span className="truncate">{hobby.name}</span>
+                      {isSelected && (
+                        <svg className="w-4 h-4 ml-auto" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Active Filters Display */}
+          {(searchTerm || selectedHobbies.length > 0) && (
+            <div className="flex flex-wrap items-center gap-2 px-4">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Active Filters:</span>
+              {searchTerm && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-100 text-rose-700 rounded-lg text-xs font-bold">
+                  <SearchIcon className="w-3 h-3" />
+                  &ldquo;{searchTerm}&rdquo;
+                  <button onClick={() => setSearchTerm("")} className="hover:text-rose-900">
+                    <XIcon className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+              {selectedHobbies.map(hobbyId => {
+                const hobby = HOBBIES.find(h => h.id === hobbyId);
+                if (!hobby) return null;
+                return (
+                  <span
+                    key={hobbyId}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg text-xs font-bold"
+                  >
+                    <span>{hobby.icon}</span>
+                    {hobby.name}
+                    <button onClick={() => toggleHobby(hobbyId)} className="hover:text-purple-900">
+                      <XIcon className="w-3 h-3" />
+                    </button>
+                  </span>
+                );
+              })}
+              <button
+                onClick={clearFilters}
+                className="ml-auto text-xs font-bold text-gray-500 hover:text-rose-600 transition-colors underline"
+              >
+                Clear All
+              </button>
+            </div>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {loading
             ? Array.from({ length: 4 }).map((_, i) => (
@@ -130,7 +316,7 @@ export default function OpenInvitesPage() {
                   </CardContent>
                 </Card>
               ))
-            : openEvents.map((event) => {
+            : filteredEvents.map((event) => {
                 const location = event.location || getLocationById(event.locationId);
                 const cityName = (location?.city as any)?.name || location?.city || '';
                 const locationName = location?.name || '';
@@ -283,21 +469,33 @@ export default function OpenInvitesPage() {
               })}
         </div>
 
-        {!loading && openEvents.length === 0 && (
+        {!loading && filteredEvents.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
               <HeartHandshakeIcon className="w-10 h-10 text-gray-400" />
             </div>
             <p className="text-gray-500 font-medium">
-              No active invites found.
+              {searchTerm || selectedHobbies.length > 0
+                ? "No events found matching your filters."
+                : "No active invites found."}
             </p>
-            <Button
-              variant="link"
-              onClick={() => router.push("/dashboard/create-invite")}
-              className="text-rose-600 font-bold"
-            >
-              Create one?
-            </Button>
+            {searchTerm || selectedHobbies.length > 0 ? (
+              <Button
+                variant="link"
+                onClick={clearFilters}
+                className="text-rose-600 font-bold"
+              >
+                Clear filters
+              </Button>
+            ) : (
+                <Button
+                  variant="link"
+                  onClick={() => router.push("/dashboard/create-invite")}
+                  className="text-rose-600 font-bold"
+                >
+                  Create one?
+                </Button>
+            )}
           </div>
         )}
       </div>

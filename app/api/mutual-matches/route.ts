@@ -4,11 +4,20 @@ import prisma from "@/lib/prisma";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
+    const userIdStr = searchParams.get("userId");
 
-    if (!userId) {
+    if (!userIdStr) {
       return NextResponse.json(
         { success: false, error: "userId parameter is required" },
+        { status: 400 }
+      );
+    }
+
+    // Convert userId to integer
+    const userId = parseInt(userIdStr, 10);
+    if (isNaN(userId)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid userId format" },
         { status: 400 }
       );
     }
@@ -128,11 +137,19 @@ export async function GET(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const friendshipId = searchParams.get("friendshipId");
+    const friendshipIdStr = searchParams.get("friendshipId");
 
-    if (!friendshipId) {
+    if (!friendshipIdStr) {
       return NextResponse.json(
         { success: false, error: "Missing friendshipId" },
+        { status: 400 }
+      );
+    }
+
+    const friendshipId = parseInt(friendshipIdStr, 10);
+    if (isNaN(friendshipId)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid friendshipId format" },
         { status: 400 }
       );
     }

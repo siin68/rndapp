@@ -9,29 +9,29 @@ import { Button, Avatar, AvatarImage, AvatarFallback } from '@/components/ui';
 import { ArrowLeft, Send, Paperclip, Info, Users } from 'lucide-react';
 
 interface Message {
-  id: string;
+  id: number;
   content: string;
   type: string;
   timestamp: string;
   sender: {
-    id: string;
+    id: number;
     name: string;
     image?: string;
   };
 }
 
 interface ChatData {
-  id: string;
+  id: number;
   type: string;
   name: string;
   event?: {
-    id: string;
+    id: number;
     title: string;
     image?: string;
     status: string;
   };
   participants: {
-    id: string;
+    id: number;
     name: string;
     image?: string;
   }[];

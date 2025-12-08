@@ -49,10 +49,10 @@
   "dashboard": {
     "nav": {
       "home": "Home",
-      "openInvites": "Open Invites",
-      "hobbyMatch": "Hobby Match",
-      "createInvite": "Create Invite",
-      "myEvents": "My Events",
+      "openInvites": "Join Events",
+      "hobbyMatch": "Match",
+      "createInvite": "Create Events",
+      "myEvents": "Events",
       "messages": "Messages",
       "settings": "Settings"
     },
@@ -67,7 +67,7 @@
       "noResults": "No open invites found"
     },
     "hobbyMatch": {
-      "title": "Match by Hobby",
+      "title": "Match",
       "subtitle": "Find people with similar interests",
       "viewProfile": "View Profile",
       "sendInvite": "Send Invite"
@@ -85,7 +85,7 @@
       "cancel": "Cancel"
     },
     "myEvents": {
-      "title": "My Events",
+      "title": "Events",
       "tabs": {
         "created": "Created by Me",
         "joined": "Joined",

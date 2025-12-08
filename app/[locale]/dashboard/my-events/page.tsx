@@ -82,26 +82,26 @@ const CrownIcon = ({ className }: { className?: string }) => (
 );
 
 interface Event {
-  id: string;
+  id: number;
   title: string;
   description?: string;
   image?: string;
   date: Date | string;
-  hobbyId: string;
-  locationId: string;
-  hostId: string;
+  hobbyId: number;
+  locationId: number;
+  hostId: number;
   maxParticipants: number;
   status: string;
   participants?: any[];
   _count?: { participants: number };
   host?: {
-    id: string;
+    id: number;
     name: string;
     image?: string;
   };
   hobbies?: Array<{
     hobby: {
-      id: string;
+      id: number;
       name: string;
       icon: string;
     };
@@ -128,8 +128,8 @@ export default function MyEventsPage() {
 
       try {
         const [hosted, participating] = await Promise.all([
-          fetchEvents({ type: "hosted", userId: session.user.id }),
-          fetchEvents({ type: "participating", userId: session.user.id }),
+          fetchEvents({ type: "hosted", userId: session.user.id.toString() }),
+          fetchEvents({ type: "participating", userId: session.user.id.toString() }),
         ]);
 
         setCreatedEvents(hosted || []);
@@ -211,8 +211,8 @@ export default function MyEventsPage() {
             const primaryHobby =
               event.hobbies?.find((h) => h.isPrimary)?.hobby ||
               event.hobbies?.[0]?.hobby ||
-              getHobbyById(event.hobbyId);
-            const location = getLocationById(event.locationId);
+              getHobbyById(event.hobbyId.toString());
+            const location = getLocationById(event.locationId.toString());
             const isHost = event.hostId === session?.user?.id;
             const participantCount =
               event._count?.participants || event.participants?.length || 0;
