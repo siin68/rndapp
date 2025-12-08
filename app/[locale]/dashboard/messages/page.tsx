@@ -497,28 +497,46 @@ export default function MessagesPage() {
                 </div>
               ) : (
                 chats.map((chat: any) => {
-                  const otherParticipant = chat.participants.find((p: any) => p.id !== session?.user?.id);
+                  const currentUserId = session?.user?.id?.toString();
+                  const otherParticipant = chat.participants.find((p: any) => p.id?.toString() !== currentUserId);
+                  const isEventChat = chat.type === 'EVENT' && chat.event;
+                  const avatarSrc = isEventChat ? chat.event?.image : otherParticipant?.image;
+                  const avatarAlt = isEventChat ? chat.event?.title : otherParticipant?.name;
+                  const avatarFallback = isEventChat ? (chat.event?.title?.charAt(0) || '📅') : (otherParticipant?.name?.charAt(0) || 'U');
+                  
                   return (
                     <Card key={chat.id} onClick={() => router.push(`/chat/${chat.id}`)} className="cursor-pointer hover:shadow-lg transition-all group">
                       <CardContent className="pt-6">
                         <div className="flex items-center gap-4">
                           <div className="relative">
                             <Avatar className="w-12 h-12">
-                              <AvatarImage src={otherParticipant?.image || ""} alt={otherParticipant?.name || ""} />
-                              <AvatarFallback>{otherParticipant?.name?.charAt(0) || "U"}</AvatarFallback>
+                              <AvatarImage src={avatarSrc || ""} alt={avatarAlt || ""} />
+                              <AvatarFallback className={isEventChat ? "bg-gradient-to-br from-rose-100 to-purple-100 text-purple-600" : ""}>
+                                {avatarFallback}
+                              </AvatarFallback>
                             </Avatar>
-                            <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                            {isEventChat ? (
+                              <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-purple-500 rounded-full border-2 border-white flex items-center justify-center">
+                                <UsersIcon className="w-2.5 h-2.5 text-white" />
+                              </div>
+                            ) : (
+                              <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                            )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex justify-between items-start mb-1">
                               <h3 className="font-bold text-gray-800 group-hover:text-primary-600 transition">
-                                {chat.event?.title || "Direct Message"}
+                                {chat.event?.title || otherParticipant?.name || "Direct Message"}
                               </h3>
                               <span className="text-xs text-gray-400 ml-2">
                                 {chat.lastMessage ? new Date(chat.lastMessage.timestamp).toLocaleDateString() : ""}
                               </span>
                             </div>
-                            <p className="text-sm text-gray-500 mb-1">💬 with {otherParticipant?.name || "Unknown User"}</p>
+                            <p className="text-sm text-gray-500 mb-1">
+                              {isEventChat 
+                                ? `👥 ${chat.participants.length} members` 
+                                : `💬 with ${otherParticipant?.name || "Unknown User"}`}
+                            </p>
                             <p className="text-sm text-gray-600 truncate">{chat.lastMessage?.content || "No messages yet"}</p>
                           </div>
                         </div>
@@ -701,9 +719,14 @@ export default function MessagesPage() {
                     </Card>
                   ))
                 : chats.map((chat: any) => {
+                    const currentUserId = session?.user?.id?.toString();
                     const otherParticipant = chat.participants.find(
-                      (p: any) => p.id !== session?.user?.id
+                      (p: any) => p.id?.toString() !== currentUserId
                     );
+                    const isEventChat = chat.type === 'EVENT' && chat.event;
+                    const avatarSrc = isEventChat ? chat.event?.image : otherParticipant?.image;
+                    const avatarAlt = isEventChat ? chat.event?.title : otherParticipant?.name;
+                    const avatarFallback = isEventChat ? (chat.event?.title?.charAt(0) || '📅') : (otherParticipant?.name?.charAt(0) || 'U');
 
                     return (
                       <Card
@@ -716,19 +739,25 @@ export default function MessagesPage() {
                             <div className="relative">
                               <Avatar className="w-12 h-12">
                                 <AvatarImage
-                                  src={otherParticipant?.image || ""}
-                                  alt={otherParticipant?.name || ""}
+                                  src={avatarSrc || ""}
+                                  alt={avatarAlt || ""}
                                 />
-                                <AvatarFallback>
-                                  {otherParticipant?.name?.charAt(0) || "U"}
+                                <AvatarFallback className={isEventChat ? "bg-gradient-to-br from-rose-100 to-purple-100 text-purple-600" : ""}>
+                                  {avatarFallback}
                                 </AvatarFallback>
                               </Avatar>
-                              <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                              {isEventChat ? (
+                                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-purple-500 rounded-full border-2 border-white flex items-center justify-center">
+                                  <UsersIcon className="w-2.5 h-2.5 text-white" />
+                                </div>
+                              ) : (
+                                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                              )}
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex justify-between items-start mb-1">
                                 <h3 className="font-bold text-gray-800 group-hover:text-primary-600 transition">
-                                  {chat.event?.title || "Direct Message"}
+                                  {chat.event?.title || otherParticipant?.name || "Direct Message"}
                                 </h3>
                                 <span className="text-xs text-gray-400 ml-2">
                                   {chat.lastMessage
@@ -739,7 +768,9 @@ export default function MessagesPage() {
                                 </span>
                               </div>
                               <p className="text-sm text-gray-500 mb-1">
-                                💬 with {otherParticipant?.name || "Unknown User"}
+                                {isEventChat 
+                                  ? `👥 ${chat.participants.length} members` 
+                                  : `💬 with ${otherParticipant?.name || "Unknown User"}`}
                               </p>
                               <p className="text-sm text-gray-600 truncate">
                                 {chat.lastMessage?.content || "No messages yet"}
