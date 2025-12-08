@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
 import prisma from "@/lib/prisma";
+import { parseId } from "@/lib/utils/id-parser";
 
 export async function GET(
   request: NextRequest,
@@ -9,9 +10,10 @@ export async function GET(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    const eventId = params.id;
+    const eventId = parseId(params.id);
+    const userId = parseId(session?.user?.id);
 
-    if (!session?.user?.id) {
+    if (!session?.user?.id || !userId) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
         { status: 401 }
@@ -20,12 +22,11 @@ export async function GET(
 
     if (!eventId) {
       return NextResponse.json(
-        { success: false, error: "Event ID is required" },
+        { success: false, error: "Invalid Event ID" },
         { status: 400 }
       );
     }
 
-    // Check if user is the host
     const event = await prisma.event.findUnique({
       where: { id: eventId },
       select: { hostId: true },
@@ -38,7 +39,7 @@ export async function GET(
       );
     }
 
-    if (event.hostId !== (session.user as any).id) {
+    if (event.hostId !== userId) {
       return NextResponse.json(
         { success: false, error: "Only the host can view join requests" },
         { status: 403 }

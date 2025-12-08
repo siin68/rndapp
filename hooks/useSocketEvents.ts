@@ -61,6 +61,10 @@ export function useEventParticipationEvents({
       onJoined?.(event.detail);
     };
 
+    console.log("onLeft", onLeft);
+    console.log("onJoined", onJoined);
+
+
     const handleLeft = (event: CustomEvent) => {
       onLeft?.(event.detail);
     };

@@ -19,7 +19,7 @@ interface Notification {
 export default function NotificationBell() {
   const router = useRouter();
   const { data: session } = useSession();
-  const { socket, isConnected } = useSocket();
+  const { isConnected } = useSocket();
   
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -46,52 +46,29 @@ export default function NotificationBell() {
   }, [session?.user?.id, fetchNotifications]);
 
   useEffect(() => {
-    if (!socket || !isConnected) return;
-
-    if (session?.user?.id) {
-      socket.emit('join', session.user.id);
-    }
-
-    socket.on('notification', (notification: Notification) => {
+    const handleNotification = (event: CustomEvent) => {
+      const notification = event.detail as Notification;
+      
       setNotifications(prev => [{
         ...notification,
         read: false,
       }, ...prev]);
-      
       setUnreadCount(prev => prev + 1);
 
-      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-        new Notification(notification.title, {
+      if (typeof window !== 'undefined' && 'Notification' in window && window.Notification.permission === 'granted') {
+        new window.Notification(notification.title, {
           body: notification.message,
           icon: '/icon.png',
         });
       }
-    });
+    };
 
-    socket.on('friend-request-received', (data: any) => {
-      window.dispatchEvent(new CustomEvent('friend-request-received', { detail: data }));
-    });
-
-    socket.on('friend-request-accepted', (data: any) => {
-      window.dispatchEvent(new CustomEvent('friend-request-accepted', { detail: data }));
-    });
-
-    socket.on('event-joined', (data: any) => {
-      window.dispatchEvent(new CustomEvent('event-joined', { detail: data }));
-    });
-
-    socket.on('event-left', (data: any) => {
-      window.dispatchEvent(new CustomEvent('event-left', { detail: data }));
-    });
+    window.addEventListener('socket-notification' as any, handleNotification as any);
 
     return () => {
-      socket.off('notification');
-      socket.off('friend-request-received');
-      socket.off('friend-request-accepted');
-      socket.off('event-joined');
-      socket.off('event-left');
+      window.removeEventListener('socket-notification' as any, handleNotification as any);
     };
-  }, [socket, isConnected, session?.user?.id]);
+  }, []);
 
   const markAsRead = async (notificationId: string) => {
     try {
@@ -113,6 +90,12 @@ export default function NotificationBell() {
     setIsOpen(false);
 
     if (notification.type === 'EVENT_JOIN' && notification.data.eventId) {
+      router.push(`/event/${notification.data.eventId}`);
+    } else if (notification.type === 'EVENT_JOIN_REQUEST' && notification.data.eventId) {
+      router.push(`/event/${notification.data.eventId}`);
+    } else if (notification.type === 'EVENT_ACCEPTED' && notification.data.eventId) {
+      router.push(`/event/${notification.data.eventId}`);
+    } else if (notification.type === 'EVENT_REJECTED' && notification.data.eventId) {
       router.push(`/event/${notification.data.eventId}`);
     }
   };
@@ -190,11 +173,17 @@ export default function NotificationBell() {
                     <div className="flex items-start gap-3">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
                         notification.type === 'EVENT_JOIN' ? 'bg-green-100 text-green-600' :
+                        notification.type === 'EVENT_JOIN_REQUEST' ? 'bg-blue-100 text-blue-600' :
+                        notification.type === 'EVENT_ACCEPTED' ? 'bg-emerald-100 text-emerald-600' :
+                        notification.type === 'EVENT_REJECTED' ? 'bg-red-100 text-red-600' :
                         notification.type === 'EVENT_LEAVE' ? 'bg-red-100 text-red-600' :
                         notification.type === 'MATCH_FOUND' ? 'bg-purple-100 text-purple-600' :
                         'bg-blue-100 text-blue-600'
                       }`}>
                         {notification.type === 'EVENT_JOIN' ? '👋' :
+                         notification.type === 'EVENT_JOIN_REQUEST' ? '🙋' :
+                         notification.type === 'EVENT_ACCEPTED' ? '✅' :
+                         notification.type === 'EVENT_REJECTED' ? '❌' :
                          notification.type === 'EVENT_LEAVE' ? '💨' :
                          notification.type === 'MATCH_FOUND' ? '💝' :
                          '📢'}

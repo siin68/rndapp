@@ -3,10 +3,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from '@/lib/auth.config';
 import prisma from "@/lib/prisma";
 import { EventService } from "@/lib/database/services";
+import { parseId } from "@/lib/utils/id-parser";
 
 /**
  * POST /api/events/[id]/join
- * Join an event
+ * Request to join an event (creates a pending join request)
  */
 export async function POST(
   request: NextRequest,
@@ -22,8 +23,24 @@ export async function POST(
       );
     }
 
-    const eventId = params.id;
-    const userId = session.user.id;
+    const eventId = parseId(params.id);
+    const userId = parseId(session.user.id);
+
+    if (!eventId || !userId) {
+      return NextResponse.json(
+        { success: false, error: "Invalid ID" },
+        { status: 400 }
+      );
+    }
+
+    // Parse optional message from request body
+    let message = "";
+    try {
+      const body = await request.json();
+      message = body.message || "";
+    } catch {
+      // No body or invalid JSON, continue without message
+    }
 
     // Fetch event with all necessary relations
     const event = await prisma.event.findUnique({
@@ -35,6 +52,9 @@ export async function POST(
           include: {
             user: { select: { id: true, name: true, image: true, bio: true } },
           },
+        },
+        joinRequests: {
+          where: { userId },
         },
         _count: { 
           select: { 
@@ -50,6 +70,33 @@ export async function POST(
       return NextResponse.json(
         { success: false, error: "Event not found" },
         { status: 404 }
+      );
+    }
+
+    // Check if user is already a participant
+    const isAlreadyParticipant = event.participants.some(p => p.userId === userId);
+    if (isAlreadyParticipant) {
+      return NextResponse.json(
+        { success: false, error: "You have already joined this event" },
+        { status: 400 }
+      );
+    }
+
+    // Check if user already has a pending request
+    const existingRequest = event.joinRequests.find(r => r.status === "PENDING");
+    if (existingRequest) {
+      return NextResponse.json(
+        { success: false, error: "You already have a pending join request for this event" },
+        { status: 400 }
+      );
+    }
+
+    // Check if user's previous request was rejected
+    const rejectedRequest = event.joinRequests.find(r => r.status === "REJECTED");
+    if (rejectedRequest) {
+      return NextResponse.json(
+        { success: false, error: "Your previous join request was rejected" },
+        { status: 400 }
       );
     }
 
@@ -80,12 +127,13 @@ export async function POST(
       );
     }
 
-    // Create participation record
-    const participant = await prisma.eventParticipant.create({
+    // Create join request with PENDING status
+    const joinRequest = await prisma.eventJoinRequest.create({
       data: {
         eventId,
         userId,
-        status: "JOINED",
+        status: "PENDING",
+        message: message || null,
       },
       include: {
         user: {
@@ -94,57 +142,61 @@ export async function POST(
       },
     });
 
-    // Update event status to FULL if needed
-    const newParticipantCount = event._count.participants + 1;
-    if (newParticipantCount >= event.maxParticipants && event.status === "OPEN") {
-      await prisma.event.update({
-        where: { id: eventId },
-        data: { status: "FULL" },
-      });
-    }
-
-    // Create notification for event host
+    // Create notification for event host about new join request
     const notification = await prisma.notification.create({
       data: {
-        userId: event.hostId,
-        type: "EVENT_JOIN",
-        title: "New participant joined",
-        message: `${user.name} has joined your event "${event.title}"`,
+        userId: event.host.id,
+        type: "EVENT_JOIN_REQUEST",
+        title: "New join request",
+        message: `${user.name} wants to join your event "${event.title}"`,
+        eventId,
         data: JSON.stringify({
           eventId,
-          participantId: userId,
-          participantName: user.name,
-          participantImage: user.image,
+          requestId: joinRequest.id,
+          userId: userId,
+          userName: user.name,
+          userImage: user.image,
+          userBio: user.bio,
+          message: message || null,
         }),
       },
     });
 
-    // Emit real-time notification via Socket.IO
+    // Emit real-time notification via Socket.IO to host
     try {
       const { socketEmit } = await import('@/lib/socket');
+      const hostUserId = event.host.id.toString();
+      console.log('[DEBUG] Sending join request notification to host:', hostUserId);
       
-      // Send notification to host
-      socketEmit.toUser(event.hostId, 'notification', {
+      await socketEmit.toUser(hostUserId, 'notification', {
         id: notification.id,
-        type: 'EVENT_JOIN',
+        type: 'EVENT_JOIN_REQUEST',
         title: notification.title,
         message: notification.message,
         data: {
           eventId,
-          participantId: userId,
-          participantName: user.name,
-          participantImage: user.image,
+          requestId: joinRequest.id,
+          userId: userId,
+          userName: user.name,
+          userImage: user.image,
+          userBio: user.bio,
+          message: message || null,
         },
         createdAt: notification.createdAt,
       });
 
-      // Broadcast to all event participants
-      socketEmit.toEvent(eventId, 'event-joined', {
+      // Also emit event-specific event for join request
+      await socketEmit.toUser(hostUserId, 'event-join-request', {
         eventId,
-        userId,
-        userName: user.name,
-        userImage: user.image,
-        participantCount: newParticipantCount,
+        requestId: joinRequest.id,
+        user: {
+          id: userId,
+          name: user.name,
+          image: user.image,
+          bio: user.bio,
+        },
+        message: message || null,
+        createdAt: joinRequest.createdAt,
       });
     } catch (socketError) {
       console.error('Socket emit error:', socketError);
@@ -152,19 +204,19 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      message: "Successfully joined the event",
+      message: "Join request sent successfully. Please wait for the host to approve.",
       data: {
-        participant,
-        participantCount: newParticipantCount,
+        requestId: joinRequest.id,
+        status: "PENDING",
       },
     });
   } catch (error: any) {
-    console.error("Error joining event:", error);
+    console.error("Error creating join request:", error);
 
-    // Handle unique constraint violation (already joined)
+    // Handle unique constraint violation (already has request)
     if (error.code === "P2002") {
       return NextResponse.json(
-        { success: false, error: "You have already joined this event" },
+        { success: false, error: "You already have a join request for this event" },
         { status: 400 }
       );
     }
@@ -279,50 +331,54 @@ export async function DELETE(
       select: { name: true, image: true },
     });
 
-    // Create notification for event host
-    if (user) {
-      const notification = await prisma.notification.create({
+    // Remove user from event group chat
+    const eventChat = await prisma.chat.findFirst({
+      where: { eventId, type: "EVENT" },
+    });
+
+    if (eventChat && user) {
+      // Update chat participant (mark as left instead of deleting)
+      await prisma.chatParticipant.updateMany({
+        where: {
+          chatId: eventChat.id,
+          userId,
+        },
         data: {
-          userId: event.hostId,
-          type: "EVENT_LEAVE",
-          title: "Participant left event",
-          message: `${user.name} has left your event "${event.title}"`,
-          data: JSON.stringify({
-            eventId,
-            participantId: userId,
-            participantName: user.name,
-            participantImage: user.image,
-          }),
+          leftAt: new Date(),
         },
       });
 
-      // Emit real-time notification via Socket.IO
+      // Send system message
+      await prisma.message.create({
+        data: {
+          chatId: eventChat.id,
+          senderId: userId,
+          content: `${user.name} left the group`,
+          type: "SYSTEM",
+        },
+      });
+    }
+
+    // Emit real-time events for UI updates (no notification for leave)
+    if (user) {
       try {
         const { socketEmit } = await import('@/lib/socket');
-        
-        // Send notification to host
-        socketEmit.toUser(event.hostId, 'notification', {
-          id: notification.id,
-          type: 'EVENT_LEAVE',
-          title: notification.title,
-          message: notification.message,
-          data: {
-            eventId,
-            participantId: userId,
-            participantName: user.name,
-            participantImage: user.image,
-          },
-          createdAt: notification.createdAt,
-        });
 
-        // Broadcast to all event participants
-        socketEmit.toEvent(eventId, 'event-left', {
+        await socketEmit.toEvent(eventId, 'event-left', {
           eventId,
           userId,
           userName: user.name,
           userImage: user.image,
           participantCount: newParticipantCount,
         });
+
+        if (eventChat) {
+          await socketEmit.toChat(eventChat.id, 'chat-member-left', {
+            chatId: eventChat.id,
+            userId,
+            userName: user.name,
+          });
+        }
       } catch (socketError) {
         console.error('Socket emit error:', socketError);
       }

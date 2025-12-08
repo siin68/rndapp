@@ -214,10 +214,17 @@ export default function DashboardHome() {
       if (!session?.user?.id || checkingOnboarding) return;
 
       try {
-        const eventsRes = await fetch(
+        let eventsRes = await fetch(
           `/api/events?type=recommended&userId=${session.user.id}&limit=3`
         );
-        const eventsData = await eventsRes.json();
+        let eventsData = await eventsRes.json();
+
+        if (eventsData.success && (!eventsData.data || eventsData.data.length === 0)) {
+          eventsRes = await fetch(
+            `/api/events?userId=${session.user.id}&limit=3`
+          );
+          eventsData = await eventsRes.json();
+        }
 
         const statsRes = await fetch(
           `/api/events/stats?userId=${session.user.id}`
@@ -241,7 +248,6 @@ export default function DashboardHome() {
     fetchData();
   }, [session?.user?.id, checkingOnboarding]);
 
-  // Show loading while checking onboarding
   if (checkingOnboarding) {
     return (
       <div className="min-h-screen w-full bg-gradient-to-br from-rose-50 via-purple-50 to-indigo-50 flex items-center justify-center">

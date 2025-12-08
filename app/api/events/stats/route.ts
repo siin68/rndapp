@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { parseId } from "@/lib/utils/id-parser";
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
+    const userIdParam = searchParams.get("userId");
 
     // Get event counts
     const openEventsCount = await prisma.event.count({
@@ -16,7 +17,15 @@ export async function GET(request: NextRequest) {
 
     let userStats = {};
 
-    if (userId) {
+    if (userIdParam) {
+      const userId = parseId(userIdParam);
+      if (!userId) {
+        return NextResponse.json(
+          { success: false, error: "Invalid userId" },
+          { status: 400 }
+        );
+      }
+
       const [hostedCount, participatingCount, matchingHobbies] =
         await Promise.all([
           prisma.event.count({

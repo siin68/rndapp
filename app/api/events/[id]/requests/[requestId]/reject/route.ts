@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
 import prisma from "@/lib/prisma";
+import { parseId } from "@/lib/utils/id-parser";
 
 export async function POST(
   request: NextRequest,
@@ -9,9 +10,11 @@ export async function POST(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    const { id: eventId, requestId } = params;
+    const eventId = parseId(params.id);
+    const requestId = parseId(params.requestId);
+    const userId = parseId(session?.user?.id);
 
-    if (!session?.user?.id) {
+    if (!session?.user?.id || !userId) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
         { status: 401 }
@@ -20,12 +23,11 @@ export async function POST(
 
     if (!eventId || !requestId) {
       return NextResponse.json(
-        { success: false, error: "Event ID and Request ID are required" },
+        { success: false, error: "Invalid Event ID or Request ID" },
         { status: 400 }
       );
     }
 
-    // Check if user is the host
     const event = await prisma.event.findUnique({
       where: { id: eventId },
       select: { hostId: true, title: true },
@@ -38,7 +40,7 @@ export async function POST(
       );
     }
 
-    if (event.hostId !== (session.user as any).id) {
+    if (event.hostId !== userId) {
       return NextResponse.json(
         { success: false, error: "Only the host can reject join requests" },
         { status: 403 }
@@ -48,6 +50,11 @@ export async function POST(
     // Get the join request
     const joinRequest = await prisma.eventJoinRequest.findUnique({
       where: { id: requestId },
+      include: {
+        user: {
+          select: { id: true, name: true }
+        }
+      },
     });
 
     if (!joinRequest) {
@@ -64,24 +71,57 @@ export async function POST(
       );
     }
 
+    if (joinRequest.status !== "PENDING") {
+      return NextResponse.json(
+        { success: false, error: "This request has already been processed" },
+        { status: 400 }
+      );
+    }
+
     // Reject the request in a transaction
-    await prisma.$transaction(async (prisma) => {
+    const notification = await prisma.$transaction(async (tx) => {
       // Update request status
-      await prisma.eventJoinRequest.update({
+      await tx.eventJoinRequest.update({
         where: { id: requestId },
         data: { status: "REJECTED" },
       });
 
       // Create notification for the user
-      await prisma.notification.create({
+      const notif = await tx.notification.create({
         data: {
           userId: joinRequest.userId,
           type: "EVENT_REJECTED",
+          title: "Join request rejected",
           message: `Your request to join "${event.title}" has been declined`,
           eventId,
+          data: JSON.stringify({
+            eventId,
+            eventTitle: event.title,
+          }),
         },
       });
+
+      return notif;
     });
+
+    // Emit real-time notification via Socket.IO
+    try {
+      const { socketEmit } = await import('@/lib/socket');
+      
+      await socketEmit.toUser(joinRequest.userId.toString(), 'notification', {
+        id: notification.id,
+        type: 'EVENT_REJECTED',
+        title: notification.title,
+        message: notification.message,
+        data: {
+          eventId,
+          eventTitle: event.title,
+        },
+        createdAt: notification.createdAt,
+      });
+    } catch (socketError) {
+      console.error('Socket emit error:', socketError);
+    }
 
     return NextResponse.json({
       success: true,
@@ -95,3 +135,4 @@ export async function POST(
     );
   }
 }
+

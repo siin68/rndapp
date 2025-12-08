@@ -2,6 +2,7 @@ import { Server as NetServer } from 'http';
 import { NextApiRequest } from 'next';
 import { Server as ServerIO } from 'socket.io';
 import { NextApiResponseServerIO } from '@/types/socket';
+import { setSocketIO } from '@/lib/socket';
 
 export const config = {
   api: {
@@ -12,6 +13,7 @@ export const config = {
 const SocketHandler = (req: NextApiRequest, res: NextApiResponseServerIO) => {
   if (!res.socket.server.io) {
     const httpServer: NetServer = res.socket.server as any;
+    
     const io = new ServerIO(httpServer, {
       path: '/api/socket/io',
       addTrailingSlash: false,
@@ -22,8 +24,13 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseServerIO) => {
     });
 
     io.on('connection', (socket) => {
+      console.log('[Socket] Connected:', socket.id);
+      
       socket.on('join', (userId: string) => {
         socket.join(`user:${userId}`);
+        const room = `user:${userId}`;
+        const sockets = io.sockets.adapter.rooms.get(room);
+        console.log(`[Socket] User ${userId} joined, room now has ${sockets?.size || 0} sockets`);
       });
 
       socket.on('join-event', (eventId: string) => {
@@ -54,8 +61,10 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseServerIO) => {
     });
 
     res.socket.server.io = io;
-    const { setSocketIO } = require('@/lib/socket');
-    setSocketIO(io);
+    setSocketIO(io, httpServer);
+  } else {
+    const io = res.socket.server.io;
+    setSocketIO(io, res.socket.server as any);
   }
 
   res.end();

@@ -20,6 +20,8 @@ export interface ServerToClientEvents {
   'match-found': (match: any) => void;
   'friend-request-received': (data: { friendRequest: any }) => void;
   'friend-request-accepted': (data: { friendRequestId: string; friendship: any }) => void;
+  'chat-member-joined': (data: { chatId: string; userId: string; userName: string }) => void;
+  'chat-member-left': (data: { chatId: string; userId: string; userName: string }) => void;
 }
 
 export interface ClientToServerEvents {

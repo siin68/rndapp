@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth.config';
 import SessionProvider from '@/components/SessionProvider';
 import { SocketProvider } from '@/contexts/SocketContext';
+import SocketListener from '@/components/SocketListener';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../globals.css';
@@ -35,6 +36,7 @@ export default async function RootLayout({
       <body className={inter.className}>
         <SessionProvider session={session}>
           <SocketProvider>
+            <SocketListener />
             <NextIntlClientProvider messages={messages}>
               {children}
             </NextIntlClientProvider>

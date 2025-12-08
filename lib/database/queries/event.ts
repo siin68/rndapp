@@ -1,13 +1,17 @@
 import prisma from "../../prisma";
+import { parseId, parseIds } from "../../utils/id-parser";
 
 /**
  * Event-related queries
  */
 export const eventQueries = {
   // Find events by user interests
-  async findRecommendedEvents(userId: string, limit: number = 10) {
+  async findRecommendedEvents(userId: string | number, limit: number = 10) {
+    const parsedUserId = parseId(userId);
+    if (!parsedUserId) return [];
+
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: parsedUserId },
       include: { hobbies: true, locations: true },
     });
 
@@ -21,7 +25,7 @@ export const eventQueries = {
         AND: [
           { status: "OPEN" },
           { date: { gte: new Date() } },
-          { hostId: { not: userId } },
+          { hostId: { not: parsedUserId } },
           {
             OR: [
               { hobbies: { some: { hobbyId: { in: userHobbyIds } } } },
@@ -49,9 +53,14 @@ export const eventQueries = {
     });
   },
 
-  async getEventDetails(eventId: string, viewerId?: string) {
+  async getEventDetails(eventId: string | number, viewerId?: string | number) {
+    const parsedEventId = parseId(eventId);
+    const parsedViewerId = parseId(viewerId);
+
+    if (!parsedEventId) return null;
+
     return prisma.event.findUnique({
-      where: { id: eventId },
+      where: { id: parsedEventId },
       include: {
         host: {
           select: { id: true, name: true, image: true, bio: true },
@@ -69,11 +78,23 @@ export const eventQueries = {
             },
           },
         },
+        // Include join requests for the viewer to see their pending status
+        joinRequests: parsedViewerId
+          ? {
+              where: { userId: parsedViewerId },
+              select: {
+                id: true,
+                userId: true,
+                status: true,
+                createdAt: true,
+              },
+            }
+          : false,
         chats: {
-          where: viewerId
+          where: parsedViewerId
             ? {
                 participants: {
-                  some: { userId: viewerId },
+                  some: { userId: parsedViewerId },
                 },
               }
             : {},
@@ -96,9 +117,12 @@ export const eventQueries = {
     });
   },
 
-  async getUserHostedEvents(userId: string) {
+  async getUserHostedEvents(userId: string | number) {
+    const parsedUserId = parseId(userId);
+    if (!parsedUserId) return [];
+
     return prisma.event.findMany({
-      where: { hostId: userId },
+      where: { hostId: parsedUserId },
       include: {
         hobbies: {
           include: { hobby: true },
@@ -116,12 +140,15 @@ export const eventQueries = {
     });
   },
 
-  async getUserParticipatingEvents(userId: string) {
+  async getUserParticipatingEvents(userId: string | number) {
+    const parsedUserId = parseId(userId);
+    if (!parsedUserId) return [];
+
     return prisma.event.findMany({
       where: {
         participants: {
           some: {
-            userId,
+            userId: parsedUserId,
             status: "JOINED",
           },
         },
@@ -147,14 +174,21 @@ export const eventQueries = {
   async searchEvents(
     query: string,
     filters?: {
-      hobbyIds?: string[];
-      locationIds?: string[];
+      hobbyIds?: (string | number)[];
+      locationIds?: (string | number)[];
       dateFrom?: Date;
       dateTo?: Date;
-      excludeHostId?: string; // Add option to exclude events by host
+      excludeHostId?: string | number;
+      excludeParticipantId?: string | number; // Exclude events user is already participating in
     },
     limit: number = 20
   ) {
+    // Parse array IDs
+    const parsedHobbyIds = filters?.hobbyIds?.map(id => parseId(id)).filter((id): id is number => id !== undefined);
+    const parsedLocationIds = filters?.locationIds?.map(id => parseId(id)).filter((id): id is number => id !== undefined);
+    const parsedExcludeHostId = parseId(filters?.excludeHostId);
+    const parsedExcludeParticipantId = parseId(filters?.excludeParticipantId);
+
     return prisma.event.findMany({
       where: {
         AND: [
@@ -166,16 +200,26 @@ export const eventQueries = {
               { description: { contains: query } },
             ],
           },
-          ...(filters?.hobbyIds
-            ? [{ hobbies: { some: { hobbyId: { in: filters.hobbyIds } } } }]
+          ...(parsedHobbyIds && parsedHobbyIds.length > 0
+            ? [{ hobbies: { some: { hobbyId: { in: parsedHobbyIds } } } }]
             : []),
-          ...(filters?.locationIds
-            ? [{ locationId: { in: filters.locationIds } }]
+          ...(parsedLocationIds && parsedLocationIds.length > 0
+            ? [{ locationId: { in: parsedLocationIds } }]
             : []),
           ...(filters?.dateFrom ? [{ date: { gte: filters.dateFrom } }] : []),
           ...(filters?.dateTo ? [{ date: { lte: filters.dateTo } }] : []),
-          ...(filters?.excludeHostId
-            ? [{ hostId: { not: filters.excludeHostId } }]
+          ...(parsedExcludeHostId
+            ? [{ hostId: { not: parsedExcludeHostId } }]
+            : []),
+          ...(parsedExcludeParticipantId
+            ? [{
+                participants: {
+                  none: {
+                    userId: parsedExcludeParticipantId,
+                    status: "JOINED"
+                  }
+                }
+              }]
             : []),
         ],
       },
