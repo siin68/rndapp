@@ -265,7 +265,6 @@ export async function DELETE(
 
     // Delete event with transaction (cascade delete will handle related records)
     await prisma.$transaction(async (tx) => {
-      console.log('Starting deletion for event:', eventId);
       
       // Set parentEventId to null for all sub-events instead of deleting them
       try {
@@ -273,25 +272,19 @@ export async function DELETE(
           where: { parentEventId: eventId },
           data: { parentEventId: null },
         });
-        console.log('Updated sub-events:', updatedSubEvents.count);
       } catch (error) {
-        console.log('Sub-events update skipped (field may not exist yet):', error);
       }
 
       // Delete event hobbies
-      console.log('Deleting event hobbies...');
       await tx.eventHobby.deleteMany({
         where: { eventId },
       });
 
       // Delete event participants
-      console.log('Deleting event participants...');
       await tx.eventParticipant.deleteMany({
         where: { eventId },
       });
 
-      // Delete join requests
-      console.log('Deleting join requests...');
       try {
         await tx.joinRequest.deleteMany({
           where: { eventId },
@@ -301,7 +294,6 @@ export async function DELETE(
       }
 
       // Delete event chats and their messages
-      console.log('Deleting event chats and messages...');
       const eventChats = await tx.chat.findMany({
         where: { eventId },
         select: { id: true },
@@ -319,12 +311,10 @@ export async function DELETE(
       });
 
       // Delete the event
-      console.log('Deleting main event...');
       await tx.event.delete({
         where: { id: eventId },
       });
       
-      console.log('Event deleted successfully!');
     });
 
     return NextResponse.json({
