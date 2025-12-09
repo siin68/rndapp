@@ -283,7 +283,7 @@ export default function MessagesPage() {
       });
 
       if (existingChat) {
-        router.push(`/${locale}/chat/${(existingChat as any).id}`);
+        router.push(`/chat/${(existingChat as any).id}`);
       } else {
         const response = await fetch("/api/chats", {
           method: "POST",
@@ -301,7 +301,7 @@ export default function MessagesPage() {
           setChats((prev: any) => [data.data, ...prev]);
           
           // Navigate to the chat
-          router.push(`/${locale}/chat/${data.data.id}`);
+          router.push(`chat/${data.data.id}`);
         } else {
           alert("Không thể tạo cuộc trò chuyện. Vui lòng thử lại.");
         }
@@ -373,7 +373,7 @@ export default function MessagesPage() {
                       <div key={friendship.friendshipId} className="flex-shrink-0 snap-center">
                         <div className="flex flex-col items-center gap-2 min-w-[90px] max-w-[90px]">
                           <div className="relative">
-                            <div onClick={() => router.push(`/${locale}/profile/${friend.id}`)} className="cursor-pointer">
+                            <div onClick={() => router.push(`/profile/${friend.id}`)} className="cursor-pointer">
                               <Avatar className="w-16 h-16 border-2 border-white shadow-md hover:border-purple-400 transition-all hover:scale-105">
                                 <AvatarImage src={friend.image || ""} alt={friend.name} />
                                 <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-500 text-white font-bold">
@@ -384,7 +384,7 @@ export default function MessagesPage() {
                             <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
                           </div>
                           <div className="text-center w-full">
-                            <p onClick={() => router.push(`/${locale}/profile/${friend.id}`)} className="font-semibold text-xs text-gray-900 truncate px-1 cursor-pointer hover:text-purple-600">
+                            <p onClick={() => router.push(`/profile/${friend.id}`)} className="font-semibold text-xs text-gray-900 truncate px-1 cursor-pointer hover:text-purple-600">
                               {friend.name}
                             </p>
                             <button
@@ -511,7 +511,7 @@ export default function MessagesPage() {
                   const avatarFallback = isEventChat ? (chat.event?.title?.charAt(0) || '📅') : (otherParticipant?.name?.charAt(0) || 'U');
                   
                   return (
-                    <Card key={chat.id} onClick={() => router.push(`/${locale}/chat/${chat.id}`)} className="cursor-pointer hover:shadow-lg transition-all group">
+                    <Card key={chat.id} onClick={() => router.push(`/chat/${chat.id}`)} className="cursor-pointer hover:shadow-lg transition-all group">
                       <CardContent className="pt-6">
                         <div className="flex items-center gap-4">
                           <div className="relative">
@@ -612,7 +612,7 @@ export default function MessagesPage() {
                           <div className="lg:hidden flex flex-col items-center gap-2 min-w-[90px] max-w-[90px]">
                             <div className="relative">
                               <div 
-                                onClick={() => router.push(`/${locale}/profile/${friend.id}`)}
+                                onClick={() => router.push(`/profile/${friend.id}`)}
                                 className="cursor-pointer"
                               >
                                 <Avatar className="w-16 h-16 border-2 border-white shadow-md hover:border-purple-400 transition-all hover:scale-105">
@@ -625,7 +625,7 @@ export default function MessagesPage() {
                               <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
                             </div>
                             <div className="text-center w-full">
-                              <p onClick={() => router.push(`/${locale}/profile/${friend.id}`)} className="font-semibold text-xs text-gray-900 truncate px-1 cursor-pointer hover:text-purple-600">
+                              <p onClick={() => router.push(`/profile/${friend.id}`)} className="font-semibold text-xs text-gray-900 truncate px-1 cursor-pointer hover:text-purple-600">
                                 {friend.name}
                               </p>
                               <button
@@ -640,7 +640,7 @@ export default function MessagesPage() {
                           {/* Desktop Layout - Horizontal Row */}
                           <div className="hidden lg:flex items-center gap-3 p-2.5 rounded-xl hover:bg-gradient-to-r hover:from-rose-50 hover:to-purple-50 transition-all group w-full">
                             <div 
-                              onClick={() => router.push(`/${locale}/profile/${friend.id}`)}
+                              onClick={() => router.push(`/profile/${friend.id}`)}
                               className="relative flex-shrink-0 cursor-pointer"
                             >
                               <Avatar className="w-11 h-11 border-2 border-white shadow-sm hover:border-purple-300 transition-all hover:scale-105">
@@ -653,7 +653,7 @@ export default function MessagesPage() {
                             </div>
 
                             <div 
-                              onClick={() => router.push(`/${locale}/profile/${friend.id}`)}
+                              onClick={() => router.push(`/profile/${friend.id}`)}
                               className="flex-1 min-w-0 cursor-pointer"
                             >
                               <h3 className="font-bold text-sm text-gray-900 truncate group-hover:text-purple-600 transition">
@@ -737,7 +737,7 @@ export default function MessagesPage() {
                     return (
                       <Card
                         key={chat.id}
-                        onClick={() => router.push(`/${locale}/chat/${chat.id}`)}
+                        onClick={() => router.push(`/chat/${chat.id}`)}
                         className="cursor-pointer hover:shadow-lg transition-all group"
                       >
                         <CardContent className="pt-6">

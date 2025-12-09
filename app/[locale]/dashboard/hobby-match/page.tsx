@@ -6,6 +6,7 @@ import { useRouter } from "@/i18n/navigation";
 import { Button, Badge } from "@/components/ui";
 import { useSession } from "next-auth/react";
 import { getHobbyById } from "@/lib/data";
+import Image from "next/image";
 
 // Icons
 const FilterIcon = ({ className }: { className?: string }) => (
@@ -124,6 +125,7 @@ interface MatchUser {
   }>;
   matchScore: number;
   lastActive?: Date;
+  distance?: number; // Distance in km
 }
 
 export default function HobbyMatchPage() {
@@ -143,6 +145,7 @@ export default function HobbyMatchPage() {
   const [selectedHobbies, setSelectedHobbies] = useState<string[]>([]);
   const [ageRange, setAgeRange] = useState({ min: 18, max: 50 });
   const [maxDistance, setMaxDistance] = useState(50);
+  const [selectedGender, setSelectedGender] = useState<string>("");
   const [hobbies, setHobbies] = useState<any[]>([]);
 
   // Fetch matched users from API with filters
@@ -244,6 +247,9 @@ export default function HobbyMatchPage() {
       }
       if (maxDistance !== 50) {
         params.append("maxDistance", maxDistance.toString());
+      }
+      if (selectedGender) {
+        params.append("gender", selectedGender);
       }
 
       const response = await fetch(`/api/users/matches?${params.toString()}`);
@@ -381,6 +387,7 @@ export default function HobbyMatchPage() {
     setSelectedHobbies([]);
     setAgeRange({ min: 18, max: 50 });
     setMaxDistance(50);
+    setSelectedGender("");
     setCurrentIndex(0); // Reset to first card when filters cleared
   };
 
@@ -402,7 +409,8 @@ export default function HobbyMatchPage() {
   const activeFiltersCount =
     selectedHobbies.length +
     (ageRange.min !== 18 || ageRange.max !== 50 ? 1 : 0) +
-    (maxDistance !== 50 ? 1 : 0);
+    (maxDistance !== 50 ? 1 : 0) +
+    (selectedGender ? 1 : 0);
 
   return (
     <div className="h-[calc(100vh-80px)] flex flex-col items-center justify-center px-3 pb-6 md:pb-24 relative overflow-hidden select-none">
@@ -434,12 +442,12 @@ export default function HobbyMatchPage() {
       {showFilters && (
         <>
           <div
-            className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/50 z-[60] backdrop-blur-sm"
             onClick={() => setShowFilters(false)}
           />
 
-          <div className="fixed inset-x-0 bottom-0 sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 z-50 bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-3xl flex items-center justify-between">
+          <div className="fixed inset-x-0 bottom-0 sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 z-[70] bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto scrollbar-hide">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-3xl flex items-center justify-between z-10">
               <h2 className="text-xl font-black text-gray-900">Filters</h2>
               <button
                 onClick={() => setShowFilters(false)}
@@ -500,7 +508,7 @@ export default function HobbyMatchPage() {
                 </label>
                 <input
                   type="range"
-                  min="5"
+                  min="1"
                   max="100"
                   step="5"
                   value={maxDistance}
@@ -508,8 +516,46 @@ export default function HobbyMatchPage() {
                   className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-rose-500"
                 />
                 <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>5 km</span>
+                  <span>1 km</span>
                   <span>100 km</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-900 mb-3">
+                  Gender Preference
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    onClick={() => setSelectedGender("")}
+                    className={`px-4 py-2.5 rounded-xl border-2 transition-all duration-200 text-sm font-semibold ${
+                      selectedGender === ""
+                        ? "bg-gradient-to-r from-rose-50 to-purple-50 border-purple-500 text-purple-700"
+                        : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
+                    }`}
+                  >
+                    All
+                  </button>
+                  <button
+                    onClick={() => setSelectedGender("male")}
+                    className={`px-4 py-2.5 rounded-xl border-2 transition-all duration-200 text-sm font-semibold ${
+                      selectedGender === "male"
+                        ? "bg-gradient-to-r from-rose-50 to-purple-50 border-purple-500 text-purple-700"
+                        : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
+                    }`}
+                  >
+                    Male
+                  </button>
+                  <button
+                    onClick={() => setSelectedGender("female")}
+                    className={`px-4 py-2.5 rounded-xl border-2 transition-all duration-200 text-sm font-semibold ${
+                      selectedGender === "female"
+                        ? "bg-gradient-to-r from-rose-50 to-purple-50 border-purple-500 text-purple-700"
+                        : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
+                    }`}
+                  >
+                    Female
+                  </button>
                 </div>
               </div>
 
@@ -517,7 +563,7 @@ export default function HobbyMatchPage() {
                 <label className="block text-sm font-bold text-gray-900 mb-3">
                   Hobbies ({selectedHobbies.length} selected)
                 </label>
-                <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
+                <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto scrollbar-hide">
                   {hobbies.map((hobby) => (
                     <button
                       key={hobby.id}
@@ -538,7 +584,7 @@ export default function HobbyMatchPage() {
               </div>
             </div>
 
-            <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex gap-3">
+            <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex gap-3 z-10">
               <button
                 onClick={clearFilters}
                 className="flex-1 px-4 py-3 rounded-xl border-2 border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
@@ -575,10 +621,12 @@ export default function HobbyMatchPage() {
               <div className="absolute inset-0 top-3 sm:top-4 scale-95 opacity-50 bg-white rounded-[1.75rem] sm:rounded-[2rem] border border-gray-200 shadow-xl overflow-hidden pointer-events-none">
                 <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400">
                   {nextUser.image ? (
-                    <img
+                    <Image
                       src={nextUser.image}
                       className="w-full h-full object-cover grayscale"
                       alt={nextUser.name}
+                      fill
+                      unoptimized
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-6xl text-white">
@@ -629,11 +677,13 @@ export default function HobbyMatchPage() {
                 <div className="absolute inset-0 bg-gray-200 pointer-events-none">
                   {currentUser.image ? (
                     <>
-                      <img
+                      <Image
                         src={currentUser.image}
                         alt={currentUser.name}
                         className="w-full h-full object-cover pointer-events-none"
                         draggable={false}
+                        fill
+                        unoptimized
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/10" />
                     </>
@@ -668,10 +718,16 @@ export default function HobbyMatchPage() {
                       <h2 className="text-2xl sm:text-3xl md:text-4xl font-black leading-none drop-shadow-md">
                         {currentUser.name}
                       </h2>
-                      <div className="flex items-center gap-1.5 sm:gap-2 mt-1 sm:mt-1.5 md:mt-2 text-[11px] sm:text-xs md:text-sm font-semibold opacity-90">
-                        <LocationIcon className="w-3 sm:w-3.5 md:w-4 h-3 sm:h-3.5 md:h-4" />
-                        <span>5 km away</span>
-                      </div>
+                      {currentUser.distance !== undefined && (
+                        <div className="flex items-center gap-1.5 sm:gap-2 mt-1 sm:mt-1.5 md:mt-2 text-[11px] sm:text-xs md:text-sm font-semibold opacity-90">
+                          <LocationIcon className="w-3 sm:w-3.5 md:w-4 h-3 sm:h-3.5 md:h-4" />
+                          <span>
+                            {currentUser.distance < 1 
+                              ? '< 1 km away' 
+                              : `${currentUser.distance} km away`}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
 

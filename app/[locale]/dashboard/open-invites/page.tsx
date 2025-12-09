@@ -149,11 +149,11 @@ export default function OpenInvitesPage() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#FAFAFA] py-10 px-4 sm:px-6 lg:px-8 pb-24">
+    <div className="min-h-screen w-full bg-[#FAFAFA] pt-24 pb-32 px-4 sm:px-6 lg:px-8">
       <div className="fixed top-0 inset-x-0 h-96 bg-gradient-to-b from-rose-50/80 to-transparent -z-10" />
 
       <div className="max-w-7xl mx-auto space-y-12">
-        <div className="flex flex-col items-center text-center space-y-4 pt-6">
+        <div className="flex flex-col items-center text-center space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-100 text-rose-600 text-[11px] font-bold uppercase tracking-widest">
             <SparklesIcon className="w-3 h-3" /> Discover
           </div>
@@ -351,7 +351,7 @@ export default function OpenInvitesPage() {
                       WebkitTransform: 'translateZ(0)'
                     }}
                   >
-                    <div className="relative aspect-[4/5] w-full overflow-hidden">
+                    <div className="relative aspect-video w-full overflow-hidden">
                       {event.image ? (
                         <Image
                           src={event.image}
@@ -366,28 +366,6 @@ export default function OpenInvitesPage() {
                       )}
 
                       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60" />
-
-                      <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 max-w-[90%]">
-                        {displayHobbies.map((hid) => {
-                          const h = getHobbyInfo(hid);
-                          return (
-                            <span
-                              key={hid}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-sm text-gray-800 text-[10px] font-bold shadow-sm"
-                            >
-                              <span>{(h as any)?.emoji}</span>
-                              <span className="truncate max-w-[80px]">
-                                {(h as any)?.name}
-                              </span>
-                            </span>
-                          );
-                        })}
-                        {remaining > 0 && (
-                          <span className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-white/95 backdrop-blur-sm text-gray-600 text-[10px] font-bold shadow-sm">
-                            +{remaining}
-                          </span>
-                        )}
-                      </div>
                     </div>
 
                     <CardContent className="p-5 flex flex-col gap-3 relative">

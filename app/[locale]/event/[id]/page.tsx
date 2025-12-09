@@ -117,6 +117,25 @@ export default function EventDetailPage() {
     }
   }, [params?.id]);
 
+  // Fetch join requests
+  const fetchJoinRequests = useCallback(async () => {
+    if (!params?.id) return;
+    
+    setLoadingRequests(true);
+    try {
+      const response = await fetch(`/api/events/${params.id}/requests`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setJoinRequests(data.data || []);
+      }
+    } catch (err) {
+      console.error("Error fetching join requests:", err);
+    } finally {
+      setLoadingRequests(false);
+    }
+  }, [params?.id]);
+
   useEffect(() => {
     const handleRequestAccepted = (event: CustomEvent) => {
       const data = event.detail;
@@ -139,7 +158,7 @@ export default function EventDetailPage() {
     if (event?.hostId && event.hostId.toString() === session?.user?.id?.toString()) {
       fetchJoinRequests();
     }
-  }, [event?.hostId, session?.user?.id]);
+  }, [event?.hostId, session?.user?.id, fetchJoinRequests]);
 
   const handleJoinEvent = async () => {
     if (!params?.id) return;
@@ -273,25 +292,6 @@ export default function EventDetailPage() {
       console.error("Error fetching friends:", err);
     } finally {
       setLoadingFriends(false);
-    }
-  };
-
-  // Fetch join requests
-  const fetchJoinRequests = async () => {
-    if (!params?.id) return;
-    
-    setLoadingRequests(true);
-    try {
-      const response = await fetch(`/api/events/${params.id}/requests`);
-      const data = await response.json();
-      
-      if (data.success) {
-        setJoinRequests(data.data || []);
-      }
-    } catch (err) {
-      console.error("Error fetching join requests:", err);
-    } finally {
-      setLoadingRequests(false);
     }
   };
 
@@ -439,117 +439,112 @@ export default function EventDetailPage() {
 
       <div className="max-w-5xl mx-auto px-4 pt-4 space-y-6">
         
-        {/* HERO SECTION */}
-        <div className="relative group overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 shadow-2xl shadow-indigo-200">
-          
-          {/* Event Image Background */}
-          {event.image && (
-            <div className="absolute inset-0 z-0">
-              <Image 
-                src={event.image} 
-                alt={event.title}
-                fill
-                className="object-cover"
-              />
-            </div>
+        {/* HERO IMAGE SECTION - Only Image */}
+        <div className="relative group overflow-hidden rounded-[2.5rem] shadow-2xl shadow-indigo-200 h-[300px] md:h-[400px]">
+          {event.image ? (
+            <Image 
+              src={event.image} 
+              alt={event.title}
+              fill
+              className="object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500"></div>
           )}
-
-          {/* Abstract Background Patterns */}
-          <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
-          <div className="relative z-10 p-8 md:p-12 flex flex-col h-full justify-between min-h-[360px]">
-            <div className="flex justify-between items-start">
-              <div className="inline-flex items-center gap-2 bg-white/90 px-3 py-1.5 rounded-xl shadow-lg text-gray-800">
-                <span>{(hobby as any)?.icon}</span>
-                <span>{(hobby as any)?.name || "Social Event"}</span>
-              </div>
-              <Badge 
-                className={`${event.status === 'OPEN' ? 'bg-green-400/90 text-green-950' : 'bg-gray-400/90 text-gray-100'} backdrop-blur-md border-0 px-4 py-1.5 text-xs font-bold uppercase tracking-wider shadow-lg`}
-              >
-                {event.status === 'OPEN' ? 'Open' : event.status}
-              </Badge>
-            </div>
-
-            <div className="space-y-4 mt-auto">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.1] drop-shadow-md">
-                {event.title}
-              </h1>
-              
-              <div className="flex flex-wrap gap-4 text-white font-medium text-sm md:text-base">
-                 <div className="flex items-center gap-2 bg-white/90 px-3 py-1.5 rounded-xl shadow-lg text-gray-800">
-                    <Calendar className="w-4 h-4 text-indigo-600" />
-                    {eventDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
-                 </div>
-                 <div className="flex items-center gap-2 bg-white/90 px-3 py-1.5 rounded-xl shadow-lg text-gray-800">
-                    <Clock className="w-4 h-4 text-indigo-600" />
-                    {eventDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-                 </div>
-                 <div className="flex items-center gap-2 bg-white/90 px-3 py-1.5 rounded-xl shadow-lg text-gray-800">
-                    <MapPin className="w-4 h-4 text-indigo-600" />
-                    {location?.city?.name || location?.city || "Unknown City"}
-                 </div>
-              </div>
-            </div>
+          
+          {/* Status Badge in top right */}
+          <div className="absolute top-4 right-4 z-10">
+            <Badge 
+              className={`${event.status === 'OPEN' ? 'bg-green-400/90 text-green-950' : 'bg-gray-400/90 text-gray-100'} backdrop-blur-md border-0 px-4 py-1.5 text-xs font-bold uppercase tracking-wider shadow-lg`}
+            >
+              {event.status === 'OPEN' ? 'Open' : event.status}
+            </Badge>
           </div>
         </div>
 
         {/* MAIN GRID LAYOUT */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
           
-          {/* LEFT COLUMN (Details) - Spans 8 cols */}
-          <div className="md:col-span-8 space-y-6">
+          {/* LEFT COLUMN (Event Info) - Spans 8 cols */}
+          <div className="md:col-span-8 space-y-4">
             
-            {/* Description Card */}
-            <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
-               <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                 About this Event
-               </h3>
-               <div className="prose prose-gray max-w-none text-gray-600 leading-relaxed">
-                 {event.description ? event.description : "No description provided."}
-               </div>
-               
-               {/* Location Detail */}
-               <div className="mt-8 p-4 bg-gray-50 rounded-2xl border border-gray-100 flex items-start gap-4">
-                  <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 text-indigo-600">
-                    <Navigation className="w-6 h-6" />
+            {/* Host Card - Compact */}
+            <div className="bg-white rounded-[2rem] p-4 shadow-sm border border-gray-100 flex items-center justify-between group cursor-pointer hover:border-indigo-100 transition-all" onClick={() => router.push(`/profile/${host?.id}`)}>
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <Avatar className="w-12 h-12 border-2 border-white shadow-md group-hover:scale-105 transition-transform">
+                    <AvatarImage src={host?.image || ""} alt={host?.name || ""} />
+                    <AvatarFallback className="bg-gradient-to-br from-indigo-100 to-purple-100 text-indigo-600 font-bold">
+                      {host?.name?.charAt(0) || "H"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="absolute -bottom-0.5 -right-0.5 bg-gradient-to-r from-amber-400 to-orange-400 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white shadow-sm">
+                    HOST
                   </div>
-                  <div className="flex-1">
-                    <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-1">Location</h4>
-                    <p className="font-semibold text-gray-800 text-lg">{location?.name}</p>
-                    <p className="text-gray-500 text-sm">{location?.address || location?.city?.name || location?.city}</p>
-                  </div>
-               </div>
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-gray-400 uppercase tracking-wide">Organized by</div>
+                  <div className="text-base font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">{host?.name || "Unknown Host"}</div>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" className="text-gray-400 hover:text-indigo-600">
+                <ArrowLeft className="w-4 h-4 rotate-180" />
+              </Button>
             </div>
 
-            {/* Host Card */}
-            <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100 flex items-center justify-between group cursor-pointer hover:border-indigo-100 transition-all" onClick={() => router.push(`/profile/${host?.id}`)}>
-               <div className="flex items-center gap-5">
-                  <div className="relative">
-                    <Avatar className="w-16 h-16 border-4 border-white shadow-lg group-hover:scale-105 transition-transform">
-                      <AvatarImage src={host?.image || ""} alt={host?.name || ""} />
-                      <AvatarFallback className="bg-gradient-to-br from-indigo-100 to-purple-100 text-indigo-600 font-bold text-xl">
-                        {host?.name?.charAt(0) || "H"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="absolute -bottom-1 -right-1 bg-gradient-to-r from-amber-400 to-orange-400 text-white text-[10px] font-bold px-2 py-0.5 rounded-full border-2 border-white shadow-sm">
-                      HOST
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-0.5">Organized by</div>
-                    <div className="text-xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">{host?.name || "Unknown Host"}</div>
-                    <div className="text-sm text-gray-500 font-medium">View Profile</div>
-                  </div>
-               </div>
-               <div className="hidden sm:block">
-                  <Button variant="ghost" className="text-gray-400 hover:text-indigo-600">
-                    <ArrowLeft className="w-5 h-5 rotate-180" />
-                  </Button>
-               </div>
+            {/* Title & Basic Info Card */}
+            <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100">
+              {/* Hobby Tag */}
+              <div className="inline-flex items-center gap-2 bg-indigo-50 px-3 py-1.5 rounded-xl text-indigo-700 mb-4">
+                <span>{(hobby as any)?.icon}</span>
+                <span className="text-sm font-semibold">{(hobby as any)?.name || "Social Event"}</span>
+              </div>
+              
+              {/* Event Title */}
+              <h1 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight leading-tight mb-4">
+                {event.title}
+              </h1>
+              
+              {/* Date, Time, Location */}
+              <div className="flex flex-wrap gap-3 mb-6">
+                <div className="flex items-center gap-2 text-gray-700">
+                  <Calendar className="w-4 h-4 text-indigo-600" />
+                  <span className="text-sm font-medium">{eventDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                </div>
+                <div className="flex items-center gap-2 text-gray-700">
+                  <Clock className="w-4 h-4 text-indigo-600" />
+                  <span className="text-sm font-medium">{eventDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+                <div className="flex items-center gap-2 text-gray-700">
+                  <MapPin className="w-4 h-4 text-indigo-600" />
+                  <span className="text-sm font-medium">{location?.city?.name || location?.city || "Unknown City"}</span>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="mb-6">
+                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2">About this Event</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  {event.description || "No description provided."}
+                </p>
+              </div>
+
+              {/* Location Detail */}
+              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex items-start gap-3">
+                <div className="bg-white p-2.5 rounded-xl shadow-sm border border-gray-100 text-indigo-600">
+                  <Navigation className="w-5 h-5" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1">Location</h4>
+                  <p className="font-semibold text-gray-800">{location?.name}</p>
+                  <p className="text-gray-500 text-sm">{location?.address || location?.city?.name || location?.city}</p>
+                </div>
+              </div>
             </div>
 
           </div>
 
-          {/* RIGHT COLUMN (Participants & Status) - Spans 4 cols */}
+          {/* RIGHT COLUMN (Participants) - Spans 4 cols */}
           <div className="md:col-span-4 space-y-6">
             
             {/* Participants Card */}
@@ -795,7 +790,7 @@ export default function EventDetailPage() {
 
       {/* Bottom Action Bar */}
       <div className="fixed bottom-8 inset-x-0 px-4 z-40 flex justify-center">
-        <div className="bg-gradient-to-r from-gray-900 to-gray-800 backdrop-blur-xl p-2 rounded-[2rem] shadow-2xl shadow-black/30 flex items-center gap-2 max-w-2xl w-full border border-white/10">
+        <div className="bg-gradient-to-r from-indigo-400 to-pink-500 backdrop-blur-xl p-2 rounded-[2rem] shadow-2xl shadow-purple-500/50 flex items-center gap-2 max-w-2xl w-full border-2 border-white/20">
           {/* Show Edit/Delete/Invite/Requests for host, Join/Leave for others */}
           {isHost ? (
             <>

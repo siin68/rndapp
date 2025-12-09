@@ -226,7 +226,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const eventId = params.id;
+    const eventId = parseInt(params.id);
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
@@ -236,7 +236,7 @@ export async function DELETE(
       );
     }
 
-    if (!eventId) {
+    if (!eventId || isNaN(eventId)) {
       return NextResponse.json(
         { success: false, error: "Event ID is required" },
         { status: 400 }
@@ -264,21 +264,67 @@ export async function DELETE(
     }
 
     // Delete event with transaction (cascade delete will handle related records)
-    await prisma.$transaction(async (prisma) => {
+    await prisma.$transaction(async (tx) => {
+      console.log('Starting deletion for event:', eventId);
+      
+      // Set parentEventId to null for all sub-events instead of deleting them
+      try {
+        const updatedSubEvents = await tx.event.updateMany({
+          where: { parentEventId: eventId },
+          data: { parentEventId: null },
+        });
+        console.log('Updated sub-events:', updatedSubEvents.count);
+      } catch (error) {
+        console.log('Sub-events update skipped (field may not exist yet):', error);
+      }
+
       // Delete event hobbies
-      await prisma.eventHobby.deleteMany({
+      console.log('Deleting event hobbies...');
+      await tx.eventHobby.deleteMany({
         where: { eventId },
       });
 
       // Delete event participants
-      await prisma.eventParticipant.deleteMany({
+      console.log('Deleting event participants...');
+      await tx.eventParticipant.deleteMany({
+        where: { eventId },
+      });
+
+      // Delete join requests
+      console.log('Deleting join requests...');
+      try {
+        await tx.joinRequest.deleteMany({
+          where: { eventId },
+        });
+      } catch (error) {
+        console.log('Join requests deletion skipped:', error);
+      }
+
+      // Delete event chats and their messages
+      console.log('Deleting event chats and messages...');
+      const eventChats = await tx.chat.findMany({
+        where: { eventId },
+        select: { id: true },
+      });
+
+      console.log('Found chats:', eventChats.length);
+      for (const chat of eventChats) {
+        await tx.message.deleteMany({
+          where: { chatId: chat.id },
+        });
+      }
+
+      await tx.chat.deleteMany({
         where: { eventId },
       });
 
       // Delete the event
-      await prisma.event.delete({
+      console.log('Deleting main event...');
+      await tx.event.delete({
         where: { id: eventId },
       });
+      
+      console.log('Event deleted successfully!');
     });
 
     return NextResponse.json({
@@ -287,6 +333,8 @@ export async function DELETE(
     });
   } catch (error) {
     console.error("Error deleting event:", error);
+    console.error("Error details:", error instanceof Error ? error.message : String(error));
+    console.error("Error stack:", error instanceof Error ? error.stack : 'No stack trace');
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

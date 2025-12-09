@@ -134,6 +134,7 @@ model Event {
   image            String?            // Event cover image URL
   hostId           Int
   locationId       Int
+  parentEventId    Int?               // For sub-events (meetups within main event)
   date             DateTime
   duration         Int?               // minutes
   maxParticipants  Int                @default(10)
@@ -152,6 +153,8 @@ model Event {
   
   host             User               @relation(fields: [hostId], references: [id], name: "HostEvents")
   location         Location           @relation(fields: [locationId], references: [id])
+  parentEvent      Event?             @relation("SubEvents", fields: [parentEventId], references: [id], onDelete: Cascade)
+  subEvents        Event[]            @relation("SubEvents")
   hobbies          EventHobby[]       // Many-to-many relation with hobbies
   participants     EventParticipant[]
   joinRequests     EventJoinRequest[]
