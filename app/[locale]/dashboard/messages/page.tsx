@@ -143,7 +143,7 @@ export default function MessagesPage() {
   const locale = (pathname ? pathname.split("/")[1] : "") || "en";
   const { data: session } = useSession();
 
-  const [chats, setChats] = useState([]);
+  const [chats, setChats] = useState<any[]>([]);
   const [friends, setFriends] = useState<Friend[]>([]);
   const [likesReceived, setLikesReceived] = useState<LikeReceived[]>([]);
   const [loading, setLoading] = useState(true);
@@ -279,11 +279,11 @@ export default function MessagesPage() {
       
       const existingChat = chats.find((chat: any) => {
         const participants = chat.participants || [];
-        return participants.some((p: any) => parseInt(p.id, 10) === friendIdNum);
+        return chat.type === "DIRECT" && participants.some((p: any) => parseInt(p.id, 10) === friendIdNum);
       });
 
       if (existingChat) {
-        router.push(`/chat/${(existingChat as any).id}`);
+        router.push(`/${locale}/chat/${(existingChat as any).id}`);
       } else {
         const response = await fetch("/api/chats", {
           method: "POST",
@@ -297,7 +297,11 @@ export default function MessagesPage() {
         const data = await response.json();
 
         if (data.success && data.data) {
-          router.push(`/chat/${data.data.id}`);
+          // Add the new chat to the local state so it appears in the list
+          setChats((prev: any) => [data.data, ...prev]);
+          
+          // Navigate to the chat
+          router.push(`/${locale}/chat/${data.data.id}`);
         } else {
           alert("Không thể tạo cuộc trò chuyện. Vui lòng thử lại.");
         }
@@ -328,7 +332,7 @@ export default function MessagesPage() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-rose-50 via-purple-50 to-indigo-50 py-6 px-4 sm:px-6 lg:px-8">
+    <div className="w-full bg-gradient-to-br from-rose-50 via-purple-50 to-indigo-50 py-6 px-4 sm:px-6 lg:px-8">
       <div className="fixed top-0 left-0 w-[500px] h-[500px] bg-rose-200/20 rounded-full blur-[100px] -z-10 mix-blend-multiply animate-pulse" />
       <div className="fixed bottom-0 right-0 w-[500px] h-[500px] bg-indigo-200/20 rounded-full blur-[100px] -z-10 mix-blend-multiply animate-pulse delay-700" />
 
@@ -497,15 +501,17 @@ export default function MessagesPage() {
                 </div>
               ) : (
                 chats.map((chat: any) => {
-                  const currentUserId = session?.user?.id?.toString();
-                  const otherParticipant = chat.participants.find((p: any) => p.id?.toString() !== currentUserId);
+                  const currentUserId = session?.user?.id;
+                  const otherParticipant = chat.participants.find(
+                    (p: any) => String(p.id) !== String(currentUserId)
+                  );
                   const isEventChat = chat.type === 'EVENT' && chat.event;
                   const avatarSrc = isEventChat ? chat.event?.image : otherParticipant?.image;
                   const avatarAlt = isEventChat ? chat.event?.title : otherParticipant?.name;
                   const avatarFallback = isEventChat ? (chat.event?.title?.charAt(0) || '📅') : (otherParticipant?.name?.charAt(0) || 'U');
                   
                   return (
-                    <Card key={chat.id} onClick={() => router.push(`/chat/${chat.id}`)} className="cursor-pointer hover:shadow-lg transition-all group">
+                    <Card key={chat.id} onClick={() => router.push(`/${locale}/chat/${chat.id}`)} className="cursor-pointer hover:shadow-lg transition-all group">
                       <CardContent className="pt-6">
                         <div className="flex items-center gap-4">
                           <div className="relative">
@@ -692,8 +698,8 @@ export default function MessagesPage() {
           </div>
 
           {/* Middle - Messages/Chats */}
-          <div className="lg:col-span-2">
-            <div className="mb-4">
+          <div className="lg:col-span-2 lg:max-h-[calc(100vh-120px)] lg:flex lg:flex-col">
+            <div className="mb-4 flex-shrink-0">
               <div className="flex items-center gap-2 mb-2">
                 <MessageCircleIcon className="w-6 h-6 text-purple-600" />
                 <h1 className="text-2xl font-black text-gray-900">Messages</h1>
@@ -703,7 +709,7 @@ export default function MessagesPage() {
               </p>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3 lg:overflow-auto lg:flex-1 scrollbar-thin">
               {loading
                 ? Array.from({ length: 3 }).map((_, i) => (
                     <Card key={i} className="animate-pulse">
@@ -719,9 +725,9 @@ export default function MessagesPage() {
                     </Card>
                   ))
                 : chats.map((chat: any) => {
-                    const currentUserId = session?.user?.id?.toString();
+                    const currentUserId = session?.user?.id;
                     const otherParticipant = chat.participants.find(
-                      (p: any) => p.id?.toString() !== currentUserId
+                      (p: any) => String(p.id) !== String(currentUserId)
                     );
                     const isEventChat = chat.type === 'EVENT' && chat.event;
                     const avatarSrc = isEventChat ? chat.event?.image : otherParticipant?.image;
@@ -731,7 +737,7 @@ export default function MessagesPage() {
                     return (
                       <Card
                         key={chat.id}
-                        onClick={() => router.push(`/chat/${chat.id}`)}
+                        onClick={() => router.push(`/${locale}/chat/${chat.id}`)}
                         className="cursor-pointer hover:shadow-lg transition-all group"
                       >
                         <CardContent className="pt-6">

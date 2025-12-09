@@ -52,7 +52,6 @@ export async function POST(
       );
     }
 
-    // Check if event is full
     if (event._count.participants >= event.maxParticipants) {
       return NextResponse.json(
         { success: false, error: "Event is full" },
@@ -60,7 +59,6 @@ export async function POST(
       );
     }
 
-    // Get the join request
     const joinRequest = await prisma.eventJoinRequest.findUnique({
       where: { id: requestId },
       include: { 
@@ -91,20 +89,16 @@ export async function POST(
       );
     }
 
-    // Get or create event chat
     let eventChat = await prisma.chat.findFirst({
       where: { eventId, type: "EVENT" },
     });
 
-    // Accept the request in a transaction
     const result = await prisma.$transaction(async (tx) => {
-      // Update request status
       await tx.eventJoinRequest.update({
         where: { id: requestId },
         data: { status: "ACCEPTED" },
       });
 
-      // Add user as participant
       const participant = await tx.eventParticipant.create({
         data: {
           eventId,
@@ -118,7 +112,6 @@ export async function POST(
         }
       });
 
-      // Create notification for the user
       const notification = await tx.notification.create({
         data: {
           userId: joinRequest.userId,
@@ -133,9 +126,7 @@ export async function POST(
         },
       });
 
-      // Handle chat participation
       if (!eventChat) {
-        // Create new group chat for the event
         eventChat = await tx.chat.create({
           data: {
             eventId,
@@ -150,7 +141,6 @@ export async function POST(
           },
         });
 
-        // Send system message
         await tx.message.create({
           data: {
             chatId: eventChat.id,
@@ -160,7 +150,6 @@ export async function POST(
           },
         });
       } else {
-        // Check if user is already in chat
         const existingChatParticipant = await tx.chatParticipant.findUnique({
           where: {
             chatId_userId: {
@@ -171,7 +160,6 @@ export async function POST(
         });
 
         if (!existingChatParticipant) {
-          // Add user to existing chat
           await tx.chatParticipant.create({
             data: {
               chatId: eventChat.id,
@@ -180,12 +168,34 @@ export async function POST(
             },
           });
 
-          // Send system message
           await tx.message.create({
             data: {
               chatId: eventChat.id,
               senderId: joinRequest.userId,
               content: `${joinRequest.user.name} joined the group`,
+              type: "SYSTEM",
+            },
+          });
+        } else if (existingChatParticipant.leftAt !== null) {
+          // User previously left, reset leftAt to rejoin
+          await tx.chatParticipant.update({
+            where: {
+              chatId_userId: {
+                chatId: eventChat.id,
+                userId: joinRequest.userId,
+              },
+            },
+            data: {
+              leftAt: null,
+            },
+          });
+
+          // Send system message
+          await tx.message.create({
+            data: {
+              chatId: eventChat.id,
+              senderId: joinRequest.userId,
+              content: `${joinRequest.user.name} rejoined the group`,
               type: "SYSTEM",
             },
           });

@@ -338,16 +338,7 @@ export default function HobbyMatchPage() {
       })
         .then((res) => res.json())
         .then((data) => {
-          if (data.success) {
-            console.log("Swipe recorded:", data.data);
-            
-            // If it's a match, show notification or modal
-            if (data.data.isMatch) {
-              console.log("🎉 It's a match!", data.data.friendship);
-              // TODO: Show match modal/notification
-              // You can add a toast notification here
-            }
-          } else {
+          if (!data.success) {
             console.error("Swipe failed:", data.error);
           }
         })

@@ -19,7 +19,6 @@ export async function GET(
 
     const chatId = parseInt(params.id, 10);
 
-    // Validate chatId is a valid number
     if (isNaN(chatId)) {
       return NextResponse.json(
         { success: false, error: "Invalid chat ID" },
@@ -79,9 +78,49 @@ export async function GET(
       );
     }
 
-    const isParticipant = chat.participants.some(
-      (p) => p.userId === session.user.id
+    const sessionUserId = typeof session.user.id === 'string' 
+      ? parseInt(session.user.id, 10) 
+      : session.user.id;
+
+    let isParticipant = chat.participants.some(
+      (p) => p.userId === sessionUserId
     );
+
+    if (!isParticipant && chat.type === "EVENT" && chat.eventId) {
+      const eventParticipant = await prisma.eventParticipant.findFirst({
+        where: {
+          eventId: chat.eventId,
+          userId: sessionUserId,
+          status: "JOINED",
+        },
+      });
+
+      if (eventParticipant) {
+        const chatParticipant = await prisma.chatParticipant.findFirst({
+          where: {
+            chatId: chat.id,
+            userId: sessionUserId,
+          },
+        });
+
+        if (chatParticipant && chatParticipant.leftAt !== null) {
+          await prisma.chatParticipant.update({
+            where: { id: chatParticipant.id },
+            data: { leftAt: null },
+          });
+          isParticipant = true;
+        } else if (!chatParticipant) {
+          await prisma.chatParticipant.create({
+            data: {
+              chatId: chat.id,
+              userId: sessionUserId,
+              role: "MEMBER",
+            },
+          });
+          isParticipant = true;
+        }
+      }
+    }
 
     if (!isParticipant) {
       return NextResponse.json(

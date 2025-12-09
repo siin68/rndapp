@@ -183,7 +183,6 @@ export default function EditProfilePage() {
       }
 
       const result = await response.json();
-      console.log('Profile updated:', result);
       
       setInitialData(formData);
       setIsDirty(false);

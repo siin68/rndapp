@@ -20,7 +20,6 @@ export async function POST(
 
     const chatId = parseInt(params.id, 10);
 
-    // Validate chatId is a valid number
     if (isNaN(chatId)) {
       return NextResponse.json(
         { success: false, error: "Invalid chat ID" },

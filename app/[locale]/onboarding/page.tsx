@@ -24,7 +24,6 @@ export default function OnboardingPage() {
         const result = await response.json();
 
         if (result.success && !result.needsOnboarding) {
-          console.log("first");
           router.push("/dashboard");
         } else {
           router.push(`/onboarding/profile`);

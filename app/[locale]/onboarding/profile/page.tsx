@@ -38,7 +38,6 @@ export default function OnboardingProfilePage() {
   useEffect(() => {
     async function checkOnboardingStatus() {
       if (!session?.user) {
-        console.log("No session, staying on onboarding");
         setCheckingOnboarding(false);
         return;
       }
@@ -46,16 +45,10 @@ export default function OnboardingProfilePage() {
       try {
         const response = await fetch("/api/auth/onboarding-status");
         const result = await response.json();
-        console.log("result: ", result);
 
         if (result.success && !result.needsOnboarding) {
-          console.log(
-            "User has already completed onboarding, redirecting to dashboard"
-          );
           router.push("/dashboard");
           return;
-        } else {
-          console.log("User needs onboarding, staying on page");
         }
       } catch (error) {
         console.error("Error checking onboarding status:", error);
@@ -156,7 +149,6 @@ export default function OnboardingProfilePage() {
         throw new Error('Failed to update profile');
       }
 
-      console.log('Profile updated successfully');
       router.push(`/onboarding/hobbies`);
     } catch (error) {
       console.error('Error updating profile:', error);

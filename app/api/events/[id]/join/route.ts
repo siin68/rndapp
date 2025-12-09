@@ -5,10 +5,6 @@ import prisma from "@/lib/prisma";
 import { EventService } from "@/lib/database/services";
 import { parseId } from "@/lib/utils/id-parser";
 
-/**
- * POST /api/events/[id]/join
- * Request to join an event (creates a pending join request)
- */
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -33,16 +29,13 @@ export async function POST(
       );
     }
 
-    // Parse optional message from request body
     let message = "";
     try {
       const body = await request.json();
       message = body.message || "";
     } catch {
-      // No body or invalid JSON, continue without message
     }
 
-    // Fetch event with all necessary relations
     const event = await prisma.event.findUnique({
       where: { id: eventId },
       include: {
@@ -73,7 +66,6 @@ export async function POST(
       );
     }
 
-    // Check if user is already a participant
     const isAlreadyParticipant = event.participants.some(p => p.userId === userId);
     if (isAlreadyParticipant) {
       return NextResponse.json(
@@ -82,7 +74,6 @@ export async function POST(
       );
     }
 
-    // Check if user already has a pending request
     const existingRequest = event.joinRequests.find(r => r.status === "PENDING");
     if (existingRequest) {
       return NextResponse.json(
@@ -91,7 +82,6 @@ export async function POST(
       );
     }
 
-    // Check if user's previous request was rejected
     const rejectedRequest = event.joinRequests.find(r => r.status === "REJECTED");
     if (rejectedRequest) {
       return NextResponse.json(
@@ -100,8 +90,6 @@ export async function POST(
       );
     }
 
-    // Check if user has old ACCEPTED request but left the event
-    // Delete old request to allow rejoin
     const acceptedRequest = event.joinRequests.find(r => r.status === "ACCEPTED");
     if (acceptedRequest && !isAlreadyParticipant) {
       await prisma.eventJoinRequest.delete({
@@ -109,7 +97,6 @@ export async function POST(
       });
     }
 
-    // Fetch user data for validation
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -126,7 +113,6 @@ export async function POST(
       );
     }
 
-    // Check if user can join the event
     const validationResult = EventService.canUserJoinEvent(event as any, user as any);
 
     if (!validationResult.canJoin) {
@@ -136,7 +122,6 @@ export async function POST(
       );
     }
 
-    // Create join request with PENDING status
     const joinRequest = await prisma.eventJoinRequest.create({
       data: {
         eventId,
@@ -151,7 +136,6 @@ export async function POST(
       },
     });
 
-    // Create notification for event host about new join request
     const notification = await prisma.notification.create({
       data: {
         userId: event.host.id,
@@ -171,11 +155,9 @@ export async function POST(
       },
     });
 
-    // Emit real-time notification via Socket.IO to host
     try {
       const { socketEmit } = await import('@/lib/socket');
       const hostUserId = event.host.id.toString();
-      console.log('[DEBUG] Sending join request notification to host:', hostUserId);
       
       await socketEmit.toUser(hostUserId, 'notification', {
         id: notification.id,

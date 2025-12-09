@@ -6,7 +6,7 @@ import { useRouter } from '@/i18n/navigation';
 import { useSession } from 'next-auth/react';
 import { useSocket } from '@/contexts/SocketContext';
 import { Button, Avatar, AvatarImage, AvatarFallback } from '@/components/ui';
-import { ArrowLeft, Send, Paperclip, Info, Users } from 'lucide-react';
+import { ArrowLeft, Send, Paperclip, Info, Users, ChevronDown } from 'lucide-react';
 
 interface Message {
   id: number;
@@ -49,7 +49,11 @@ export default function ChatPage() {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [hasNewMessage, setHasNewMessage] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isNearBottomRef = useRef(true);
+  const initialScrollDoneRef = useRef(false);
 
   const fetchChat = useCallback(async () => {
     if (!params?.id) return;
@@ -73,11 +77,34 @@ export default function ChatPage() {
     fetchChat();
   }, [fetchChat]);
 
-  useEffect(() => {
+  const handleScroll = useCallback(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+      const nearBottom = scrollHeight - scrollTop - clientHeight < 150;
+      isNearBottomRef.current = nearBottom;
+      
+      if (nearBottom) {
+        setHasNewMessage(false);
+      }
     }
-  }, [messages]);
+  }, []);
+
+  const scrollToBottom = useCallback((smooth = true) => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' });
+      setHasNewMessage(false);
+      isNearBottomRef.current = true;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!loading && messages.length > 0 && !initialScrollDoneRef.current) {
+      setTimeout(() => {
+        scrollToBottom(false);
+        initialScrollDoneRef.current = true;
+      }, 100);
+    }
+  }, [loading, messages.length, scrollToBottom]);
 
   useEffect(() => {
     if (!socket || !isConnected || !params?.id) return;
@@ -88,6 +115,18 @@ export default function ChatPage() {
     socket.on('new-message', (data: { chatId: string; message: Message }) => {
       if (data.chatId === chatId) {
         setMessages(prev => [...prev, data.message]);
+        
+        // Check if the new message is from current user
+        const isOwnMessage = data.message.sender.id.toString() === session?.user?.id?.toString();
+        
+        // Use ref value for real-time check
+        if (isOwnMessage || isNearBottomRef.current) {
+          // Auto scroll for own messages or if near bottom
+          setTimeout(() => scrollToBottom(true), 50);
+        } else {
+          // Show new message indicator
+          setHasNewMessage(true);
+        }
       }
     });
 
@@ -95,7 +134,7 @@ export default function ChatPage() {
       socket.emit('leave-chat', chatId);
       socket.off('new-message');
     };
-  }, [socket, isConnected, params?.id]);
+  }, [socket, isConnected, params?.id, scrollToBottom, session?.user?.id]);
 
   const handleSend = async () => {
     if (!message.trim() || !params?.id || sending) return;
@@ -161,24 +200,69 @@ export default function ChatPage() {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             
-            <div 
-              className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity" 
-              onClick={() => chat.event?.id && router.push(`/event/${chat.event.id}`)}
-            >
-              <Avatar className="w-10 h-10 border-2 border-white shadow-sm ring-2 ring-rose-50">
-                <AvatarImage src={chat.event?.image || `https://api.dicebear.com/7.x/shapes/svg?seed=${chat.id}`} />
-                <AvatarFallback className="bg-gradient-to-br from-rose-100 to-purple-100 text-purple-600">
-                  {chat.name?.charAt(0) || 'C'}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <h1 className="font-bold text-gray-900 text-sm leading-tight">{chat.name}</h1>
-                <p className="text-xs font-medium text-green-500 flex items-center gap-1">
-                  <Users className="w-3 h-3" />
-                  {chat.participants.length} members
-                </p>
-              </div>
-            </div>
+            {(() => {
+              const isEventChat = chat.type === 'EVENT' && chat.event;
+              const otherParticipant = chat.participants.find(
+                (p) => p.id.toString() !== currentUserId?.toString()
+              );
+              
+              // Determine avatar and display info based on chat type
+              const avatarSrc = isEventChat 
+                ? chat.event?.image 
+                : otherParticipant?.image;
+              const avatarFallback = isEventChat 
+                ? (chat.event?.title?.charAt(0) || '📅') 
+                : (otherParticipant?.name?.charAt(0) || 'U');
+              const displayName = isEventChat 
+                ? chat.event?.title 
+                : otherParticipant?.name || chat.name;
+              const clickHandler = isEventChat 
+                ? () => chat.event?.id && router.push(`/event/${chat.event.id}`)
+                : () => otherParticipant?.id && router.push(`/profile/${otherParticipant.id}`);
+              
+              return (
+                <div 
+                  className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity" 
+                  onClick={clickHandler}
+                >
+                  <div className="relative">
+                    <Avatar className="w-10 h-10 border-2 border-white shadow-sm ring-2 ring-rose-50">
+                      <AvatarImage src={avatarSrc || `https://api.dicebear.com/7.x/shapes/svg?seed=${chat.id}`} />
+                      <AvatarFallback className={isEventChat 
+                        ? "bg-gradient-to-br from-rose-100 to-purple-100 text-purple-600" 
+                        : "bg-gradient-to-br from-indigo-500 to-purple-500 text-white font-bold"
+                      }>
+                        {avatarFallback}
+                      </AvatarFallback>
+                    </Avatar>
+                    {!isEventChat && (
+                      <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
+                    )}
+                    {isEventChat && (
+                      <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-purple-500 rounded-full border-2 border-white flex items-center justify-center">
+                        <Users className="w-2.5 h-2.5 text-white" />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <h1 className="font-bold text-gray-900 text-sm leading-tight">{displayName}</h1>
+                    <p className="text-xs font-medium text-green-500 flex items-center gap-1">
+                      {isEventChat ? (
+                        <>
+                          <Users className="w-3 h-3" />
+                          {chat.participants.length} members
+                        </>
+                      ) : (
+                        <>
+                          <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+                          Online
+                        </>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
 
           <Button variant="ghost" size="icon" className="rounded-full text-gray-400 hover:text-gray-900">
@@ -187,72 +271,87 @@ export default function ChatPage() {
         </div>
       </header>
       
-      <div className="flex-1 overflow-y-auto px-4 py-6" ref={scrollRef}>
-        <div className="max-w-3xl mx-auto space-y-4">
-          {messages.length === 0 ? (
-            <div className="text-center py-12 text-gray-400">
-              <p>No messages yet. Start the conversation!</p>
-            </div>
-          ) : (
-            messages.map((msg, index) => {
-              const isCurrentUser = msg.sender.id === currentUserId;
-              const isSequence = index > 0 && messages[index - 1].sender.id === msg.sender.id;
-              const isSystemMessage = msg.type === 'SYSTEM';
+      <div className="flex-1 overflow-y-auto px-4 py-6 flex flex-col relative" ref={scrollRef} onScroll={handleScroll}>
+        {/* New Messages Button - appears when scrolled up and new messages arrive */}
+        {hasNewMessage && (
+          <button
+            onClick={() => scrollToBottom(true)}
+            className="fixed bottom-28 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-rose-500 to-purple-600 text-white text-sm font-semibold rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all animate-bounce"
+          >
+            <ChevronDown className="w-4 h-4" />
+            New Messages
+          </button>
+        )}
+        
+        <div className="max-w-3xl mx-auto w-full flex-1 flex flex-col justify-end">
+          <div className="space-y-1">
+            {messages.length === 0 ? (
+              <div className="text-center py-12 text-gray-400">
+                <p>No messages yet. Start the conversation!</p>
+              </div>
+            ) : (
+              messages.map((msg, index) => {
+                const isCurrentUser = msg.sender.id === currentUserId;
+                const isSequence = index > 0 && messages[index - 1].sender.id === msg.sender.id;
+                const isSystemMessage = msg.type === 'SYSTEM';
 
-              if (isSystemMessage) {
+                if (isSystemMessage) {
+                  return (
+                    <div key={msg.id} className="text-center py-2">
+                      <span className="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
+                        {msg.content}
+                      </span>
+                    </div>
+                  );
+                }
+
                 return (
-                  <div key={msg.id} className="text-center py-2">
-                    <span className="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
-                      {msg.content}
-                    </span>
+                  <div
+                    key={msg.id}
+                    className={`flex gap-3 ${isCurrentUser ? 'flex-row-reverse' : ''} ${isSequence ? 'mt-1' : 'mt-4'}`}
+                  >
+                    {!isCurrentUser && !isSequence && (
+                      <Avatar className="w-8 h-8 self-end mb-1 ring-2 ring-white shadow-sm">
+                        <AvatarImage src={msg.sender.image} alt={msg.sender.name} />
+                        <AvatarFallback className="bg-gray-100 text-gray-500 text-xs font-bold">
+                          {msg.sender.name?.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                    {!isCurrentUser && isSequence && <div className="w-8" />}
+
+                    <div className="group relative max-w-[80%]">
+                      {!isCurrentUser && !isSequence && (
+                        <span className="text-[10px] text-gray-400 ml-1 mb-1 block">
+                          {msg.sender.name}
+                        </span>
+                      )}
+                      
+                      <div
+                        className={`
+                          px-4 py-2.5 text-sm leading-relaxed shadow-sm
+                          ${isCurrentUser 
+                            ? 'bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-2xl rounded-tr-sm' 
+                            : 'bg-white text-gray-700 border border-gray-100 rounded-2xl rounded-tl-sm'}
+                        `}
+                      >
+                        {msg.content}
+                      </div>
+                      
+                      <div className={`
+                        text-[10px] text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-0 
+                        ${isCurrentUser ? '-left-12' : '-right-12'} translate-y-[-50%] top-[50%]
+                      `}>
+                        {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                      </div>
+                    </div>
                   </div>
                 );
-              }
-
-              return (
-                <div
-                  key={msg.id}
-                  className={`flex gap-3 ${isCurrentUser ? 'flex-row-reverse' : ''} ${isSequence ? 'mt-1' : 'mt-4'}`}
-                >
-                  {!isCurrentUser && !isSequence && (
-                    <Avatar className="w-8 h-8 self-end mb-1 ring-2 ring-white shadow-sm">
-                      <AvatarImage src={msg.sender.image} alt={msg.sender.name} />
-                      <AvatarFallback className="bg-gray-100 text-gray-500 text-xs font-bold">
-                        {msg.sender.name?.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
-                  {!isCurrentUser && isSequence && <div className="w-8" />}
-
-                  <div className="group relative max-w-[80%]">
-                    {!isCurrentUser && !isSequence && (
-                      <span className="text-[10px] text-gray-400 ml-1 mb-1 block">
-                        {msg.sender.name}
-                      </span>
-                    )}
-                    
-                    <div
-                      className={`
-                        px-4 py-2.5 text-sm leading-relaxed shadow-sm
-                        ${isCurrentUser 
-                          ? 'bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-2xl rounded-tr-sm' 
-                          : 'bg-white text-gray-700 border border-gray-100 rounded-2xl rounded-tl-sm'}
-                      `}
-                    >
-                      {msg.content}
-                    </div>
-                    
-                    <div className={`
-                      text-[10px] text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-0 
-                      ${isCurrentUser ? '-left-12' : '-right-12'} translate-y-[-50%] top-[50%]
-                    `}>
-                      {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          )}
+              })
+            )}
+            {/* Invisible element to scroll to */}
+            <div ref={messagesEndRef} />
+          </div>
         </div>
       </div>
       

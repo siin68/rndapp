@@ -130,11 +130,6 @@ export default function OpenInvitesPage() {
     const matchesHobby = selectedHobbies.length === 0 ||
       event.hobbyIds.some(hobbyId => selectedHobbies.includes(hobbyId));
 
-    // Debug logging
-    if (selectedHobbies.length > 0 && event.hobbyIds.length > 0) {
-      console.log('Event:', event.title, 'Event hobbyIds:', event.hobbyIds, 'Selected:', selectedHobbies, 'Match:', matchesHobby);
-    }
-
     return matchesSearch && matchesHobby;
   });
 
@@ -324,15 +319,13 @@ export default function OpenInvitesPage() {
                   event._count?.participants || event.participants?.length || 0;
                 const spotsLeft = event.maxParticipants - participantCount;
 
-                // Use hobbies from event if available, otherwise use hobbyIds
                 const eventHobbies = event.hobbies?.map(h => h.hobby) || [];
                 const hobbyIds = eventHobbies.length > 0 
                   ? eventHobbies.map(h => h.id)
                   : event.hobbyIds;
                 const totalHobbies = hobbyIds.length;
                 const showMax = 3;
-                // If we have > 3, we show 2 items + 1 counter badge = 3 elements total.
-                // If we have <= 3, we show all items.
+               
                 const shouldTruncate = totalHobbies > showMax;
                 const displayCount = shouldTruncate
                   ? showMax - 1
@@ -340,7 +333,6 @@ export default function OpenInvitesPage() {
                 const displayHobbies = hobbyIds.slice(0, displayCount);
                 const remaining = totalHobbies - displayCount;
 
-                // Helper to get hobby info
                 const getHobbyInfo = (hid: string) => {
                   const fromEvent = eventHobbies.find(h => h.id === hid);
                   if (fromEvent) return { name: fromEvent.name, emoji: fromEvent.icon };

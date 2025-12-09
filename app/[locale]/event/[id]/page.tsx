@@ -117,18 +117,13 @@ export default function EventDetailPage() {
     }
   }, [params?.id]);
 
-  // Listen for socket event when request is accepted
   useEffect(() => {
     const handleRequestAccepted = (event: CustomEvent) => {
       const data = event.detail;
-      console.log('[Event Detail] Request accepted:', data);
       
-      // Check if this event is for current event page
       if (data.eventId?.toString() === params?.id?.toString()) {
         setHasPendingRequest(false);
         setActionSuccess("Your request has been accepted! Welcome to the event!");
-        
-        // Refresh event data to show updated participant list
         refreshEvent();
       }
     };
@@ -140,9 +135,8 @@ export default function EventDetailPage() {
     };
   }, [params?.id, refreshEvent]);
 
-  // Fetch join requests count for host badge
   useEffect(() => {
-    if (event?.hostId && event.hostId === session?.user?.id) {
+    if (event?.hostId && event.hostId.toString() === session?.user?.id?.toString()) {
       fetchJoinRequests();
     }
   }, [event?.hostId, session?.user?.id]);
@@ -414,14 +408,15 @@ export default function EventDetailPage() {
   const maxParticipants = event.maxParticipants || 10; // Fallback if 0
   const isFull = participantCount >= maxParticipants;
   const spotsLeft = maxParticipants - participantCount;
+  const currentUserId = session?.user?.id?.toString();
   const isParticipant = event.participants?.some(
-    (p: any) => p.userId === (session?.user as any)?.id || p.id === (session?.user as any)?.id
+    (p: any) => p.userId?.toString() === currentUserId || p.id?.toString() === currentUserId
   );
-  const isHost = event.hostId === session?.user?.id;
+  const isHost = event.hostId?.toString() === currentUserId;
   
   // Check if current user has a pending join request
   const isPendingRequest = hasPendingRequest || event.joinRequests?.some(
-    (r) => r.userId === (session?.user as any)?.id && r.status === "PENDING"
+    (r) => r.userId?.toString() === currentUserId && r.status === "PENDING"
   );
   
   const eventDate = new Date(event.date);
@@ -853,13 +848,9 @@ export default function EventDetailPage() {
             <>
               <Button
                 onClick={() => {
-                  // Find or create chat for this event
                   const eventChat = event.chats?.find((chat: any) => chat.type === 'EVENT');
                   if (eventChat) {
                     router.push(`/chat/${eventChat.id}`);
-                  } else {
-                    // Handle case where chat doesn't exist yet
-                    console.log('Chat not found for event');
                   }
                 }}
                 className="rounded-full h-12 px-4 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white border-0 flex items-center gap-2 transition-all font-bold text-sm shadow-lg hover:shadow-xl hover:scale-105"

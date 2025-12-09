@@ -13,17 +13,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Delete all read notifications or mark all as read
+    const userIdNum = parseInt(userId, 10);
+    if (isNaN(userIdNum)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid userId' },
+        { status: 400 }
+      );
+    }
+
     await prisma.notification.deleteMany({
       where: {
-        userId,
+        userId: userIdNum,
         isRead: true,
       },
     });
 
-    // Mark remaining notifications as read
     await prisma.notification.updateMany({
-      where: { userId },
+      where: { userId: userIdNum },
       data: { isRead: true },
     });
 
