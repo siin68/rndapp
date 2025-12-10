@@ -5,15 +5,10 @@ import { useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
-import {
-  Card,
-  CardContent,
-  Button,
-  Avatar,
-  AvatarImage,
-  AvatarFallback,
-  Badge,
-} from "@/components/ui";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { getHobbyById, getLocationById } from "@/lib/data";
 import { useSession } from "next-auth/react";
 import { 

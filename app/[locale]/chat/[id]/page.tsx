@@ -5,7 +5,8 @@ import { useParams } from 'next/navigation';
 import { useRouter } from '@/i18n/navigation';
 import { useSession } from 'next-auth/react';
 import { useSocket } from '@/contexts/SocketContext';
-import { Button, Avatar, AvatarImage, AvatarFallback } from '@/components/ui';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { ArrowLeft, Send, Paperclip, Info, Users, ChevronDown, MoreVertical, Phone, Video, Calendar, Plus, Clock } from 'lucide-react';
 
 interface Message {

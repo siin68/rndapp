@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
-import { Button } from '@/components/ui';
+import { Button } from '@/components/ui/button';
 import { SparklesIcon, HeartFilledIcon, MapIcon, MessageSquareIcon, CheckIcon } from '@/icons/icons';
 import { useSession } from 'next-auth/react';
 import { useRouter } from '@/i18n/navigation';

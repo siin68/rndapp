@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useSocket } from '@/contexts/SocketContext';
-import { Avatar, AvatarImage, AvatarFallback, Button } from '@/components/ui';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import { Users, Check, X, UserPlus } from 'lucide-react';
 
 interface FriendRequest {

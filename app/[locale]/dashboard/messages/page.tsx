@@ -3,14 +3,9 @@
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter, usePathname } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  Avatar,
-  AvatarImage,
-  AvatarFallback,
-  Button,
-} from "@/components/ui";
+import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
 import { useSocket } from "@/contexts/SocketContext";
 

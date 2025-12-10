@@ -4,7 +4,10 @@ import { useParams } from 'next/navigation';
 import { useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
-import { Card, CardContent, Button, Avatar, AvatarImage, AvatarFallback, Badge } from '@/components/ui';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { ArrowLeftIcon, MapPinIcon, SparklesIcon, CalendarIcon, MessageCircleIcon } from '@/icons/icons';
 
 export default function ProfilePage() {
