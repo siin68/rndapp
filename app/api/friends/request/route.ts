@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
       const { socketEmit } = await import('@/lib/socket');
 
       // Send notification to receiver
-      socketEmit.toUser(receiverId, 'notification', {
+      socketEmit.toUser(String(receiverId), 'notification', {
         id: notification.id,
         type: 'FRIEND_REQUEST',
         title: notification.title,
@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
       });
 
       // Also emit friend-request specific event
-      socketEmit.toUser(receiverId, 'friend-request-received', {
+      socketEmit.toUser(String(receiverId), 'friend-request-received', {
         friendRequest: {
           id: friendRequest.id,
           sender: friendRequest.sender,

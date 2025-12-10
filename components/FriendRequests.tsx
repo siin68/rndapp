@@ -47,7 +47,7 @@ export default function FriendRequests() {
     if (!socket || !isConnected) return;
 
     if (session?.user?.id) {
-      socket.emit('join', session.user.id);
+      socket.emit('join', String(session.user.id));
     }
 
     // Listen for new friend requests

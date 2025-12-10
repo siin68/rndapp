@@ -10,7 +10,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const eventId = params.id;
+    const eventId = parseInt(params.id);
     const { searchParams } = new URL(request.url);
     const queryViewerId = searchParams.get("userId");
     
@@ -18,7 +18,7 @@ export async function GET(
     const session = await getServerSession(authOptions);
     const viewerId = queryViewerId || session?.user?.id || undefined;
 
-    if (!eventId) {
+    if (!eventId || isNaN(eventId)) {
       return NextResponse.json(
         { success: false, error: "Event ID is required" },
         { status: 400 }
@@ -63,7 +63,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const eventId = params.id;
+    const eventId = parseInt(params.id);
     const body = await request.json();
     const {
       title,
@@ -78,7 +78,7 @@ export async function PUT(
       requiresApproval,
     } = body;
 
-    if (!eventId) {
+    if (!eventId || isNaN(eventId)) {
       return NextResponse.json(
         { success: false, error: "Event ID is required" },
         { status: 400 }
@@ -183,7 +183,7 @@ export async function PUT(
         await prisma.eventHobby.createMany({
           data: hobbyIds.map((hobbyId: string, index: number) => ({
             eventId,
-            hobbyId,
+            hobbyId: parseInt(hobbyId),
             isPrimary: index === 0, // First hobby is primary
           })),
         });
@@ -286,7 +286,7 @@ export async function DELETE(
       });
 
       try {
-        await tx.joinRequest.deleteMany({
+        await tx.eventJoinRequest.deleteMany({
           where: { eventId },
         });
       } catch (error) {
