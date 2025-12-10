@@ -4,6 +4,7 @@ import { useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useSocket } from '@/contexts/SocketContext';
 
+
 export default function SocketListener() {
   const { data: session } = useSession();
   const { socket, isConnected } = useSocket();
@@ -12,7 +13,7 @@ export default function SocketListener() {
     if (!socket || !isConnected || !session?.user?.id) {
       return;
     }
-    socket.emit('join', session.user.id);
+    socket.emit('join', String(session.user.id));
   }, [socket, isConnected, session?.user?.id]);
 
   useEffect(() => {
@@ -92,6 +93,14 @@ export default function SocketListener() {
       window.dispatchEvent(new CustomEvent('event-request-rejected', { detail: data }));
     };
 
+    const handleNewLike = (data: { message: string; likerName: string; likerImage?: string; likerId: number }) => {
+      window.dispatchEvent(new CustomEvent('new-like', { detail: data }));
+    };
+
+    const handleMatchFound = (data: { message: string; matchedUserId: number; matchedUserName: string; matchedUserImage?: string }) => {
+      window.dispatchEvent(new CustomEvent('match-found', { detail: data }));
+    };
+
     socket.on('notification', handleNotification);
     socket.on('event-joined', handleEventJoined);
     socket.on('event-left', handleEventLeft);
@@ -103,6 +112,8 @@ export default function SocketListener() {
     socket.on('event-join-request', handleEventJoinRequest);
     socket.on('event-request-accepted', handleEventRequestAccepted);
     socket.on('event-request-rejected', handleEventRequestRejected);
+    socket.on('new-like', handleNewLike);
+    socket.on('match-found', handleMatchFound);
 
     return () => {
       socket.off('notification', handleNotification);
@@ -116,6 +127,8 @@ export default function SocketListener() {
       socket.off('event-join-request', handleEventJoinRequest);
       socket.off('event-request-accepted', handleEventRequestAccepted);
       socket.off('event-request-rejected', handleEventRequestRejected);
+      socket.off('new-like', handleNewLike);
+      socket.off('match-found', handleMatchFound);
     };
   }, [socket, isConnected]);
 

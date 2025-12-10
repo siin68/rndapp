@@ -75,7 +75,6 @@ export default function ChatPage() {
         setChat(data.data);
         setMessages(data.data.messages || []);
         
-        // Fetch sub-events if this is an event chat
         if (data.data.event?.id) {
           const subEventsRes = await fetch(`/api/events/${data.data.event.id}/sub-events`);
           const subEventsData = await subEventsRes.json();
@@ -92,6 +91,12 @@ export default function ChatPage() {
   }, [params?.id]);
 
   useEffect(() => {
+    // Reset state when chat ID changes
+    setLoading(true);
+    setMessages([]);
+    setChat(null);
+    initialScrollDoneRef.current = false;
+    
     fetchChat();
   }, [fetchChat]);
 
@@ -138,52 +143,80 @@ export default function ChatPage() {
     const chatId = params.id as string;
     socket.emit('join-chat', chatId);
 
-    socket.on('new-message', (data: { chatId: string; message: Message }) => {
+    const handleNewMessage = (data: { chatId: string; senderId?: number; message: Message }) => {
+      const isOwnMessage = data.senderId?.toString() === session?.user?.id?.toString();
+      if (isOwnMessage) {
+        return;
+      }
+      
       if (data.chatId === chatId) {
-        setMessages(prev => [...prev, data.message]);
+        setMessages(prev => {
+          if (prev.some(m => m.id === data.message.id)) {
+            return prev;
+          }
+          return [...prev, data.message];
+        });
         
-        // Check if the new message is from current user
-        const isOwnMessage = data.message.sender.id.toString() === session?.user?.id?.toString();
-        
-        // Use ref value for real-time check
-        if (isOwnMessage || isNearBottomRef.current) {
-          // Auto scroll for own messages or if near bottom
+        if (isNearBottomRef.current) {
           setTimeout(() => scrollToBottom(true), 50);
         } else {
-          // Show new message indicator
           setHasNewMessage(true);
         }
       }
-    });
+    };
+
+    socket.on('new-message', handleNewMessage);
 
     return () => {
       socket.emit('leave-chat', chatId);
-      socket.off('new-message');
+      socket.off('new-message', handleNewMessage);
     };
   }, [socket, isConnected, params?.id, scrollToBottom, session?.user?.id]);
 
   const handleSend = async () => {
     if (!message.trim() || !params?.id || sending) return;
     
+    const messageContent = message.trim();
     setSending(true);
+    setMessage(''); // Clear input ngay lập tức
+    
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
+    
     try {
       const response = await fetch(`/api/chats/${params.id}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: message }),
+        body: JSON.stringify({ content: messageContent }),
       });
       
       const data = await response.json();
       
-      if (data.success) {
-        setMessage('');
-        // Reset height immediately after send
-        if (textareaRef.current) {
-          textareaRef.current.style.height = 'auto';
-        }
+      if (data.success && data.data) {
+        // Optimistic update - hiển thị tin nhắn ngay lập tức
+        const newMessage: Message = {
+          id: data.data.id,
+          content: data.data.content,
+          type: data.data.type,
+          timestamp: data.data.timestamp,
+          sender: data.data.sender,
+        };
+        
+        setMessages(prev => {
+          // Kiểm tra xem message đã tồn tại chưa (có thể socket đã gửi về trước)
+          if (prev.some(m => m.id === newMessage.id)) {
+            return prev;
+          }
+          return [...prev, newMessage];
+        });
+        
+        // Scroll to bottom sau khi gửi
+        setTimeout(() => scrollToBottom(true), 50);
       }
     } catch (error) {
       console.error('Error sending message:', error);
+      // Có thể thêm toast notification ở đây
     } finally {
       setSending(false);
     }
@@ -223,11 +256,9 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-[100dvh] bg-slate-50 relative overflow-hidden font-sans">
-      {/* Background Decor */}
       <div className="fixed top-[-20%] right-[-10%] w-[600px] h-[600px] bg-gradient-to-br from-rose-200/30 to-orange-100/30 rounded-full blur-[120px] pointer-events-none z-0" />
       <div className="fixed bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-gradient-to-tr from-violet-200/30 to-blue-100/30 rounded-full blur-[100px] pointer-events-none z-0" />
       
-      {/* Header */}
       <header className="flex-none px-4 py-3 bg-white/70 backdrop-blur-xl border-b border-white/50 shadow-sm z-30 sticky top-0 transition-all duration-300">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-1">
@@ -246,7 +277,6 @@ export default function ChatPage() {
                 (p) => p.id.toString() !== currentUserId?.toString()
               );
               
-              // Determine avatar and display info based on chat type
               const avatarSrc = isEventChat 
                 ? chat.event?.image 
                 : otherParticipant?.image;
@@ -334,7 +364,6 @@ export default function ChatPage() {
         </div>
       </header>
       
-      {/* Sub-Events Sidebar */}
       {showSubEvents && chat.event && (
         <div className="flex-none bg-white border-b border-slate-200 shadow-sm z-20">
           <div className="max-w-4xl mx-auto px-4 py-4">
@@ -394,9 +423,7 @@ export default function ChatPage() {
         </div>
       )}
       
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 z-10 scroll-smooth" ref={scrollRef} onScroll={handleScroll}>
-        {/* New Messages Button */}
+      <div className="flex-1 overflow-y-auto px-4 py-6 z-10 scrollbar-thin" ref={scrollRef} onScroll={handleScroll}>
         {hasNewMessage && (
           <button
             onClick={() => scrollToBottom(true)}
@@ -438,7 +465,6 @@ export default function ChatPage() {
                   key={msg.id}
                   className={`flex gap-3 w-full group ${isCurrentUser ? 'flex-row-reverse' : 'flex-row'} ${isSequence ? 'mt-1' : 'mt-4'} animate-in slide-in-from-bottom-2 duration-300`}
                 >
-                  {/* Avatar only for other users and only at the bottom of the sequence */}
                   {!isCurrentUser && (
                     <div className="w-8 flex flex-col justify-end shrink-0">
                       {!isSequence ? (
@@ -453,7 +479,6 @@ export default function ChatPage() {
                   )}
 
                   <div className={`relative max-w-[85%] sm:max-w-[70%] flex flex-col ${isCurrentUser ? 'items-end' : 'items-start'}`}>
-                    {/* Name shown only for first message in sequence from others */}
                     {!isCurrentUser && !isSequence && (
                       <span className="text-[11px] font-medium text-slate-500 ml-3 mb-1 block">
                         {msg.sender.name}
@@ -471,7 +496,6 @@ export default function ChatPage() {
                       {msg.content}
                     </div>
                     
-                    {/* Timestamp - visible on hover or if it's the last message */}
                     <div className={`
                       text-[10px] font-medium text-slate-300 mt-1 px-1 transition-opacity duration-200
                       ${isLastInSequence ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}
@@ -486,7 +510,6 @@ export default function ChatPage() {
           <div className="h-2" ref={messagesEndRef} />
         </div>
       </div>
-      
       {/* Input Area */}
       <div className="flex-none p-3 sm:p-4 bg-white/80 backdrop-blur-2xl border-t border-white/20 shadow-[0_-5px_20px_-10px_rgba(0,0,0,0.05)] z-40">
         <div className="max-w-4xl mx-auto flex items-end gap-2 sm:gap-3">

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { socketEmit } from "@/lib/socket";
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,6 +37,11 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const likerUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, image: true },
+    });
 
     const existingSwipe = await prisma.swipe.findUnique({
       where: {
@@ -104,6 +110,26 @@ export async function POST(request: NextRequest) {
               },
             }),
           ]);
+
+          const user1Name = friendship.user2Id === userId ? friendship.user1.name : friendship.user2.name;
+          const user2Name = friendship.user1Id === targetId ? friendship.user2.name : friendship.user1.name;
+          const user1Image = friendship.user2Id === userId ? friendship.user1.image : friendship.user2.image;
+          const user2Image = friendship.user1Id === targetId ? friendship.user2.image : friendship.user1.image;
+
+          await Promise.all([
+            socketEmit.toUser(String(userId), "match-found", {
+              message: `It's a match! You and ${user1Name} can now chat.`,
+              matchedUserId: targetId,
+              matchedUserName: user1Name,
+              matchedUserImage: user1Image,
+            }),
+            socketEmit.toUser(String(targetId), "match-found", {
+              message: `It's a match! You and ${user2Name} can now chat.`,
+              matchedUserId: userId,
+              matchedUserName: user2Name,
+              matchedUserImage: user2Image,
+            }),
+          ]);
         } else {
           friendship = existingFriendship;
         }
@@ -149,6 +175,16 @@ export async function POST(request: NextRequest) {
         expiresAt,
       },
     });
+
+    if (action === "LIKE" && likerUser) {
+      const likerName = likerUser.name || "Someone";
+      await socketEmit.toUser(String(targetId), "new-like", {
+        message: `${likerName} interested in you — like back to chat`,
+        likerId: userId,
+        likerName: likerUser.name,
+        likerImage: likerUser.image,
+      });
+    }
 
     let isMatch = false;
     let friendship = null;
@@ -227,6 +263,21 @@ export async function POST(request: NextRequest) {
                   message: `You and ${friendship.user1.name} are now friends!`,
                   data: JSON.stringify({ friendId: userId }),
                 },
+              }),
+            ]);
+
+            await Promise.all([
+              socketEmit.toUser(String(userId), "match-found", {
+                message: `It's a match! You and ${friendship.user2.name} can now chat.`,
+                matchedUserId: targetId,
+                matchedUserName: friendship.user2.name,
+                matchedUserImage: friendship.user2.image,
+              }),
+              socketEmit.toUser(String(targetId), "match-found", {
+                message: `It's a match! You and ${friendship.user1.name} can now chat.`,
+                matchedUserId: userId,
+                matchedUserName: friendship.user1.name,
+                matchedUserImage: friendship.user1.image,
               }),
             ]);
           }

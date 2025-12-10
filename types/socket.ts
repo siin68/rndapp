@@ -22,6 +22,10 @@ export interface ServerToClientEvents {
   'friend-request-accepted': (data: { friendRequestId: string; friendship: any }) => void;
   'chat-member-joined': (data: { chatId: string; userId: string; userName: string }) => void;
   'chat-member-left': (data: { chatId: string; userId: string; userName: string }) => void;
+  'event-join-request': (data: any) => void;
+  'event-request-accepted': (data: any) => void;
+  'event-request-rejected': (data: any) => void;
+  'new-like': (data: { message: string; likerName: string; likerImage?: string; likerId: number; createdAt: string }) => void;
 }
 
 export interface ClientToServerEvents {

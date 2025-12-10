@@ -12,6 +12,7 @@ import {
   Button,
 } from "@/components/ui";
 import { useSession } from "next-auth/react";
+import { useSocket } from "@/contexts/SocketContext";
 
 // Icons
 const MessageCircleIcon = ({ className }: { className?: string }) => (
@@ -174,6 +175,55 @@ export default function MessagesPage() {
 
     fetchChats();
   }, [session?.user?.id]);
+
+  // Socket listener for real-time chat updates
+  const { socket, isConnected } = useSocket();
+  
+  useEffect(() => {
+    if (!socket || !isConnected || !session?.user?.id) return;
+
+    // Join user's personal room to receive all chat updates
+    socket.emit('join', session.user.id.toString());
+
+    const handleNewMessage = (data: { chatId: string; message: any }) => {
+      setChats(prevChats => {
+        const chatId = parseInt(data.chatId);
+        const chatIndex = prevChats.findIndex((c: any) => c.id === chatId);
+        
+        if (chatIndex === -1) {
+          fetch(`/api/chats?userId=${session.user.id}`)
+            .then(res => res.json())
+            .then(result => {
+              if (result.success) {
+                setChats(result.data || []);
+              }
+            });
+          return prevChats;
+        }
+        
+        const updatedChats = [...prevChats];
+        updatedChats[chatIndex] = {
+          ...updatedChats[chatIndex],
+          lastMessage: data.message,
+          updatedAt: data.message.timestamp
+        };
+        
+        updatedChats.sort((a: any, b: any) => {
+          const aTime = new Date(a.updatedAt || a.createdAt).getTime();
+          const bTime = new Date(b.updatedAt || b.createdAt).getTime();
+          return bTime - aTime;
+        });
+        
+        return updatedChats;
+      });
+    };
+
+    socket.on('new-message', handleNewMessage);
+
+    return () => {
+      socket.off('new-message', handleNewMessage);
+    };
+  }, [socket, isConnected, session?.user?.id]);
 
   // Fetch friends
   useEffect(() => {
@@ -510,6 +560,20 @@ export default function MessagesPage() {
                   const avatarAlt = isEventChat ? chat.event?.title : otherParticipant?.name;
                   const avatarFallback = isEventChat ? (chat.event?.title?.charAt(0) || '📅') : (otherParticipant?.name?.charAt(0) || 'U');
                   
+                  // Format timestamp to show both date and time
+                  const formatTimestamp = (timestamp: string) => {
+                    if (!timestamp) return '';
+                    const date = new Date(timestamp);
+                    const now = new Date();
+                    const isToday = date.toDateString() === now.toDateString();
+                    
+                    if (isToday) {
+                      return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                    }
+                    return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) + ' ' + 
+                           date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                  };
+                  
                   return (
                     <Card key={chat.id} onClick={() => router.push(`/chat/${chat.id}`)} className="cursor-pointer hover:shadow-lg transition-all group">
                       <CardContent className="pt-6">
@@ -535,7 +599,7 @@ export default function MessagesPage() {
                                 {chat.event?.title || otherParticipant?.name || "Direct Message"}
                               </h3>
                               <span className="text-xs text-gray-400 ml-2">
-                                {chat.lastMessage ? new Date(chat.lastMessage.timestamp).toLocaleDateString() : ""}
+                                {formatTimestamp(chat.lastMessage?.timestamp)}
                               </span>
                             </div>
                             <p className="text-sm text-gray-500 mb-1">
@@ -734,6 +798,20 @@ export default function MessagesPage() {
                     const avatarAlt = isEventChat ? chat.event?.title : otherParticipant?.name;
                     const avatarFallback = isEventChat ? (chat.event?.title?.charAt(0) || '📅') : (otherParticipant?.name?.charAt(0) || 'U');
 
+                    // Format timestamp to show both date and time
+                    const formatTimestamp = (timestamp: string) => {
+                      if (!timestamp) return '';
+                      const date = new Date(timestamp);
+                      const now = new Date();
+                      const isToday = date.toDateString() === now.toDateString();
+                      
+                      if (isToday) {
+                        return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                      }
+                      return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) + ' ' + 
+                             date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                    };
+
                     return (
                       <Card
                         key={chat.id}
@@ -766,11 +844,7 @@ export default function MessagesPage() {
                                   {chat.event?.title || otherParticipant?.name || "Direct Message"}
                                 </h3>
                                 <span className="text-xs text-gray-400 ml-2">
-                                  {chat.lastMessage
-                                    ? new Date(
-                                        chat.lastMessage.timestamp
-                                      ).toLocaleDateString()
-                                    : ""}
+                                  {formatTimestamp(chat.lastMessage?.timestamp)}
                                 </span>
                               </div>
                               <p className="text-sm text-gray-500 mb-1">

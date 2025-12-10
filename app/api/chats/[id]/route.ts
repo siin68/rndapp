@@ -55,7 +55,7 @@ export async function GET(
         },
         messages: {
           orderBy: {
-            timestamp: "asc",
+            timestamp: "desc",
           },
           take: 100,
           include: {
@@ -129,6 +129,8 @@ export async function GET(
       );
     }
 
+    const messages = chat.messages.reverse();
+
     return NextResponse.json({
       success: true,
       data: {
@@ -137,7 +139,7 @@ export async function GET(
         name: chat.name || chat.event?.title,
         event: chat.event,
         participants: chat.participants.map((p) => p.user),
-        messages: chat.messages,
+        messages: messages,
       },
     });
   } catch (error) {

@@ -42,12 +42,24 @@ export async function POST(
       include: {
         participants: {
           where: {
-            userId: session.user.id,
             leftAt: null,
+          },
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                image: true,
+              },
+            },
           },
         },
       },
     });
+
+    const isParticipant = chat?.participants.some(
+      (p) => p.userId === session.user.id
+    );
 
     if (!chat) {
       return NextResponse.json(
@@ -56,7 +68,7 @@ export async function POST(
       );
     }
 
-    if (chat.participants.length === 0) {
+    if (!isParticipant) {
       return NextResponse.json(
         { success: false, error: "You are not a participant in this chat" },
         { status: 403 }
@@ -86,15 +98,26 @@ export async function POST(
       data: { updatedAt: new Date() },
     });
 
+    const messageData = {
+      id: message.id,
+      content: message.content,
+      type: message.type,
+      timestamp: message.timestamp.toISOString(),
+      sender: message.sender,
+    };
+
     socketEmit.toChat(chatId.toString(), "new-message", {
       chatId: chatId.toString(),
-      message: {
-        id: message.id,
-        content: message.content,
-        type: message.type,
-        timestamp: message.timestamp,
-        sender: message.sender,
-      },
+      senderId: session.user.id,
+      message: messageData,
+    });
+
+    chat.participants.forEach((participant) => {
+      socketEmit.toUser(participant.userId.toString(), "new-message", {
+        chatId: chatId.toString(),
+        senderId: session.user.id,
+        message: messageData,
+      });
     });
 
     return NextResponse.json({

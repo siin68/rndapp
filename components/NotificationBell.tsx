@@ -63,10 +63,70 @@ export default function NotificationBell() {
       }
     };
 
+    const handleNewLike = (event: CustomEvent) => {
+      const likeData = event.detail as { message: string; likerName: string; likerImage?: string; likerId: number };
+      
+      const notification: Notification = {
+        id: `like-${Date.now()}-${likeData.likerId}`,
+        type: 'NEW_LIKE',
+        title: '💕 New Like',
+        message: likeData.message,
+        data: {
+          likerId: likeData.likerId,
+          likerName: likeData.likerName,
+          likerImage: likeData.likerImage,
+        },
+        createdAt: new Date(),
+        isRead: false,
+      };
+      
+      setNotifications(prev => [notification, ...prev]);
+      setUnreadCount(prev => prev + 1);
+
+      if (typeof window !== 'undefined' && 'Notification' in window && window.Notification.permission === 'granted') {
+        new window.Notification(notification.title, {
+          body: notification.message,
+          icon: likeData.likerImage || '/icon.png',
+        });
+      }
+    };
+
+    const handleMatchFound = (event: CustomEvent) => {
+      const matchData = event.detail as { message: string; matchedUserId: number; matchedUserName: string; matchedUserImage?: string };
+      
+      const notification: Notification = {
+        id: `match-${Date.now()}-${matchData.matchedUserId}`,
+        type: 'MATCH_FOUND',
+        title: '🎉 It\'s a Match!',
+        message: matchData.message,
+        data: {
+          matchedUserId: matchData.matchedUserId,
+          matchedUserName: matchData.matchedUserName,
+          matchedUserImage: matchData.matchedUserImage,
+        },
+        createdAt: new Date(),
+        isRead: false,
+      };
+      
+      setNotifications(prev => [notification, ...prev]);
+      setUnreadCount(prev => prev + 1);
+
+      if (typeof window !== 'undefined' && 'Notification' in window && window.Notification.permission === 'granted') {
+        new window.Notification(notification.title, {
+          body: notification.message,
+          icon: matchData.matchedUserImage || '/icon.png',
+        });
+      }
+    };
+
     window.addEventListener('socket-notification' as any, handleNotification as any);
+    window.addEventListener('new-like' as any, handleNewLike as any);
+    window.addEventListener('match-found' as any, handleMatchFound as any);
 
     return () => {
       window.removeEventListener('socket-notification' as any, handleNotification as any);
+      window.removeEventListener('new-like' as any, handleNewLike as any);
+      window.removeEventListener('match-found' as any, handleMatchFound as any);
     };
   }, []);
 
@@ -126,6 +186,16 @@ export default function NotificationBell() {
 
     if (notification.type === 'NEW_MESSAGE' && notificationData?.chatId) {
       router.push(`/chat/${notificationData.chatId}`);
+      return;
+    }
+
+    if (notification.type === 'NEW_LIKE' && notificationData?.likerId) {
+      router.push(`/profile/${notificationData.likerId}`);
+      return;
+    }
+
+    if (notification.type === 'MATCH_FOUND' && notificationData?.matchedUserId) {
+      router.push(`/profile/${notificationData.matchedUserId}`);
       return;
     }
   };
@@ -208,6 +278,7 @@ export default function NotificationBell() {
                         notification.type === 'EVENT_REJECTED' ? 'bg-red-100 text-red-600' :
                         notification.type === 'EVENT_LEAVE' ? 'bg-red-100 text-red-600' :
                         notification.type === 'MATCH_FOUND' ? 'bg-purple-100 text-purple-600' :
+                        notification.type === 'NEW_LIKE' ? 'bg-pink-100 text-pink-600' :
                         'bg-blue-100 text-blue-600'
                       }`}>
                         {notification.type === 'EVENT_JOIN' ? '👋' :
@@ -215,7 +286,8 @@ export default function NotificationBell() {
                          notification.type === 'EVENT_ACCEPTED' ? '✅' :
                          notification.type === 'EVENT_REJECTED' ? '❌' :
                          notification.type === 'EVENT_LEAVE' ? '💨' :
-                         notification.type === 'MATCH_FOUND' ? '💝' :
+                         notification.type === 'MATCH_FOUND' ? '🎉' :
+                         notification.type === 'NEW_LIKE' ? '💕' :
                          '📢'}
                       </div>
 
