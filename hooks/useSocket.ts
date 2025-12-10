@@ -13,7 +13,7 @@ export const useSocketUser = () => {
 
   useEffect(() => {
     if (socket && isConnected && session?.user?.id) {
-      socket.emit('join', session.user.id);
+      socket.emit('join', String(session.user.id));
       console.log(`👤 Joined user room: ${session.user.id}`);
     }
   }, [socket, isConnected, session?.user?.id]);

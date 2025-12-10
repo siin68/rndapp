@@ -1,9 +1,10 @@
 import prisma from "../../prisma";
 
 export const chatQueries = {
-  async getUserChats(userId: string) {
+  async getUserChats(userId: string | number) {
+    const numericUserId = typeof userId === 'string' ? parseInt(userId) : userId;
     return prisma.chatParticipant.findMany({
-      where: { userId },
+      where: { userId: numericUserId },
       include: {
         chat: {
           include: {
@@ -11,7 +12,7 @@ export const chatQueries = {
               select: { title: true, date: true },
             },
             participants: {
-              where: { userId: { not: userId } },
+              where: { userId: { not: numericUserId } },
               include: {
                 user: { select: { name: true, image: true } },
               },
@@ -61,8 +62,8 @@ export const chatQueries = {
 
   // Create new chat
   async createChat(
-    participants: string[],
-    eventId?: string,
+    participants: (string | number)[],
+    eventId?: number,
     type: string = "GROUP"
   ) {
     const chat = await prisma.chat.create({
@@ -71,7 +72,7 @@ export const chatQueries = {
         type,
         participants: {
           create: participants.map((userId, index) => ({
-            userId,
+            userId: typeof userId === 'string' ? parseInt(userId) : userId,
             role: index === 0 ? "OWNER" : "MEMBER",
           })),
         },
@@ -129,10 +130,11 @@ export const chatQueries = {
   //   },
 
   // Mark messages as read
-  async markAsRead(chatId: string, userId: string) {
+  async markAsRead(chatId: number, userId: string | number) {
+    const numericUserId = typeof userId === 'string' ? parseInt(userId) : userId;
     return prisma.chatParticipant.update({
       where: {
-        chatId_userId: { chatId, userId },
+        chatId_userId: { chatId, userId: numericUserId },
       },
       data: {
         lastReadAt: new Date(),

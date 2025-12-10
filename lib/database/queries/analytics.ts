@@ -5,18 +5,19 @@ import prisma from "../../prisma";
  */
 export const analyticsQueries = {
   // Get user activity stats
-  async getUserStats(userId: string) {
+  async getUserStats(userId: string | number) {
+    const numericUserId = typeof userId === 'string' ? parseInt(userId) : userId;
     const [eventsHosted, eventsAttended, averageRating, totalFriends] =
       await Promise.all([
-        prisma.event.count({ where: { hostId: userId } }),
-        prisma.eventParticipant.count({ where: { userId } }),
+        prisma.event.count({ where: { hostId: numericUserId } }),
+        prisma.eventParticipant.count({ where: { userId: numericUserId } }),
         prisma.review.aggregate({
-          where: { revieweeId: userId },
+          where: { revieweeId: numericUserId },
           _avg: { rating: true },
         }),
         prisma.friendship.count({
           where: {
-            OR: [{ user1Id: userId }, { user2Id: userId }],
+            OR: [{ user1Id: numericUserId }, { user2Id: numericUserId }],
           },
         }),
       ]);
@@ -87,27 +88,28 @@ export const analyticsQueries = {
   },
 
   // Get user activity over time
-  async getUserActivity(userId: string, days: number = 30) {
+  async getUserActivity(userId: string | number, days: number = 30) {
+    const numericUserId = typeof userId === 'string' ? parseInt(userId) : userId;
     const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
     const [events, messages, reviews] = await Promise.all([
       prisma.event.findMany({
         where: {
-          hostId: userId,
+          hostId: numericUserId,
           createdAt: { gte: startDate },
         },
         select: { createdAt: true },
       }),
       prisma.message.findMany({
         where: {
-          senderId: userId,
+          senderId: numericUserId,
           timestamp: { gte: startDate },
         },
         select: { timestamp: true },
       }),
       prisma.review.findMany({
         where: {
-          reviewerId: userId,
+          reviewerId: numericUserId,
           createdAt: { gte: startDate },
         },
         select: { createdAt: true },

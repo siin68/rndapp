@@ -24,9 +24,10 @@ export const hobbyQueries = {
   },
 
   // Get hobby with stats
-  async getHobbyWithStats(hobbyId: string) {
+  async getHobbyWithStats(hobbyId: string | number) {
+    const numericHobbyId = typeof hobbyId === 'string' ? parseInt(hobbyId) : hobbyId;
     return prisma.hobby.findUnique({
-      where: { id: hobbyId },
+      where: { id: numericHobbyId },
       include: {
         _count: {
           select: { users: true, events: true },
@@ -47,10 +48,11 @@ export const locationQueries = {
   },
 
   // Get locations by city
-  async getLocationsByCity(cityId: string) {
+  async getLocationsByCity(cityId: string | number) {
+    const numericCityId = typeof cityId === 'string' ? parseInt(cityId) : cityId;
     return prisma.location.findMany({
       where: {
-        cityId,
+        cityId: numericCityId,
         isActive: true,
       },
       include: { city: true },
@@ -67,9 +69,10 @@ export const locationQueries = {
   },
 
   // Get city with locations
-  async getCityWithLocations(cityId: string) {
+  async getCityWithLocations(cityId: string | number) {
+    const numericCityId = typeof cityId === 'string' ? parseInt(cityId) : cityId;
     return prisma.city.findUnique({
-      where: { id: cityId },
+      where: { id: numericCityId },
       include: {
         locations: {
           where: { isActive: true },

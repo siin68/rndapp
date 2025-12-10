@@ -84,7 +84,11 @@ export const authOptions: NextAuthOptions = {
           }
         } catch (error) {
           console.error("Error fetching user session:", error);
-          session.user.id = token.sub;
+          // Fallback to token.sub if database query fails
+          if (token.sub) {
+            const parsedId = parseInt(token.sub);
+            session.user.id = isNaN(parsedId) ? undefined : parsedId;
+          }
         }
       }
       return session;
