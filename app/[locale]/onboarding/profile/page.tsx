@@ -4,14 +4,10 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useSession } from "next-auth/react";
-import {
-  Button,
-  Input,
-  Textarea,
-  Avatar,
-  AvatarImage,
-  AvatarFallback,
-} from "@/components/ui";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { CameraIcon, UserIcon, ArrowRightIcon } from "@/icons/icons";
 import { uploadToCloudinaryClient } from "@/lib/cloudinary";
 // import { uploadToCloudinaryClient } from "@/lib/cloudinary";

@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { signIn } from 'next-auth/react';
-import { Button } from '@/components/ui';
+import { Button } from '@/components/ui/button';
 import { GoogleIcon, HeartFilledIcon } from '@/icons/icons';
 
 const HeartIcon = HeartFilledIcon;

@@ -4,7 +4,9 @@
 import { useTranslations } from 'next-intl';
 import { signOut, useSession } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Card, CardContent, Button, Avatar, AvatarImage, AvatarFallback } from '@/components/ui';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useState, useEffect } from 'react';
 
 // --- Icons ---
